@@ -1,0 +1,797 @@
+{
+    "item_id": 563,
+    "status": "completed",
+    "priority": 0,
+    "batch_id": "e3270230-fc4e-4c3b-92a8-fa6d3f3e1807",
+    "origin": "canvas",
+    "destination": "generate",
+    "session_id": "042552fd-8dc5-42e8-b1c4-54975731923f",
+    "created_at": "2025-08-09 16:11:26.998",
+    "updated_at": "2025-08-09 16:11:35.625",
+    "started_at": "2025-08-09 16:11:27.004",
+    "completed_at": "2025-08-09 16:11:35.625",
+    "queue_id": "default",
+    "field_values": [
+        {"node_path": "seed:RpiR4N9oZ9", "field_name": "value", "value": 3573534001},
+        {
+            "node_path" : "positive_prompt:VLX4x4tROA",
+            "field_name": "value",
+            "value"     : "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace"
+        }
+    ],
+    "is_api_validation_run": false,
+    "session": {
+        "id": "042552fd-8dc5-42e8-b1c4-54975731923f",
+        "graph": {
+            "id": "sdxl_graph:E52pKC4VWX",
+            "nodes": {
+                "sdxl_model_loader:hTRtPGN2SC": {
+                    "id": "sdxl_model_loader:hTRtPGN2SC",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "model": {
+                        "key" : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                        "hash": "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                        "name": "sdxlUnstableDiffusers_nihilmania",
+                        "base": "sdxl",
+                        "type": "main"
+                    },
+                    "type": "sdxl_model_loader"
+                },
+                "positive_prompt:VLX4x4tROA": {
+                    "id": "positive_prompt:VLX4x4tROA",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "value": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
+                    "type": "string"
+                },
+                "pos_cond:vMiGRaL7ZV": {
+                    "id": "pos_cond:vMiGRaL7ZV",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "prompt": "",
+                    "style": "",
+                    "original_width": 1024,
+                    "original_height": 1024,
+                    "crop_top": 0,
+                    "crop_left": 0,
+                    "target_width": 1024,
+                    "target_height": 1024,
+                    "type": "sdxl_compel_prompt"
+                },
+                "pos_cond_collect:q2Mrr3VgaM": {
+                    "id": "pos_cond_collect:q2Mrr3VgaM",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "collection": [],
+                    "type": "collect"
+                },
+                "neg_cond:VPsH7pE8u4": {
+                    "id": "neg_cond:VPsH7pE8u4",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
+                    "style": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
+                    "original_width": 1024,
+                    "original_height": 1024,
+                    "crop_top": 0,
+                    "crop_left": 0,
+                    "target_width": 1024,
+                    "target_height": 1024,
+                    "type": "sdxl_compel_prompt"
+                },
+                "neg_cond_collect:iOgNrfkjEw": {
+                    "id": "neg_cond_collect:iOgNrfkjEw",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "collection": [],
+                    "type": "collect"
+                },
+                "seed:RpiR4N9oZ9": {
+                    "id": "seed:RpiR4N9oZ9",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "value": 3573534001,
+                    "type": "integer"
+                },
+                "noise:r4hTDusFvO": {
+                    "id": "noise:r4hTDusFvO",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "seed": 0,
+                    "width": 960,
+                    "height": 1280,
+                    "use_cpu": true,
+                    "type": "noise"
+                },
+                "denoise_latents:1pC1TPyIsz": {
+                    "id": "denoise_latents:1pC1TPyIsz",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "steps": 21,
+                    "cfg_scale": 7.5,
+                    "denoising_start": 0,
+                    "denoising_end": 1,
+                    "scheduler": "euler_a",
+                    "cfg_rescale_multiplier": 0,
+                    "type": "denoise_latents"
+                },
+                "core_metadata:oO2k36xZyg": {
+                    "id": "core_metadata:oO2k36xZyg",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "generation_mode": "sdxl_txt2img",
+                    "negative_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
+                    "width": 960,
+                    "height": 1280,
+                    "rand_device": "cpu",
+                    "cfg_scale": 7.5,
+                    "cfg_rescale_multiplier": 0,
+                    "steps": 21,
+                    "scheduler": "euler_a",
+                    "seamless_x": false,
+                    "seamless_y": false,
+                    "model": {
+                        "key" : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                        "hash": "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                        "name": "sdxlUnstableDiffusers_nihilmania",
+                        "base": "sdxl",
+                        "type": "main"
+                    },
+                    "negative_style_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
+                    "type": "core_metadata",
+                    "ref_images": []
+                },
+                "canvas_output:94JBfO5C9c": {
+                    "id": "canvas_output:94JBfO5C9c",
+                    "is_intermediate": false,
+                    "use_cache": false,
+                    "tiled": false,
+                    "tile_size": 0,
+                    "fp32": true,
+                    "type": "l2i"
+                }
+            },
+            "edges": [
+                {
+                    "source"     : {"node_id": "sdxl_model_loader:hTRtPGN2SC", "field": "unet"},
+                    "destination": {"node_id": "denoise_latents:1pC1TPyIsz",   "field": "unet"}
+                },
+                {
+                    "source"     : {"node_id": "sdxl_model_loader:hTRtPGN2SC", "field": "clip"},
+                    "destination": {"node_id": "pos_cond:vMiGRaL7ZV",          "field": "clip"}
+                },
+                {
+                    "source"     : {"node_id": "sdxl_model_loader:hTRtPGN2SC", "field": "clip"},
+                    "destination": {"node_id": "neg_cond:VPsH7pE8u4",          "field": "clip"}
+                },
+                {
+                    "source"     : {"node_id": "sdxl_model_loader:hTRtPGN2SC", "field": "clip2"},
+                    "destination": {"node_id": "pos_cond:vMiGRaL7ZV",          "field": "clip2"}
+                },
+                {
+                    "source"     : {"node_id": "sdxl_model_loader:hTRtPGN2SC", "field": "clip2"},
+                    "destination": {"node_id": "neg_cond:VPsH7pE8u4",          "field": "clip2"}
+                },
+                {
+                    "source"     : {"node_id": "positive_prompt:VLX4x4tROA", "field": "value" },
+                    "destination": {"node_id": "pos_cond:vMiGRaL7ZV",        "field": "prompt"}
+                },
+                {
+                    "source"     : {"node_id": "pos_cond:vMiGRaL7ZV",         "field": "conditioning"},
+                    "destination": {"node_id": "pos_cond_collect:q2Mrr3VgaM", "field": "item"        }
+                },
+                {
+                    "source"     : {"node_id": "pos_cond_collect:q2Mrr3VgaM", "field": "collection"           },
+                    "destination": {"node_id": "denoise_latents:1pC1TPyIsz",  "field": "positive_conditioning"}
+                },
+                {
+                    "source"     : {"node_id": "neg_cond:VPsH7pE8u4",         "field": "conditioning"},
+                    "destination": {"node_id": "neg_cond_collect:iOgNrfkjEw", "field": "item"        }
+                },
+                {
+                    "source"     : {"node_id": "neg_cond_collect:iOgNrfkjEw", "field": "collection"           },
+                    "destination": {"node_id": "denoise_latents:1pC1TPyIsz",  "field": "negative_conditioning"}
+                },
+                {
+                    "source"     : {"node_id": "seed:RpiR4N9oZ9",  "field": "value"},
+                    "destination": {"node_id": "noise:r4hTDusFvO", "field": "seed" }
+                },
+                {
+                    "source"     : {"node_id": "noise:r4hTDusFvO",           "field": "noise"},
+                    "destination": {"node_id": "denoise_latents:1pC1TPyIsz", "field": "noise"}
+                },
+                {
+                    "source"     : {"node_id": "denoise_latents:1pC1TPyIsz", "field": "latents"},
+                    "destination": {"node_id": "canvas_output:94JBfO5C9c",   "field": "latents"}
+                },
+                {
+                    "source"     : {"node_id": "seed:RpiR4N9oZ9",          "field": "value"},
+                    "destination": {"node_id": "core_metadata:oO2k36xZyg", "field": "seed" }
+                },
+                {
+                    "source"     : {"node_id": "positive_prompt:VLX4x4tROA", "field": "value"          },
+                    "destination": {"node_id": "core_metadata:oO2k36xZyg",   "field": "positive_prompt"}
+                },
+                {
+                    "source"     : {"node_id": "positive_prompt:VLX4x4tROA", "field": "value"},
+                    "destination": {"node_id": "pos_cond:vMiGRaL7ZV",        "field": "style"}
+                },
+                {
+                    "source"     : {"node_id": "positive_prompt:VLX4x4tROA", "field": "value"                },
+                    "destination": {"node_id": "core_metadata:oO2k36xZyg",   "field": "positive_style_prompt"}
+                },
+                {
+                    "source"     : {"node_id": "sdxl_model_loader:hTRtPGN2SC", "field": "vae"},
+                    "destination": {"node_id": "canvas_output:94JBfO5C9c",     "field": "vae"}
+                },
+                {
+                    "source"     : {"node_id": "core_metadata:oO2k36xZyg", "field": "metadata"},
+                    "destination": {"node_id": "canvas_output:94JBfO5C9c", "field": "metadata"}
+                }
+            ]
+        },
+        "execution_graph": {
+            "id": "21c9478e-efd3-4c8b-853a-bba17eebbe38",
+            "nodes": {
+                "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5": {
+                    "id": "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "model": {
+                        "key" : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                        "hash": "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                        "name": "sdxlUnstableDiffusers_nihilmania",
+                        "base": "sdxl",
+                        "type": "main"
+                    },
+                    "type": "sdxl_model_loader"
+                },
+                "2de4c49e-b821-4ca3-b3b7-13f468961dd9": {
+                    "id": "2de4c49e-b821-4ca3-b3b7-13f468961dd9",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "value": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
+                    "type": "string"
+                },
+                "bbc4b31e-411b-4b21-bdac-e3be833cd4ee": {
+                    "id": "bbc4b31e-411b-4b21-bdac-e3be833cd4ee",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "value": 3573534001,
+                    "type": "integer"
+                },
+                "3d32582d-bff3-40ab-b6ca-ead67efeb423": {
+                    "id": "3d32582d-bff3-40ab-b6ca-ead67efeb423",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
+                    "style": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
+                    "original_width": 1024,
+                    "original_height": 1024,
+                    "crop_top": 0,
+                    "crop_left": 0,
+                    "target_width": 1024,
+                    "target_height": 1024,
+                    "clip": {
+                        "tokenizer": {
+                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "base"         : "sdxl",
+                            "type"         : "main",
+                            "submodel_type": "tokenizer"
+                        },
+                        "text_encoder": {
+                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "base"         : "sdxl",
+                            "type"         : "main",
+                            "submodel_type": "text_encoder"
+                        },
+                        "skipped_layers": 0,
+                        "loras": []
+                    },
+                    "clip2": {
+                        "tokenizer": {
+                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "base"         : "sdxl",
+                            "type"         : "main",
+                            "submodel_type": "tokenizer_2"
+                        },
+                        "text_encoder": {
+                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "base"         : "sdxl",
+                            "type"         : "main",
+                            "submodel_type": "text_encoder_2"
+                        },
+                        "skipped_layers": 0,
+                        "loras": []
+                    },
+                    "type": "sdxl_compel_prompt"
+                },
+                "30ceb5cd-5d35-4d34-956c-01197143febc": {
+                    "id": "30ceb5cd-5d35-4d34-956c-01197143febc",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "prompt": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
+                    "style": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
+                    "original_width": 1024,
+                    "original_height": 1024,
+                    "crop_top": 0,
+                    "crop_left": 0,
+                    "target_width": 1024,
+                    "target_height": 1024,
+                    "clip": {
+                        "tokenizer": {
+                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "base"         : "sdxl",
+                            "type"         : "main",
+                            "submodel_type": "tokenizer"
+                        },
+                        "text_encoder": {
+                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "base"         : "sdxl",
+                            "type"         : "main",
+                            "submodel_type": "text_encoder"
+                        },
+                        "skipped_layers": 0,
+                        "loras": []
+                    },
+                    "clip2": {
+                        "tokenizer": {
+                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "base"         : "sdxl",
+                            "type"         : "main",
+                            "submodel_type": "tokenizer_2"
+                        },
+                        "text_encoder": {
+                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "base"         : "sdxl",
+                            "type"         : "main",
+                            "submodel_type": "text_encoder_2"
+                        },
+                        "skipped_layers": 0,
+                        "loras": []
+                    },
+                    "type": "sdxl_compel_prompt"
+                },
+                "8423bc7f-3d1c-442b-83ad-1881af48427e": {
+                    "id": "8423bc7f-3d1c-442b-83ad-1881af48427e",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "generation_mode": "sdxl_txt2img",
+                    "positive_prompt": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
+                    "negative_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
+                    "width": 960,
+                    "height": 1280,
+                    "seed": 3573534001,
+                    "rand_device": "cpu",
+                    "cfg_scale": 7.5,
+                    "cfg_rescale_multiplier": 0,
+                    "steps": 21,
+                    "scheduler": "euler_a",
+                    "seamless_x": false,
+                    "seamless_y": false,
+                    "model": {
+                        "key" : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                        "hash": "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                        "name": "sdxlUnstableDiffusers_nihilmania",
+                        "base": "sdxl",
+                        "type": "main"
+                    },
+                    "positive_style_prompt": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
+                    "negative_style_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
+                    "type": "core_metadata",
+                    "ref_images": []
+                },
+                "aa0af106-9562-484a-bdc1-abc512f4192e": {
+                    "id": "aa0af106-9562-484a-bdc1-abc512f4192e",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "seed": 3573534001,
+                    "width": 960,
+                    "height": 1280,
+                    "use_cpu": true,
+                    "type": "noise"
+                },
+                "c0290424-a3d6-4999-aefe-8f255fbf9283": {
+                    "id": "c0290424-a3d6-4999-aefe-8f255fbf9283",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "collection": [
+                        {"conditioning_name": "ConditioningFieldData_8bb1d2ea-c836-47cf-a939-ae10f970cd2b"}
+                    ],
+                    "type": "collect"
+                },
+                "b3983cba-6fed-48b3-a39c-fb2f20fb147e": {
+                    "id": "b3983cba-6fed-48b3-a39c-fb2f20fb147e",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "collection": [
+                        {"conditioning_name": "ConditioningFieldData_34e8902c-369f-4f7c-a2d4-ceb58cd79109"}
+                    ],
+                    "type": "collect"
+                },
+                "2bddb043-414c-4e30-8991-3bd30dd8b562": {
+                    "id": "2bddb043-414c-4e30-8991-3bd30dd8b562",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "positive_conditioning": [
+                        {"conditioning_name": "ConditioningFieldData_34e8902c-369f-4f7c-a2d4-ceb58cd79109"}
+                    ],
+                    "negative_conditioning": [
+                        {"conditioning_name": "ConditioningFieldData_8bb1d2ea-c836-47cf-a939-ae10f970cd2b"}
+                    ],
+                    "noise": {"latents_name": "Tensor_7c1a7026-4422-4f1c-aafe-1e76de54c1f8", "seed": 3573534001},
+                    "steps": 21,
+                    "cfg_scale": 7.5,
+                    "denoising_start": 0,
+                    "denoising_end": 1,
+                    "scheduler": "euler_a",
+                    "unet": {
+                        "unet": {
+                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "base"         : "sdxl",
+                            "type"         : "main",
+                            "submodel_type": "unet"
+                        },
+                        "scheduler": {
+                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "base"         : "sdxl",
+                            "type"         : "main",
+                            "submodel_type": "scheduler"
+                        },
+                        "loras": [],
+                        "seamless_axes": []
+                    },
+                    "cfg_rescale_multiplier": 0,
+                    "type": "denoise_latents"
+                },
+                "6e4bed37-797c-4c48-a50d-7d78153bb04e": {
+                    "metadata": {
+                        "generation_mode": "sdxl_txt2img",
+                        "positive_prompt": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
+                        "negative_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
+                        "width": 960,
+                        "height": 1280,
+                        "seed": 3573534001,
+                        "rand_device": "cpu",
+                        "cfg_scale": 7.5,
+                        "cfg_rescale_multiplier": 0,
+                        "steps": 21,
+                        "scheduler": "euler_a",
+                        "seamless_x": false,
+                        "seamless_y": false,
+                        "model": {
+                            "key" : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                            "hash": "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                            "name": "sdxlUnstableDiffusers_nihilmania",
+                            "base": "sdxl",
+                            "type": "main"
+                        },
+                        "positive_style_prompt": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
+                        "negative_style_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
+                        "ref_images": [],
+                        "app_version": "6.3.0"
+                    },
+                    "id": "6e4bed37-797c-4c48-a50d-7d78153bb04e",
+                    "is_intermediate": false,
+                    "use_cache": false,
+                    "latents": {"latents_name": "Tensor_44956f04-62a3-4810-b4f3-bde726c9c1fc"},
+                    "vae": {
+                        "vae": {
+                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "base"         : "sdxl",
+                            "type"         : "main",
+                            "submodel_type": "vae"
+                        },
+                        "seamless_axes": []
+                    },
+                    "tiled": false,
+                    "tile_size": 0,
+                    "fp32": true,
+                    "type": "l2i"
+                }
+            },
+            "edges": [
+                {
+                    "source"     : {"node_id": "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5", "field": "clip"},
+                    "destination": {"node_id": "3d32582d-bff3-40ab-b6ca-ead67efeb423", "field": "clip"}
+                },
+                {
+                    "source"     : {"node_id": "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5", "field": "clip2"},
+                    "destination": {"node_id": "3d32582d-bff3-40ab-b6ca-ead67efeb423", "field": "clip2"}
+                },
+                {
+                    "source"     : {"node_id": "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5", "field": "clip"},
+                    "destination": {"node_id": "30ceb5cd-5d35-4d34-956c-01197143febc", "field": "clip"}
+                },
+                {
+                    "source"     : {"node_id": "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5", "field": "clip2"},
+                    "destination": {"node_id": "30ceb5cd-5d35-4d34-956c-01197143febc", "field": "clip2"}
+                },
+                {
+                    "source"     : {"node_id": "2de4c49e-b821-4ca3-b3b7-13f468961dd9", "field": "value" },
+                    "destination": {"node_id": "30ceb5cd-5d35-4d34-956c-01197143febc", "field": "prompt"}
+                },
+                {
+                    "source"     : {"node_id": "2de4c49e-b821-4ca3-b3b7-13f468961dd9", "field": "value"},
+                    "destination": {"node_id": "30ceb5cd-5d35-4d34-956c-01197143febc", "field": "style"}
+                },
+                {
+                    "source"     : {"node_id": "bbc4b31e-411b-4b21-bdac-e3be833cd4ee", "field": "value"},
+                    "destination": {"node_id": "8423bc7f-3d1c-442b-83ad-1881af48427e", "field": "seed" }
+                },
+                {
+                    "source"     : {"node_id": "2de4c49e-b821-4ca3-b3b7-13f468961dd9", "field": "value"          },
+                    "destination": {"node_id": "8423bc7f-3d1c-442b-83ad-1881af48427e", "field": "positive_prompt"}
+                },
+                {
+                    "source": {"node_id": "2de4c49e-b821-4ca3-b3b7-13f468961dd9", "field": "value"},
+                    "destination": {"node_id": "8423bc7f-3d1c-442b-83ad-1881af48427e", "field": "positive_style_prompt"}
+                },
+                {
+                    "source"     : {"node_id": "bbc4b31e-411b-4b21-bdac-e3be833cd4ee", "field": "value"},
+                    "destination": {"node_id": "aa0af106-9562-484a-bdc1-abc512f4192e", "field": "seed" }
+                },
+                {
+                    "source"     : {"node_id": "3d32582d-bff3-40ab-b6ca-ead67efeb423", "field": "conditioning"},
+                    "destination": {"node_id": "c0290424-a3d6-4999-aefe-8f255fbf9283", "field": "item"        }
+                },
+                {
+                    "source"     : {"node_id": "30ceb5cd-5d35-4d34-956c-01197143febc", "field": "conditioning"},
+                    "destination": {"node_id": "b3983cba-6fed-48b3-a39c-fb2f20fb147e", "field": "item"        }
+                },
+                {
+                    "source"     : {"node_id": "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5", "field": "unet"},
+                    "destination": {"node_id": "2bddb043-414c-4e30-8991-3bd30dd8b562", "field": "unet"}
+                },
+                {
+                    "source": {"node_id": "b3983cba-6fed-48b3-a39c-fb2f20fb147e", "field": "collection"},
+                    "destination": {"node_id": "2bddb043-414c-4e30-8991-3bd30dd8b562", "field": "positive_conditioning"}
+                },
+                {
+                    "source": {"node_id": "c0290424-a3d6-4999-aefe-8f255fbf9283", "field": "collection"},
+                    "destination": {"node_id": "2bddb043-414c-4e30-8991-3bd30dd8b562", "field": "negative_conditioning"}
+                },
+                {
+                    "source"     : {"node_id": "aa0af106-9562-484a-bdc1-abc512f4192e", "field": "noise"},
+                    "destination": {"node_id": "2bddb043-414c-4e30-8991-3bd30dd8b562", "field": "noise"}
+                },
+                {
+                    "source"     : {"node_id": "2bddb043-414c-4e30-8991-3bd30dd8b562", "field": "latents"},
+                    "destination": {"node_id": "6e4bed37-797c-4c48-a50d-7d78153bb04e", "field": "latents"}
+                },
+                {
+                    "source"     : {"node_id": "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5", "field": "vae"},
+                    "destination": {"node_id": "6e4bed37-797c-4c48-a50d-7d78153bb04e", "field": "vae"}
+                },
+                {
+                    "source"     : {"node_id": "8423bc7f-3d1c-442b-83ad-1881af48427e", "field": "metadata"},
+                    "destination": {"node_id": "6e4bed37-797c-4c48-a50d-7d78153bb04e", "field": "metadata"}
+                }
+            ]
+        },
+        "executed": [
+            "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5",
+            "3d32582d-bff3-40ab-b6ca-ead67efeb423",
+            "30ceb5cd-5d35-4d34-956c-01197143febc",
+            "aa0af106-9562-484a-bdc1-abc512f4192e",
+            "pos_cond:vMiGRaL7ZV",
+            "2bddb043-414c-4e30-8991-3bd30dd8b562",
+            "noise:r4hTDusFvO",
+            "positive_prompt:VLX4x4tROA",
+            "canvas_output:94JBfO5C9c",
+            "pos_cond_collect:q2Mrr3VgaM",
+            "2de4c49e-b821-4ca3-b3b7-13f468961dd9",
+            "bbc4b31e-411b-4b21-bdac-e3be833cd4ee",
+            "6e4bed37-797c-4c48-a50d-7d78153bb04e",
+            "core_metadata:oO2k36xZyg",
+            "c0290424-a3d6-4999-aefe-8f255fbf9283",
+            "8423bc7f-3d1c-442b-83ad-1881af48427e",
+            "neg_cond_collect:iOgNrfkjEw",
+            "neg_cond:VPsH7pE8u4",
+            "denoise_latents:1pC1TPyIsz",
+            "sdxl_model_loader:hTRtPGN2SC",
+            "b3983cba-6fed-48b3-a39c-fb2f20fb147e",
+            "seed:RpiR4N9oZ9"
+        ],
+        "executed_history": [
+            "sdxl_model_loader:hTRtPGN2SC", "neg_cond:VPsH7pE8u4",          "neg_cond_collect:iOgNrfkjEw",
+            "positive_prompt:VLX4x4tROA",   "pos_cond:vMiGRaL7ZV",          "pos_cond_collect:q2Mrr3VgaM",
+            "seed:RpiR4N9oZ9",              "core_metadata:oO2k36xZyg",     "noise:r4hTDusFvO",
+            "denoise_latents:1pC1TPyIsz",   "canvas_output:94JBfO5C9c"
+        ],
+        "results": {
+            "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5": {
+                "unet": {
+                    "unet": {
+                        "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                        "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                        "name"         : "sdxlUnstableDiffusers_nihilmania",
+                        "base"         : "sdxl",
+                        "type"         : "main",
+                        "submodel_type": "unet"
+                    },
+                    "scheduler": {
+                        "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                        "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                        "name"         : "sdxlUnstableDiffusers_nihilmania",
+                        "base"         : "sdxl",
+                        "type"         : "main",
+                        "submodel_type": "scheduler"
+                    },
+                    "loras": [],
+                    "seamless_axes": []
+                },
+                "clip": {
+                    "tokenizer": {
+                        "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                        "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                        "name"         : "sdxlUnstableDiffusers_nihilmania",
+                        "base"         : "sdxl",
+                        "type"         : "main",
+                        "submodel_type": "tokenizer"
+                    },
+                    "text_encoder": {
+                        "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                        "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                        "name"         : "sdxlUnstableDiffusers_nihilmania",
+                        "base"         : "sdxl",
+                        "type"         : "main",
+                        "submodel_type": "text_encoder"
+                    },
+                    "skipped_layers": 0,
+                    "loras": []
+                },
+                "clip2": {
+                    "tokenizer": {
+                        "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                        "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                        "name"         : "sdxlUnstableDiffusers_nihilmania",
+                        "base"         : "sdxl",
+                        "type"         : "main",
+                        "submodel_type": "tokenizer_2"
+                    },
+                    "text_encoder": {
+                        "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                        "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                        "name"         : "sdxlUnstableDiffusers_nihilmania",
+                        "base"         : "sdxl",
+                        "type"         : "main",
+                        "submodel_type": "text_encoder_2"
+                    },
+                    "skipped_layers": 0,
+                    "loras": []
+                },
+                "vae": {
+                    "vae": {
+                        "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                        "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                        "name"         : "sdxlUnstableDiffusers_nihilmania",
+                        "base"         : "sdxl",
+                        "type"         : "main",
+                        "submodel_type": "vae"
+                    },
+                    "seamless_axes": []
+                },
+                "type": "sdxl_model_loader_output"
+            },
+            "3d32582d-bff3-40ab-b6ca-ead67efeb423": {
+                "conditioning": {"conditioning_name": "ConditioningFieldData_8bb1d2ea-c836-47cf-a939-ae10f970cd2b"},
+                "type": "conditioning_output"
+            },
+            "c0290424-a3d6-4999-aefe-8f255fbf9283": {
+                "collection": [ {"conditioning_name": "ConditioningFieldData_8bb1d2ea-c836-47cf-a939-ae10f970cd2b"} ],
+                "type": "collect_output"
+            },
+            "2de4c49e-b821-4ca3-b3b7-13f468961dd9": {
+                "value": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
+                "type" : "string_output"
+            },
+            "30ceb5cd-5d35-4d34-956c-01197143febc": {
+                "conditioning": {"conditioning_name": "ConditioningFieldData_34e8902c-369f-4f7c-a2d4-ceb58cd79109"},
+                "type": "conditioning_output"
+            },
+            "b3983cba-6fed-48b3-a39c-fb2f20fb147e": {
+                "collection": [ {"conditioning_name": "ConditioningFieldData_34e8902c-369f-4f7c-a2d4-ceb58cd79109"} ],
+                "type": "collect_output"
+            },
+            "bbc4b31e-411b-4b21-bdac-e3be833cd4ee": {"value": 3573534001, "type": "integer_output"},
+            "8423bc7f-3d1c-442b-83ad-1881af48427e": {
+                "metadata": {
+                    "generation_mode": "sdxl_txt2img",
+                    "positive_prompt": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
+                    "negative_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
+                    "width": 960,
+                    "height": 1280,
+                    "seed": 3573534001,
+                    "rand_device": "cpu",
+                    "cfg_scale": 7.5,
+                    "cfg_rescale_multiplier": 0,
+                    "steps": 21,
+                    "scheduler": "euler_a",
+                    "seamless_x": false,
+                    "seamless_y": false,
+                    "model": {
+                        "key" : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
+                        "hash": "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
+                        "name": "sdxlUnstableDiffusers_nihilmania",
+                        "base": "sdxl",
+                        "type": "main"
+                    },
+                    "positive_style_prompt": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
+                    "negative_style_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
+                    "ref_images": [],
+                    "app_version": "6.3.0"
+                },
+                "type": "metadata_output"
+            },
+            "aa0af106-9562-484a-bdc1-abc512f4192e": {
+                "noise": {"latents_name": "Tensor_7c1a7026-4422-4f1c-aafe-1e76de54c1f8", "seed": 3573534001},
+                "width": 960,
+                "height": 1280,
+                "type": "noise_output"
+            },
+            "2bddb043-414c-4e30-8991-3bd30dd8b562": {
+                "latents": {"latents_name": "Tensor_44956f04-62a3-4810-b4f3-bde726c9c1fc"},
+                "width": 960,
+                "height": 1280,
+                "type": "latents_output"
+            },
+            "6e4bed37-797c-4c48-a50d-7d78153bb04e": {
+                "image": {"image_name": "daf74141-3df9-4751-8c8e-5d1f66f975cb.png"},
+                "width": 960,
+                "height": 1280,
+                "type": "image_output"
+            }
+        },
+        "errors": {},
+        "prepared_source_mapping": {
+            "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5": "sdxl_model_loader:hTRtPGN2SC",
+            "2de4c49e-b821-4ca3-b3b7-13f468961dd9": "positive_prompt:VLX4x4tROA",
+            "bbc4b31e-411b-4b21-bdac-e3be833cd4ee": "seed:RpiR4N9oZ9",
+            "3d32582d-bff3-40ab-b6ca-ead67efeb423": "neg_cond:VPsH7pE8u4",
+            "30ceb5cd-5d35-4d34-956c-01197143febc": "pos_cond:vMiGRaL7ZV",
+            "8423bc7f-3d1c-442b-83ad-1881af48427e": "core_metadata:oO2k36xZyg",
+            "aa0af106-9562-484a-bdc1-abc512f4192e": "noise:r4hTDusFvO",
+            "c0290424-a3d6-4999-aefe-8f255fbf9283": "neg_cond_collect:iOgNrfkjEw",
+            "b3983cba-6fed-48b3-a39c-fb2f20fb147e": "pos_cond_collect:q2Mrr3VgaM",
+            "2bddb043-414c-4e30-8991-3bd30dd8b562": "denoise_latents:1pC1TPyIsz",
+            "6e4bed37-797c-4c48-a50d-7d78153bb04e": "canvas_output:94JBfO5C9c"
+        },
+        "source_prepared_mapping": {
+            "sdxl_model_loader:hTRtPGN2SC": ["7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5"],
+            "positive_prompt:VLX4x4tROA"  : ["2de4c49e-b821-4ca3-b3b7-13f468961dd9"],
+            "seed:RpiR4N9oZ9"             : ["bbc4b31e-411b-4b21-bdac-e3be833cd4ee"],
+            "neg_cond:VPsH7pE8u4"         : ["3d32582d-bff3-40ab-b6ca-ead67efeb423"],
+            "pos_cond:vMiGRaL7ZV"         : ["30ceb5cd-5d35-4d34-956c-01197143febc"],
+            "core_metadata:oO2k36xZyg"    : ["8423bc7f-3d1c-442b-83ad-1881af48427e"],
+            "noise:r4hTDusFvO"            : ["aa0af106-9562-484a-bdc1-abc512f4192e"],
+            "neg_cond_collect:iOgNrfkjEw" : ["c0290424-a3d6-4999-aefe-8f255fbf9283"],
+            "pos_cond_collect:q2Mrr3VgaM" : ["b3983cba-6fed-48b3-a39c-fb2f20fb147e"],
+            "denoise_latents:1pC1TPyIsz"  : ["2bddb043-414c-4e30-8991-3bd30dd8b562"],
+            "canvas_output:94JBfO5C9c"    : ["6e4bed37-797c-4c48-a50d-7d78153bb04e"]
+        }
+    }
+}
