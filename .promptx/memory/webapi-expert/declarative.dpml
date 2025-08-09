@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<memory>
+  <item id="mem_1754764473772_83tcz0ewn" time="2025/08/10 02:34">
+    <content>
+      I have a set of powerful CLI tools for web API analysis and automation. These include: curl for making HTTP requests, jq for JSON processing, httpie as a user-friendly curl alternative, Node.js for running JavaScript tools, Playwright and Puppeteer for browser automation, mitmproxy for inspecting HTTPS traffic, shot-scraper for taking website screenshots, and yq for processing YAML files. The documentation for these tools is available in &#x27;context/hints/howto-use-webapi-tools.md&#x27;.
+    </content>
+    <tags>#其他</tags>
+  </item>
+  <item id="mem_1754764750429_mrjec5nih" time="2025/08/10 02:39">
+    <content>
+      To get JS-rendered pages, I will use the `shot-scraper` tool, specifically the `html` or `javascript` commands. I must remember to wait for at least 5 seconds (`--wait 5000`) to ensure the page has fully loaded all dynamic content. I should also be aware of Content Security Policy (CSP) and use the `--bypass-csp` flag if needed. The full instructions are in `context/hints/howto-use-shot-scraper-for-js-rendered-content.md`.
+    </content>
+    <tags>#其他</tags>
+  </item>
+</memory>

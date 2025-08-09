@@ -1,0 +1,559 @@
+{
+    "name": "flux-image-to-image",
+    "author": "InvokeAI",
+    "description": "A simple image-to-image workflow using a FLUX dev model. ",
+    "version": "1.1.0",
+    "contact": "",
+    "tags": "flux, image to image",
+    "notes": "Prerequisite model downloads: T5 Encoder, CLIP-L Encoder, and FLUX VAE. Quantized and un-quantized versions can be found in the starter models tab within your Model Manager. We recommend using FLUX dev models for image-to-image workflows. The image-to-image performance with FLUX schnell models is poor.",
+    "exposedFields": [
+        {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "model"           },
+        {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "t5_encoder_model"},
+        {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "clip_embed_model"},
+        {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "vae_model"       },
+        {"nodeId": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c", "fieldName": "prompt"          },
+        {"nodeId": "2981a67c-480f-4237-9384-26b68dbf912b", "fieldName": "image"           }
+    ],
+    "meta": {"category": "user", "version": "3.0.0"},
+    "id": "2092f9c8-7b60-425a-874f-4fe59f946190",
+    "form": {
+        "elements": {
+            "root": {
+                "id": "root",
+                "data": {
+                    "layout": "column",
+                    "children": [
+                        "node-field-ijo7m63hDi", "node-field-QuO8FhTq6c", "node-field-a1nav5kDNi",
+                        "node-field-2lhCG395of", "node-field-ydWKtxVLEk", "node-field-mArU8Uy5GY",
+                        "node-field-DudUc3rqpl", "node-field-mcjNlse2cM", "node-field-doVk7pdRxy"
+                    ]
+                },
+                "type": "container"
+            },
+            "node-field-mArU8Uy5GY": {
+                "id": "node-field-mArU8Uy5GY",
+                "parentId": "root",
+                "data": {
+                    "fieldIdentifier": {"nodeId": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c", "fieldName": "prompt"},
+                    "showDescription": false,
+                    "settings": {"type": "string-field-config", "component": "input"}
+                },
+                "type": "node-field"
+            },
+            "node-field-ydWKtxVLEk": {
+                "id": "node-field-ydWKtxVLEk",
+                "parentId": "root",
+                "data": {
+                    "fieldIdentifier": {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "vae_model"},
+                    "showDescription": false
+                },
+                "type": "node-field"
+            },
+            "node-field-2lhCG395of": {
+                "id": "node-field-2lhCG395of",
+                "parentId": "root",
+                "data": {
+                    "fieldIdentifier": {
+                        "nodeId"   : "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                        "fieldName": "clip_embed_model"
+                    },
+                    "showDescription": false
+                },
+                "type": "node-field"
+            },
+            "node-field-a1nav5kDNi": {
+                "id": "node-field-a1nav5kDNi",
+                "parentId": "root",
+                "data": {
+                    "fieldIdentifier": {
+                        "nodeId"   : "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                        "fieldName": "t5_encoder_model"
+                    },
+                    "showDescription": false
+                },
+                "type": "node-field"
+            },
+            "node-field-ijo7m63hDi": {
+                "id": "node-field-ijo7m63hDi",
+                "parentId": "root",
+                "data": {
+                    "fieldIdentifier": {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "model"},
+                    "showDescription": false
+                },
+                "type": "node-field"
+            },
+            "node-field-DudUc3rqpl": {
+                "id": "node-field-DudUc3rqpl",
+                "parentId": "root",
+                "data": {
+                    "fieldIdentifier": {"nodeId": "e87ba3b6-c98f-4644-903a-e13c421f2add", "fieldName": "prompt"},
+                    "showDescription": true,
+                    "settings": {"type": "string-field-config", "component": "input"}
+                },
+                "type": "node-field"
+            },
+            "node-field-mcjNlse2cM": {
+                "id": "node-field-mcjNlse2cM",
+                "parentId": "root",
+                "data": {
+                    "fieldIdentifier": {"nodeId": "9c773392-5647-4f2b-958e-9da1707b6e6a", "fieldName": "num_steps"},
+                    "showDescription": true,
+                    "settings": {"type": "integer-field-config", "component": "number-input"}
+                },
+                "type": "node-field"
+            },
+            "node-field-doVk7pdRxy": {
+                "id": "node-field-doVk7pdRxy",
+                "parentId": "root",
+                "data": {
+                    "fieldIdentifier": {
+                        "nodeId"   : "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                        "fieldName": "denoising_start"
+                    },
+                    "showDescription": true,
+                    "settings": {"type": "float-field-config", "component": "number-input"}
+                },
+                "type": "node-field"
+            },
+            "node-field-QuO8FhTq6c": {
+                "id": "node-field-QuO8FhTq6c",
+                "parentId": "root",
+                "data": {
+                    "fieldIdentifier": {"nodeId": "7b056f05-a4fe-40d3-b913-1a4b3897230f", "fieldName": "image"},
+                    "showDescription": true
+                },
+                "type": "node-field"
+            }
+        },
+        "rootElementId": "root"
+    },
+    "nodes": [
+        {
+            "id": "2981a67c-480f-4237-9384-26b68dbf912b",
+            "type": "invocation",
+            "data": {
+                "id": "2981a67c-480f-4237-9384-26b68dbf912b",
+                "version": "1.0.1",
+                "nodePack": "invokeai",
+                "label": "",
+                "notes": "",
+                "type": "flux_vae_encode",
+                "inputs": {
+                    "image": {"name": "image", "label": "", "description": ""},
+                    "vae"  : {"name": "vae",   "label": "", "description": ""}
+                },
+                "isOpen": true,
+                "isIntermediate": true,
+                "useCache": true
+            },
+            "position": {"x": 276.7626039605479, "y": 664.7050903471228}
+        },
+        {
+            "id": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+            "type": "invocation",
+            "data": {
+                "id": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+                "version": "1.0.2",
+                "nodePack": "invokeai",
+                "label": "",
+                "notes": "",
+                "type": "flux_vae_decode",
+                "inputs": {
+                    "board"   : {"name": "board",    "label": "", "description": "", "value": "auto"},
+                    "metadata": {"name": "metadata", "label": "", "description": ""                 },
+                    "latents" : {"name": "latents",  "label": "", "description": ""                 },
+                    "vae"     : {"name": "vae",      "label": "", "description": ""                 }
+                },
+                "isOpen": true,
+                "isIntermediate": false,
+                "useCache": true
+            },
+            "position": {"x": 1278, "y": 110}
+        },
+        {
+            "id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "type": "invocation",
+            "data": {
+                "id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                "version": "1.0.6",
+                "nodePack": "invokeai",
+                "label": "",
+                "notes": "",
+                "type": "flux_model_loader",
+                "inputs": {
+                    "model": {
+                        "name": "model",
+                        "label": "Model (dev variant recommended for Image-to-Image)",
+                        "description": "",
+                        "value": {
+                            "key" : "fe04e4c3-2287-4ba5-8c34-107d3da215ae",
+                            "hash": "blake3:8e532c2cb80971c1fc56074e63adcfcaba7b2e1c7c79afda98a459aafd4f4b87",
+                            "name": "FLUX Dev (Quantized)",
+                            "base": "flux",
+                            "type": "main"
+                        }
+                    },
+                    "t5_encoder_model": {
+                        "name": "t5_encoder_model",
+                        "label": "",
+                        "description": "",
+                        "value": {
+                            "key" : "2dba546f-0753-4d9f-80c5-1c05466613c9",
+                            "hash": "blake3:38aafa42899cf4fe8b1055d17de6e7fe15af104d193da4a320e34ca24db32754",
+                            "name": "t5_bnb_int8_quantized_encoder",
+                            "base": "any",
+                            "type": "t5_encoder"
+                        }
+                    },
+                    "clip_embed_model": {
+                        "name": "clip_embed_model",
+                        "label": "",
+                        "description": "",
+                        "value": {
+                            "key" : "f4f1dc55-74f4-409a-9a0f-e419866e8347",
+                            "hash": "blake3:17c19f0ef941c3b7609a9c94a659ca5364de0be364a91d4179f0e39ba17c3b70",
+                            "name": "clip-vit-large-patch14",
+                            "base": "any",
+                            "type": "clip_embed"
+                        }
+                    },
+                    "vae_model": {
+                        "name": "vae_model",
+                        "label": "",
+                        "description": "",
+                        "value": {
+                            "key" : "ef6d47fe-94c7-4d59-a520-3429162431a8",
+                            "hash": "blake3:ce21cb76364aa6e2421311cf4a4b5eb052a76c4f1cd207b50703d8978198a068",
+                            "name": "FLUX.1-schnell_ae",
+                            "base": "flux",
+                            "type": "vae"
+                        }
+                    }
+                },
+                "isOpen": true,
+                "isIntermediate": true,
+                "useCache": false
+            },
+            "position": {"x": -249.97263836608238, "y": -1.8654674504931563}
+        },
+        {
+            "id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+            "type": "invocation",
+            "data": {
+                "id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+                "version": "1.1.2",
+                "nodePack": "invokeai",
+                "label": "Positive Prompt - FLUX",
+                "notes": "",
+                "type": "flux_text_encoder",
+                "inputs": {
+                    "clip": {"name": "clip", "label": "", "description": ""},
+                    "t5_encoder": {"name": "t5_encoder", "label": "", "description": ""},
+                    "t5_max_seq_len": {
+                        "name": "t5_max_seq_len",
+                        "label": "T5 Max Seq Len",
+                        "description": "",
+                        "value": 256
+                    },
+                    "prompt": {"name": "prompt", "label": "Positive Prompt", "description": "", "value": ""},
+                    "mask": {"name": "mask", "label": "", "description": ""}
+                },
+                "isOpen": true,
+                "isIntermediate": true,
+                "useCache": true
+            },
+            "position": {"x": 276.7626039605479, "y": 104.70509034712279}
+        },
+        {
+            "id": "4754c534-a5f3-4ad0-9382-7887985e668c",
+            "type": "invocation",
+            "data": {
+                "id": "4754c534-a5f3-4ad0-9382-7887985e668c",
+                "version": "1.0.1",
+                "nodePack": "invokeai",
+                "label": "",
+                "notes": "",
+                "type": "rand_int",
+                "inputs": {
+                    "low" : {"name": "low",  "label": "", "description": "", "value":          0},
+                    "high": {"name": "high", "label": "", "description": "", "value": 2147483647}
+                },
+                "isOpen": true,
+                "isIntermediate": true,
+                "useCache": false
+            },
+            "position": {"x": 276.7626039605479, "y": 860.7050903471228}
+        },
+        {
+            "id": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+            "type": "invocation",
+            "data": {
+                "id": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+                "version": "1.1.2",
+                "nodePack": "invokeai",
+                "label": "Negative Prompt - FLUX",
+                "notes": "",
+                "type": "flux_text_encoder",
+                "inputs": {
+                    "clip": {"name": "clip", "label": "", "description": ""},
+                    "t5_encoder": {"name": "t5_encoder", "label": "", "description": ""},
+                    "t5_max_seq_len": {
+                        "name": "t5_max_seq_len",
+                        "label": "T5 Max Seq Len",
+                        "description": "",
+                        "value": 256
+                    },
+                    "prompt": {"name": "prompt", "label": "Negative Prompt", "description": "", "value": ""},
+                    "mask": {"name": "mask", "label": "", "description": ""}
+                },
+                "isOpen": true,
+                "isIntermediate": true,
+                "useCache": true
+            },
+            "position": {"x": 276.7626039605479, "y": 384.7050903471228}
+        },
+        {
+            "id": "f14341d4-34a5-42a5-8221-acf98d82add7",
+            "type": "invocation",
+            "data": {
+                "id": "f14341d4-34a5-42a5-8221-acf98d82add7",
+                "type": "metadata_from_image",
+                "version": "1.0.1",
+                "label": "",
+                "notes": "",
+                "isOpen": true,
+                "isIntermediate": true,
+                "useCache": true,
+                "nodePack": "invokeai",
+                "inputs": { "image": {"name": "image", "label": "", "description": ""} }
+            },
+            "position": {"x": 276.7626039605479, "y": -63.29490965287721}
+        },
+        {
+            "id": "7b056f05-a4fe-40d3-b913-1a4b3897230f",
+            "type": "invocation",
+            "data": {
+                "id": "7b056f05-a4fe-40d3-b913-1a4b3897230f",
+                "type": "image",
+                "version": "1.0.2",
+                "label": "",
+                "notes": "",
+                "isOpen": true,
+                "isIntermediate": true,
+                "useCache": true,
+                "nodePack": "invokeai",
+                "inputs": { "image": {"name": "image", "label": "", "description": ""} }
+            },
+            "position": {"x": -249.97263836608238, "y": 441.13453254950684}
+        },
+        {
+            "id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "type": "invocation",
+            "data": {
+                "id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                "type": "flux_denoise_meta",
+                "version": "1.0.1",
+                "label": "",
+                "notes": "",
+                "isOpen": true,
+                "isIntermediate": true,
+                "useCache": true,
+                "nodePack": "invokeai",
+                "inputs": {
+                    "metadata": {"name": "metadata", "label": "", "description": ""},
+                    "latents": {"name": "latents", "label": "", "description": ""},
+                    "denoise_mask": {"name": "denoise_mask", "label": "", "description": ""},
+                    "denoising_start": {"name": "denoising_start", "label": "", "description": "", "value": 0.4},
+                    "denoising_end": {"name": "denoising_end", "label": "", "description": "", "value": 1},
+                    "add_noise": {"name": "add_noise", "label": "", "description": "", "value": true},
+                    "transformer": {"name": "transformer", "label": "", "description": ""},
+                    "control_lora": {"name": "control_lora", "label": "", "description": ""},
+                    "positive_text_conditioning": {
+                        "name"       : "positive_text_conditioning",
+                        "label"      : "",
+                        "description": ""
+                    },
+                    "negative_text_conditioning": {
+                        "name"       : "negative_text_conditioning",
+                        "label"      : "",
+                        "description": ""
+                    },
+                    "redux_conditioning": {"name": "redux_conditioning", "label": "", "description": ""},
+                    "fill_conditioning": {"name": "fill_conditioning", "label": "", "description": ""},
+                    "cfg_scale": {"name": "cfg_scale", "label": "", "description": "", "value": 1},
+                    "cfg_scale_start_step": {
+                        "name": "cfg_scale_start_step",
+                        "label": "",
+                        "description": "",
+                        "value": 0
+                    },
+                    "cfg_scale_end_step": {"name": "cfg_scale_end_step", "label": "", "description": "", "value": -1},
+                    "width": {"name": "width", "label": "", "description": "", "value": 1024},
+                    "height": {"name": "height", "label": "", "description": "", "value": 1024},
+                    "num_steps": {"name": "num_steps", "label": "", "description": "", "value": 30},
+                    "guidance": {"name": "guidance", "label": "", "description": "", "value": 4},
+                    "seed": {"name": "seed", "label": "", "description": "", "value": 0},
+                    "control": {"name": "control", "label": "", "description": ""},
+                    "controlnet_vae": {"name": "controlnet_vae", "label": "", "description": ""},
+                    "ip_adapter": {"name": "ip_adapter", "label": "", "description": ""},
+                    "kontext_conditioning": {"name": "kontext_conditioning", "label": "", "description": ""}
+                }
+            },
+            "position": {"x": 825.8834556930959, "y": 85.12161027257513}
+        }
+    ],
+    "edges": [
+        {
+            "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90vae-2981a67c-480f-4237-9384-26b68dbf912bvae",
+            "type": "default",
+            "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "target": "2981a67c-480f-4237-9384-26b68dbf912b",
+            "sourceHandle": "vae",
+            "targetHandle": "vae"
+        },
+        {
+            "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90vae-7e5172eb-48c1-44db-a770-8fd83e1435d1vae",
+            "type": "default",
+            "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "target": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+            "sourceHandle": "vae",
+            "targetHandle": "vae"
+        },
+        {
+            "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90max_seq_len-01f674f8-b3d1-4df1-acac-6cb8e0bfb63ct5_max_seq_len",
+            "type": "default",
+            "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "target": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+            "sourceHandle": "max_seq_len",
+            "targetHandle": "t5_max_seq_len"
+        },
+        {
+            "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90t5_encoder-01f674f8-b3d1-4df1-acac-6cb8e0bfb63ct5_encoder",
+            "type": "default",
+            "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "target": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+            "sourceHandle": "t5_encoder",
+            "targetHandle": "t5_encoder"
+        },
+        {
+            "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90clip-01f674f8-b3d1-4df1-acac-6cb8e0bfb63cclip",
+            "type": "default",
+            "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "target": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+            "sourceHandle": "clip",
+            "targetHandle": "clip"
+        },
+        {
+            "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90clip-e87ba3b6-c98f-4644-903a-e13c421f2addclip",
+            "type": "default",
+            "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "target": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+            "sourceHandle": "clip",
+            "targetHandle": "clip"
+        },
+        {
+            "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90t5_encoder-e87ba3b6-c98f-4644-903a-e13c421f2addt5_encoder",
+            "type": "default",
+            "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "target": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+            "sourceHandle": "t5_encoder",
+            "targetHandle": "t5_encoder"
+        },
+        {
+            "id": "reactflow__edge-7b056f05-a4fe-40d3-b913-1a4b3897230fimage-f14341d4-34a5-42a5-8221-acf98d82add7image",
+            "type": "default",
+            "source": "7b056f05-a4fe-40d3-b913-1a4b3897230f",
+            "target": "f14341d4-34a5-42a5-8221-acf98d82add7",
+            "sourceHandle": "image",
+            "targetHandle": "image"
+        },
+        {
+            "id": "reactflow__edge-f14341d4-34a5-42a5-8221-acf98d82add7metadata-9c773392-5647-4f2b-958e-9da1707b6e6ametadata",
+            "type": "default",
+            "source": "f14341d4-34a5-42a5-8221-acf98d82add7",
+            "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "sourceHandle": "metadata",
+            "targetHandle": "metadata"
+        },
+        {
+            "id": "reactflow__edge-9c773392-5647-4f2b-958e-9da1707b6e6ametadata-7e5172eb-48c1-44db-a770-8fd83e1435d1metadata",
+            "type": "default",
+            "source": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "target": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+            "sourceHandle": "metadata",
+            "targetHandle": "metadata"
+        },
+        {
+            "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90transformer-9c773392-5647-4f2b-958e-9da1707b6e6atransformer",
+            "type": "default",
+            "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "sourceHandle": "transformer",
+            "targetHandle": "transformer"
+        },
+        {
+            "id": "reactflow__edge-01f674f8-b3d1-4df1-acac-6cb8e0bfb63cconditioning-9c773392-5647-4f2b-958e-9da1707b6e6apositive_text_conditioning",
+            "type": "default",
+            "source": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+            "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "sourceHandle": "conditioning",
+            "targetHandle": "positive_text_conditioning"
+        },
+        {
+            "id": "reactflow__edge-e87ba3b6-c98f-4644-903a-e13c421f2addconditioning-9c773392-5647-4f2b-958e-9da1707b6e6anegative_text_conditioning",
+            "type": "default",
+            "source": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+            "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "sourceHandle": "conditioning",
+            "targetHandle": "negative_text_conditioning"
+        },
+        {
+            "id": "reactflow__edge-2981a67c-480f-4237-9384-26b68dbf912blatents-9c773392-5647-4f2b-958e-9da1707b6e6alatents",
+            "type": "default",
+            "source": "2981a67c-480f-4237-9384-26b68dbf912b",
+            "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "sourceHandle": "latents",
+            "targetHandle": "latents"
+        },
+        {
+            "id": "reactflow__edge-2981a67c-480f-4237-9384-26b68dbf912bwidth-9c773392-5647-4f2b-958e-9da1707b6e6awidth",
+            "type": "default",
+            "source": "2981a67c-480f-4237-9384-26b68dbf912b",
+            "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "sourceHandle": "width",
+            "targetHandle": "width"
+        },
+        {
+            "id": "reactflow__edge-2981a67c-480f-4237-9384-26b68dbf912bheight-9c773392-5647-4f2b-958e-9da1707b6e6aheight",
+            "type": "default",
+            "source": "2981a67c-480f-4237-9384-26b68dbf912b",
+            "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "sourceHandle": "height",
+            "targetHandle": "height"
+        },
+        {
+            "id": "reactflow__edge-4754c534-a5f3-4ad0-9382-7887985e668cvalue-9c773392-5647-4f2b-958e-9da1707b6e6aseed",
+            "type": "default",
+            "source": "4754c534-a5f3-4ad0-9382-7887985e668c",
+            "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "sourceHandle": "value",
+            "targetHandle": "seed"
+        },
+        {
+            "id": "reactflow__edge-9c773392-5647-4f2b-958e-9da1707b6e6alatents-7e5172eb-48c1-44db-a770-8fd83e1435d1latents",
+            "type": "default",
+            "source": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "target": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+            "sourceHandle": "latents",
+            "targetHandle": "latents"
+        },
+        {
+            "id": "reactflow__edge-7b056f05-a4fe-40d3-b913-1a4b3897230fimage-2981a67c-480f-4237-9384-26b68dbf912bimage",
+            "type": "default",
+            "source": "7b056f05-a4fe-40d3-b913-1a4b3897230f",
+            "target": "2981a67c-480f-4237-9384-26b68dbf912b",
+            "sourceHandle": "image",
+            "targetHandle": "image"
+        }
+    ]
+}

@@ -1,0 +1,1 @@
+deprecated guides, considered them as obsolete, will be removed in future versions
