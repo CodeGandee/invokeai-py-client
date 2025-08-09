@@ -12,6 +12,7 @@ Successfully implemented a comprehensive SDXL text-to-image job submission and m
 4. **Job Submission** - Submits jobs to InvokeAI session queue
 5. **Real-time Monitoring** - Tracks job progress with optimized performance
 6. **Result Extraction** - Retrieves generated image details and URLs
+7. **Image Download** - Automatically downloads generated images to local storage
 
 ### Technical Highlights
 
@@ -51,9 +52,10 @@ Leverages the hybrid approach developed in previous tasks:
 
 🏆 Results:
    ✅ Success: True
-   📝 Session ID: 9c88fc45-f419-4c61-bbd2-6dc7340b22ce
-   🎨 Generated Image: f635aeb4-6986-4da5-b8b8-72bbbdf95cbb.png (768x1024)
-   🔗 Image URL: http://localhost:9090/api/v1/images/i/f635aeb4-6986-4da5-b8b8-72bbbdf95cbb.png
+   📝 Session ID: a924fab6-398f-47b6-8016-0493969abd03
+   🎨 Generated Image: 04d19036-a020-46f4-940d-7b2b9e4cc1ca.png (768x1024)
+   🔗 Image URL: http://localhost:9090/api/v1/images/i/04d19036-a020-46f4-940d-7b2b9e4cc1ca.png
+   📁 Downloaded: tmp\downloads\04d19036-a020-46f4-940d-7b2b9e4cc1ca.png (1.31 MB)
 ```
 
 ## API Integration Points
@@ -80,6 +82,7 @@ API Submission → Queue Monitoring → Result Extraction → Image URL
 - **Job Submission**: Queue API integration
 - **Progress Monitoring**: Hybrid monitoring with performance optimization
 - **Result Extraction**: Session details and image information
+- **Image Download**: Automatic download of generated images with file validation
 
 ### Key Methods
 - `load_workflow_template()` - Load and validate workflow JSON
@@ -88,6 +91,7 @@ API Submission → Queue Monitoring → Result Extraction → Image URL
 - `submit_workflow_job()` - Submit to session queue
 - `monitor_job_progress()` - Real-time status monitoring
 - `get_session_results()` - Extract final results and image details
+- `download_generated_images()` - Download images to local storage
 
 ## Integration with Previous Work
 
@@ -140,8 +144,9 @@ session_details = submitter.get_session_results(session_id)
 2. **Parameter Customization** - Fully customizable prompts, dimensions, generation settings
 3. **Queue Monitoring** - Real-time progress tracking with status updates
 4. **Result Extraction** - Complete image details and download URLs
-5. **Performance Optimization** - Leverages 1600x faster database monitoring
-6. **Error Handling** - Comprehensive error detection and graceful fallbacks
+5. **Image Download** - Automatic download of generated images to `./tmp/downloads/`
+6. **Performance Optimization** - Leverages 1600x faster database monitoring
+7. **Error Handling** - Comprehensive error detection and graceful fallbacks
 
 ### Integration Success
 - **Task 1**: Board management knowledge applied

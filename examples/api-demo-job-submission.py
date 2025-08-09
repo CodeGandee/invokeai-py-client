@@ -31,6 +31,7 @@ import sqlite3
 import os
 from datetime import datetime
 from typing import Dict, Any, Optional, List, Tuple
+from pathlib import Path
 
 
 class InvokeAIJobSubmitter:
@@ -472,6 +473,73 @@ class InvokeAIJobSubmitter:
             print(f"❌ Failed to get session results: {e}")
             return {}
     
+    def download_generated_images(self, session_results: Dict[str, Any], download_dir: str = "./tmp/downloads/") -> List[str]:
+        """Download generated images from completed session."""
+        print(f"📥 Downloading generated images...")
+        
+        # Ensure download directory exists
+        download_path = Path(download_dir)
+        download_path.mkdir(parents=True, exist_ok=True)
+        
+        downloaded_files = []
+        
+        try:
+            # Look for session results
+            results = session_results.get('results', {})
+            if not results:
+                print(f"   ⚠️ No results found in session data")
+                return downloaded_files
+            
+            # Find image outputs
+            image_count = 0
+            for result_id, result_data in results.items():
+                if result_data.get('type') == 'image_output':
+                    image_count += 1
+                    image_info = result_data.get('image', {})
+                    image_name = image_info.get('image_name')
+                    
+                    if not image_name:
+                        print(f"   ⚠️ No image name found in result {result_id}")
+                        continue
+                    
+                    # Download the image
+                    try:
+                        image_url = f"{self.base_url}/api/v1/images/i/{image_name}/full"
+                        
+                        print(f"   📸 Downloading image #{image_count}: {image_name}")
+                        print(f"      URL: {image_url}")
+                        
+                        response = self.session.get(image_url)
+                        response.raise_for_status()
+                        
+                        # Save the image
+                        local_filename = download_path / image_name
+                        with open(local_filename, 'wb') as f:
+                            f.write(response.content)
+                        
+                        # Get file size for confirmation
+                        file_size = os.path.getsize(local_filename)
+                        file_size_mb = file_size / (1024 * 1024)
+                        
+                        print(f"      ✅ Saved: {local_filename}")
+                        print(f"      📊 Size: {file_size_mb:.2f} MB ({file_size:,} bytes)")
+                        
+                        downloaded_files.append(str(local_filename))
+                        
+                    except Exception as e:
+                        print(f"      ❌ Failed to download {image_name}: {e}")
+            
+            if downloaded_files:
+                print(f"   🎉 Successfully downloaded {len(downloaded_files)} image(s)")
+            else:
+                print(f"   ⚠️ No images were downloaded")
+                
+            return downloaded_files
+            
+        except Exception as e:
+            print(f"❌ Image download failed: {e}")
+            return downloaded_files
+    
     def run_complete_job_workflow(self, workflow_path: str, 
                                 positive_prompt: str = "a beautiful landscape with mountains and lakes, sunset, highly detailed",
                                 negative_prompt: str = "blurry, low quality, distorted",
@@ -521,6 +589,10 @@ class InvokeAIJobSubmitter:
             print(f"\n📊 Step 5: Extracting detailed results")
             session_results = self.get_session_results(session_id)
             
+            # Step 6: Download generated images
+            print(f"\n📥 Step 6: Downloading generated images")
+            downloaded_files = self.download_generated_images(session_results)
+            
             # Performance summary
             total_time = time.time() - overall_start
             self.timings['total_workflow'] = total_time
@@ -536,6 +608,7 @@ class InvokeAIJobSubmitter:
                 'session_id': session_id,
                 'job_status': job_result.get('status'),
                 'session_results': session_results,
+                'downloaded_files': downloaded_files,
                 'performance': self.timings,
                 'parameters': {
                     'positive_prompt': positive_prompt,
@@ -555,6 +628,7 @@ class InvokeAIJobSubmitter:
             return {
                 'success': False,
                 'error': str(e),
+                'downloaded_files': [],
                 'timings': self.timings
             }
 
@@ -610,10 +684,19 @@ def main():
         
         if image_count == 0:
             print(f"   ⚠️ No images found in results")
+        
+        # Show downloaded files
+        downloaded_files = results.get('downloaded_files', [])
+        if downloaded_files:
+            print(f"   📁 Downloaded Files:")
+            for i, file_path in enumerate(downloaded_files, 1):
+                print(f"      #{i}: {file_path}")
+        else:
+            print(f"   ⚠️ No files were downloaded")
     else:
         print(f"   Error: {results.get('error', 'Unknown error')}")
     
-    print(f"\n✨ Task 3 Complete - SDXL Job Submission & Monitoring Demo")
+    print(f"\n✨ Task 3 Complete - SDXL Job Submission, Monitoring & Download Demo")
 
 
 if __name__ == "__main__":
