@@ -28,3 +28,9 @@
 - there is an example query of using that workflow, see `data\api-calls\call-wf-sdxl-text-to-image.json`, this is want is sent to the API to submit the job.
 - after submitting the job, you need to monitor the job status, and when the job is completed, print out the job details, including the generated image name.
 - when the job is completed, download the image and save it to `./tmp/downloads/`
+
+## Task 4: Job exception handling
+
+- find out how to cancel a running job and try it
+- find out what kinds of exceptions can happen when a job is submitted, and how to handle them
+- implement this: when a job is failed to submit, or submitted but failed during run, print out the error message and the job details, and then cancel or ignore the job.
