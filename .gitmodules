@@ -2,3 +2,8 @@
 	path = .magic-context
 	url = git@github.com:igamenovoer/magic-context.git
 	branch = main
+[submodule "context/refcode/InvokeAI"]
+	path = context/refcode/InvokeAI
+	url = https://github.com/invoke-ai/InvokeAI.git
+	branch = main
+	shallow = true
