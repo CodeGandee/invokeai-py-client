@@ -12,16 +12,22 @@
 - DO NOT modify this file
 - If API exploration is successful, create a demo in `<workspace>\examples\api-demo-<what-api>.py`.
 
-## Task 1: The basic info APIs
+## Task 1: The basic info APIs ✅
 
 - find out how to get the board names
 
-## Task 2: Get the latest image from a given board
+**Related Files:**
+- Demo: [`examples/api-demo-boards.py`](../../examples/api-demo-boards.py)
+
+## Task 2: Get the latest image from a given board ✅
 
 - find the latest image from board `probe`, the latest means the most recent image that was generated and saved in the board.
 - download the image and save it to `./tmp/downloads/`
 
-## Task 3: Submit a job to the queue, to do text-to-image generation with sdxl
+**Related Files:**
+- Demo: [`examples/api-demo-latest-image.py`](../../examples/api-demo-latest-image.py)
+
+## Task 3: Submit a job to the queue, to do text-to-image generation with sdxl ✅
 
 - first, find out what API can be used to submit a job to the queue
 - submit a job to the queue, doing text-to-image generation with sdxl. in order to submit such a job, you need a workflow that has a text-to-image functionality, the workflow is in `data\workflows\sdxl-text-to-image.json`
@@ -29,8 +35,21 @@
 - after submitting the job, you need to monitor the job status, and when the job is completed, print out the job details, including the generated image name.
 - when the job is completed, download the image and save it to `./tmp/downloads/`
 
-## Task 4: Job exception handling
+**Related Files:**
+- Demo: [`examples/api-demo-job-submission.py`](../../examples/api-demo-job-submission.py)
+- Documentation: [`docs/task-3-implementation-summary.md`](../../docs/task-3-implementation-summary.md)
+
+## Task 4: Job exception handling ✅
 
 - find out how to cancel a running job and try it
 - find out what kinds of exceptions can happen when a job is submitted, and how to handle them
 - implement this: when a job is failed to submit, or submitted but failed during run, print out the error message and the job details, and then cancel or ignore the job.
+
+**Related Files:**
+- Demo: [`examples/api-demo-job-exception-handling.py`](../../examples/api-demo-job-exception-handling.py)
+- Documentation: [`docs/task-4-implementation-summary.md`](../../docs/task-4-implementation-summary.md)
+
+## Project Summary
+
+**Related Files:**
+- Complete Project Overview: [`docs/complete-project-summary.md`](../../docs/complete-project-summary.md)
