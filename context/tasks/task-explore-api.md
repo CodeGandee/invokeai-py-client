@@ -21,3 +21,9 @@
 - find the latest image from board `probe`, the latest means the most recent image that was generated and saved in the board.
 - download the image and save it to `./tmp/downloads/`
 
+## Task 3: Submit a job to the queue, to do text-to-image generation with sdxl
+
+- first, find out what API can be used to submit a job to the queue
+- submit a job to the queue, doing text-to-image generation with sdxl. in order to submit such a job, you need a workflow that has a text-to-image functionality, the workflow is in `data\workflows\sdxl-text-to-image.json`
+- there is an example query of using that workflow, see `data\api-calls\call-wf-sdxl-text-to-image.json`, this is want is sent to the API to submit the job.
+- after submitting the job, you need to monitor the job status, and when the job is completed, print out the job details, including the generated image name.
