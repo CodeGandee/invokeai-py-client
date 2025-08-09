@@ -12,4 +12,46 @@
     </content>
     <tags>#其他</tags>
   </item>
+  <item id="mem_1754772295825_1o1ha1q8n" time="2025/08/10 04:44">
+    <content>
+      InvokeAI Boards API solution: To get board names, use GET /api/v1/boards/?all=true which returns a JSON array of board objects. Each board has a &#x27;board_name&#x27; field that contains the name. The API supports pagination with offset/limit, but using all=true gets everything at once. Other useful fields include board_id, image_count, created_at, and cover_image_name. The API is running on localhost:9090 in this project.
+    </content>
+    <tags>#其他</tags>
+  </item>
+  <item id="mem_1754772483945_pkk212495" time="2025/08/10 04:48">
+    <content>
+      InvokeAI API exploration project rules: 1) DO NOT create scripts in workspace root, 2) DO NOT modify task files, 3) If API exploration is successful, create demos in context/examples/api-demo-&lt;what-api&gt;.py. Successfully completed Task 1 (get board names) using GET /api/v1/boards/?all=true and created proper demo at context/examples/api-demo-boards.py showing how to extract board_name fields from the JSON response.
+    </content>
+    <tags>#其他</tags>
+  </item>
+  <item id="mem_1754772655572_gyrzcg18r" time="2025/08/10 04:50">
+    <content>
+      Enhanced InvokeAI boards API with uncategorized images: Use GET /api/v1/boards/none/image_names to get uncategorized images (images not assigned to any board). The &#x27;none&#x27; keyword is a special board_id for uncategorized content. Updated api-demo-boards.py to include comprehensive overview showing total image counts across boards (73 images) and uncategorized (470 images) for total of 543 images. This provides complete visibility into all images in the InvokeAI system.
+    </content>
+    <tags>#其他</tags>
+  </item>
+  <item id="mem_1754772751952_ci3sg5btx" time="2025/08/10 04:52">
+    <content>
+      Moved InvokeAI boards API demo to correct location: examples/api-demo-boards.py (moved from context/examples/). The demo works perfectly from the new location and includes full boards functionality with uncategorized images support. File organization follows project structure with API demos in the root examples/ directory rather than context/examples/.
+    </content>
+    <tags>#其他</tags>
+  </item>
+  <item id="mem_1754773163373_efwsmgu59" time="2025/08/10 04:59">
+    <content>
+      Task 2 completed: InvokeAI latest image download from board. Key API endpoints: GET /api/v1/images/names?board_id={id}&amp;order_dir=DESC gets ordered image names (most recent first), GET /api/v1/images/i/{name}/metadata gets generation details, GET /api/v1/images/i/{name}/full downloads full resolution image. Successfully downloaded latest image from &#x27;probe&#x27; board (ad7ae269-135e-4432-ac9a-db349cae64d2.png, 1.83MB, SDXL txt2img) to ./tmp/downloads/. API response format: {image_names: [string], total_count: int, starred_count: int}.
+    </content>
+    <tags>#其他</tags>
+  </item>
+  <item id="mem_1754773327802_rdmwxhwmh" time="2025/08/10 05:02">
+    <content>
+      Corrected Task 2: InvokeAI latest image detection requires actual timestamp sorting, not board ordering. Critical fix: Use POST /api/v1/images/images_by_names with all board image names to get ImageDTOs containing created_at timestamps, then sort by created_at desc. Board image ordering via GET /api/v1/images/names is NOT chronological. True latest: d5ecea7e-a8ad-4a41-814c-0100c191adaa.png (2025-08-09 20:56:35.827) vs previous ad7ae269... which was NOT the latest by timestamp.
+    </content>
+    <tags>#其他</tags>
+  </item>
+  <item id="mem_1754773620373_05op8nsxc" time="2025/08/10 05:07">
+    <content>
+      InvokeAI starred images from board: Use GET /api/v1/boards/{board_id}/image_names to get all images, then POST /api/v1/images/images_by_names to get ImageDTOs, filter by starred=true field. Found 2 starred images in probe board: ad7ae269-135e-4432-ac9a-db349cae64d2.png (2025-08-09 19:40:52.348) and 0ab4c196-f00f-449b-8936-82a76c10167c.png (2025-08-09 15:45:57.219). Created api-demo-starred-images.py with download functionality and get-starred-from-probe.py for simple listing.
+    </content>
+    <tags>#其他</tags>
+  </item>
 </memory>
