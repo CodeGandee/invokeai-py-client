@@ -49,7 +49,6 @@
 - Demo: [`examples/api-demo-job-exception-handling.py`](../../examples/api-demo-job-exception-handling.py)
 - Documentation: [`docs/task-4-implementation-summary.md`](../../docs/task-4-implementation-summary.md)
 
-## Project Summary
+## Task 5: Upload image as asset to a board
 
-**Related Files:**
-- Complete Project Overview: [`docs/complete-project-summary.md`](../../docs/complete-project-summary.md)
+- find out how to upload an image as an asset to a board, there is a board named `samples`, upload the image `data\images\ad7ae269-135e-4432-ac9a-db349cae64d2.png` to it.

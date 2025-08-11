@@ -54,4 +54,22 @@
     </content>
     <tags>#其他</tags>
   </item>
+  <item id="mem_1754913107721_3bf7tuh3t" time="2025/08/11 19:51">
+    <content>
+      Task 5 completed: InvokeAI image upload to board. Key API: POST /api/v1/images/upload with multipart/form-data. Required params: image_category=&#x27;user&#x27;, is_intermediate=false, board_id={target_board_id}. Form data includes &#x27;file&#x27; field with binary image data. Successfully uploaded data/images/ad7ae269-135e-4432-ac9a-db349cae64d2.png (1.83MB, 960x1280) to &#x27;samples&#x27; board (d32f49b7-370e-4bab-8cfd-cf81fcf4c3a8). Returns ImageDTO with new image_name. Created api-demo-upload-image.py with board creation, upload, and verification functionality.
+    </content>
+    <tags>#其他</tags>
+  </item>
+  <item id="mem_1754916383145_t0f3eq6p9" time="2025/08/11 20:46">
+    <content>
+      Created comprehensive InvokeAI workflow schema guide at context/hints/howto-use-invokeai-workflow-schema.md. Document covers complete workflow JSON structure (v3.0.0), node/edge schemas, field types (StringField, ImageField, etc.), core invocation categories (SDXL, FLUX, image processing, ControlNet), custom node development patterns, InvocationContext services, and common workflow patterns. Based on deep analysis of InvokeAI source code, TypeScript schemas, Python invocation classes, and official documentation. Guide includes practical examples for custom nodes, field validation, and troubleshooting.
+    </content>
+    <tags>#其他</tags>
+  </item>
+  <item id="mem_1754916512287_hx1hel8vq" time="2025/08/11 20:48">
+    <content>
+      Enhanced InvokeAI workflow schema guide with comprehensive &quot;Discovering Node Schemas&quot; section. Added 6 methods for finding node JSON schemas: 1) OpenAPI endpoint (http://localhost:9090/openapi.json), 2) Schema analysis workflow with component navigation, 3) Runtime schema discovery via Python API calls, 4) Source code analysis in invokeai/app/invocations/, 5) Workflow inspection of existing JSON files, 6) Frontend node template generation patterns. Included practical examples for SDXL model loader, jq commands for schema queries, and best practices for schema discovery and validation.
+    </content>
+    <tags>#其他</tags>
+  </item>
 </memory>
