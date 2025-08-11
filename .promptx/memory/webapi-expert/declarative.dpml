@@ -72,4 +72,61 @@
     </content>
     <tags>#其他</tags>
   </item>
+  <item id="mem_1754923706414_a8slzad1r" time="2025/08/11 22:48">
+    <content>
+      InvokeAI workflow schema discovery methods for Python client development:
+    
+      1. **OpenAPI Schema Endpoint**: curl http://localhost:9090/openapi.json provides complete node definitions, field constraints, validation rules, and default values
+    
+      2. **Key jq Commands for Schema Analysis**:
+      - Find node schema: `jq --arg type &quot;NODE_TYPE&quot; &#x27;.components.schemas | to_entries | map(select(.value.properties.type.default == $type)) | .[0].value&#x27; openapi.json`
+      - List input fields: `jq --arg type &quot;NODE_TYPE&quot; &#x27;.components.schemas | to_entries | map(select(.value.properties.type.default == $type)) | .[0].value.properties | to_entries[] | select(.value.field_kind == &quot;input&quot;) | .key&#x27; openapi.json`
+      - Extract required fields: `jq &#x27;.components.schemas | to_entries | map(select(.value.properties.type.default == &quot;NODE_TYPE&quot;)) | .[0].value.properties | to_entries[] | select(.value.orig_required == true) | .key&#x27; openapi.json`
+    
+      3. **Common Field Types for Client Models**:
+      - ImageField: `{&quot;image_name&quot;: &quot;uuid.png&quot;}`
+      - LatentsField: `{&quot;latents_name&quot;: &quot;uuid&quot;}`
+      - ModelField: `{&quot;key&quot;: &quot;model-id&quot;, &quot;hash&quot;: &quot;...&quot;, &quot;name&quot;: &quot;model-name&quot;, &quot;base&quot;: &quot;sdxl&quot;, &quot;type&quot;: &quot;main&quot;}`
+      - Basic types: StringField, IntegerField, FloatField, BooleanField with validation constraints (ge, le, gt, lt)
+    
+      4. **Workflow Structure (v3.0.0)**: Essential components are nodes[] array with {id, type, data: {type, inputs, version, nodePack}}, edges[] array connecting nodes via sourceHandle/targetHandle, and meta.version for schema compatibility
+    
+      5. **Source Discovery**: Use `grep -r &quot;@invocation.*\&quot;NODE_TYPE\&quot;&quot; invokeai/app/invocations/` to find Python implementation files for understanding node behavior
+    
+      Reference: context/hints/invokeai-kb/howto-find-invokeai-workflow-schema.md
+    </content>
+    <tags>#其他</tags>
+  </item>
+  <item id="mem_1754925791966_k476kfg9q" time="2025/08/11 23:23">
+    <content>
+      Created comprehensive InvokeAI workflow input types documentation with 60+ field types identified from source code analysis:
+    
+      **Core Documentation**: `about-invokeai-workflow-input-types.md` covers:
+      - 9 primitive types (int, float, bool, str, ColorField, BoundingBoxField, etc.)
+      - 8 resource reference types (ImageField, LatentsField, TensorField, etc.)
+      - 8 conditioning types for different model architectures (FLUX, SD3, CogView4)
+      - 12+ model reference types (ModelIdentifierField, UNetField, CLIPField, etc.)
+      - Collection types (list[T] for all supported types)
+      - Enum/Literal types and UI configuration fields
+      - Advanced features: connection types, validation constraints, mixins
+    
+      **Implementation Guide**: `howto-implement-invokeai-workflow-fields.md` provides:
+      - Pydantic model patterns for client-side field validation
+      - Node input builders with fluent API
+      - Type-safe field validators and OpenAPI schema integration
+      - Complete workflow construction examples (txt2img, img2img+ControlNet)
+      - Connection graph utilities and dependency resolution
+      - Error handling patterns and comprehensive test examples
+    
+      **Key Source Files Analyzed**:
+      - `fields.py` - Field type definitions
+      - `baseinvocation.py` - Base classes and decorators
+      - `primitives.py` - Basic input/output types
+      - `model.py` - Model reference types
+      - 50+ invocation files - Usage patterns and validation rules
+    
+      Reference location: context/hints/invokeai-kb/
+    </content>
+    <tags>#其他</tags>
+  </item>
 </memory>
