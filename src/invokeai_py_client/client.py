@@ -256,7 +256,7 @@ class InvokeAIClient:
         
         return boards
     
-    def get_board(self, board_id: str) -> Board:
+    def get_board_by_id(self, board_id: str) -> Optional[Board]:
         """
         Get a specific board by ID.
         
@@ -273,21 +273,18 @@ class InvokeAIClient:
         
         Returns
         -------
-        Board
-            The board object with full metadata.
-        
-        Raises
-        ------
-        ValueError
-            If the board does not exist.
+        Optional[Board]
+            The board object with full metadata, or None if not found.
         
         Examples
         --------
         >>> # Get regular board
-        >>> board = client.get_board("abc-123")
+        >>> board = client.get_board_by_id("abc-123")
+        >>> if board:
+        ...     print(f"Found board: {board.board_name}")
         
         >>> # Get uncategorized board - must use string "none"
-        >>> uncategorized = client.get_board("none")
+        >>> uncategorized = client.get_board_by_id("none")
         """
         # Handle uncategorized board specially
         if board_id == "none" or board_id is None:
@@ -298,9 +295,56 @@ class InvokeAIClient:
             response = self._make_request('GET', f'/boards/{board_id}')
             return Board.from_api_response(response.json())
         except requests.HTTPError as e:
-            if e.response.status_code == 404:
-                raise ValueError(f"Board with ID '{board_id}' does not exist")
+            if e.response is not None and e.response.status_code == 404:
+                return None
             raise
+    
+    def get_boards_by_name(self, name: str) -> List[Board]:
+        """
+        Get all boards with a specific name.
+        
+        Since board names are not unique in InvokeAI, this method returns
+        a list of all boards matching the given name.
+        
+        Parameters
+        ----------
+        name : str
+            The name to search for. Use "Uncategorized" (case-sensitive)
+            to include the uncategorized board in results.
+        
+        Returns
+        -------
+        List[Board]
+            List of boards with the matching name. Returns empty list if
+            no boards are found.
+        
+        Examples
+        --------
+        >>> # Get all boards named "Landscapes"
+        >>> boards = client.get_boards_by_name("Landscapes")
+        >>> print(f"Found {len(boards)} board(s) named 'Landscapes'")
+        
+        >>> # Get uncategorized board by name
+        >>> uncategorized_list = client.get_boards_by_name("Uncategorized")
+        >>> if uncategorized_list:
+        ...     print(f"Found uncategorized board with {uncategorized_list[0].image_count} images")
+        """
+        matching_boards: List[Board] = []
+        
+        # Check if searching for uncategorized board
+        if name == "Uncategorized":
+            # Get uncategorized board
+            uncategorized = self.get_board_by_id("none")
+            if uncategorized:
+                matching_boards.append(uncategorized)
+        
+        # Get all regular boards and filter by name
+        all_boards = self.list_boards(include_uncategorized=False)
+        for board in all_boards:
+            if board.board_name == name:
+                matching_boards.append(board)
+        
+        return matching_boards
     
     def create_board(self, name: str, is_private: bool = False) -> Board:
         """

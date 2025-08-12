@@ -31,4 +31,8 @@ implement the following methods in `InvokeAIClient`:
 
 the board api should handle the uncategorized board, see the demo about how to handle the uncategorized board, it is treated as a special board, without a name.
 
+# Task 3.2: get board by name
 
+split the `get_board` method into two methods:
+- `get_boards_by_name`: takes a board name and returns the all the boards with this name, if not found, returns empty list. Note that, board names are not unique, so this method returns a list of boards. Handle the uncategorized board as well, its name is "Uncategorized" (case sensitive).
+- `get_board_by_id`: takes a board id and returns the board, if not found, returns `None` (python value). The board id is a string used in the InvokeAI API url.
