@@ -200,14 +200,18 @@ class InvokeAIClient:
         from invokeai_py_client.workflow import Workflow
         return Workflow(client=self, definition=definition)
     
-    def list_boards(self, all: bool = True) -> List[Board]:
+    def list_boards(self, all: bool = True, include_uncategorized: bool = False) -> List[Board]:
         """
         List all available boards in the InvokeAI instance.
+        
+        Note: The uncategorized board is not included by default as it's system-managed.
         
         Parameters
         ----------
         all : bool, optional
             Whether to fetch all boards or use pagination, by default True.
+        include_uncategorized : bool, optional
+            Whether to include the uncategorized board in the list, by default False.
         
         Returns
         -------
@@ -219,6 +223,12 @@ class InvokeAIClient:
         >>> boards = client.list_boards()
         >>> for board in boards:
         ...     print(f"{board.board_name}: {board.image_count} images")
+        
+        >>> # Include uncategorized board
+        >>> boards = client.list_boards(include_uncategorized=True)
+        >>> for board in boards:
+        ...     if board.is_uncategorized():
+        ...         print(f"Uncategorized: {board.image_count} images")
         """
         params = {'all': all}
         response = self._make_request('GET', '/boards/', params=params)
@@ -236,7 +246,15 @@ class InvokeAIClient:
             boards_data = []
         
         # Convert to Board objects
-        return [Board.from_api_response(board_data) for board_data in boards_data]
+        boards = [Board.from_api_response(board_data) for board_data in boards_data]
+        
+        # Add uncategorized board if requested
+        if include_uncategorized:
+            uncategorized_count = self.get_uncategorized_images_count()
+            uncategorized_board = Board.uncategorized(image_count=uncategorized_count)
+            boards.insert(0, uncategorized_board)  # Add at beginning
+        
+        return boards
     
     def get_board(self, board_id: str) -> Board:
         """
@@ -245,7 +263,7 @@ class InvokeAIClient:
         Parameters
         ----------
         board_id : str
-            The unique identifier of the board.
+            The unique identifier of the board. Use "none" for uncategorized.
         
         Returns
         -------
@@ -256,7 +274,20 @@ class InvokeAIClient:
         ------
         ValueError
             If the board does not exist.
+        
+        Examples
+        --------
+        >>> # Get regular board
+        >>> board = client.get_board("abc-123")
+        
+        >>> # Get uncategorized board
+        >>> uncategorized = client.get_board("none")
         """
+        # Handle uncategorized board specially
+        if board_id == "none" or board_id is None:
+            count = self.get_uncategorized_images_count()
+            return Board.uncategorized(image_count=count)
+        
         try:
             response = self._make_request('GET', f'/boards/{board_id}')
             return Board.from_api_response(response.json())
@@ -269,10 +300,13 @@ class InvokeAIClient:
         """
         Create a new board.
         
+        Note: The "Uncategorized" board is system-managed and cannot be created.
+        
         Parameters
         ----------
         name : str
             The name for the new board (max 300 characters).
+            Cannot be "Uncategorized" or "uncategorized".
         is_private : bool, optional
             Whether the board should be private, by default False.
         
@@ -284,13 +318,17 @@ class InvokeAIClient:
         Raises
         ------
         ValueError
-            If the board name is invalid or too long.
+            If the board name is invalid, reserved, or too long.
         
         Examples
         --------
         >>> board = client.create_board("My Artwork")
         >>> print(f"Created board: {board.board_name} ({board.board_id})")
         """
+        # Validate board name
+        if name.lower() == "uncategorized":
+            raise ValueError("Cannot create board with reserved name 'Uncategorized'")
+        
         if len(name) > 300:
             raise ValueError(f"Board name too long: {len(name)} characters (max 300)")
         
@@ -301,6 +339,95 @@ class InvokeAIClient:
         
         response = self._make_request('POST', '/boards/', params=params)
         return Board.from_api_response(response.json())
+    
+    def get_uncategorized_images_count(self) -> int:
+        """
+        Get the count of uncategorized images (images not assigned to any board).
+        
+        Returns
+        -------
+        int
+            Number of uncategorized images.
+        
+        Examples
+        --------
+        >>> count = client.get_uncategorized_images_count()
+        >>> print(f"Uncategorized images: {count}")
+        """
+        try:
+            # Get list of uncategorized image names
+            response = self._make_request('GET', '/boards/none/image_names')
+            image_names = response.json()
+            
+            # Return count of images
+            if isinstance(image_names, list):
+                return len(image_names)
+            return 0
+        except requests.HTTPError:
+            # If endpoint fails, return 0
+            return 0
+    
+    def get_uncategorized_images(self) -> List[str]:
+        """
+        Get the list of uncategorized image names.
+        
+        Returns
+        -------
+        List[str]
+            List of image names that are not assigned to any board.
+        
+        Examples
+        --------
+        >>> images = client.get_uncategorized_images()
+        >>> print(f"Found {len(images)} uncategorized images")
+        """
+        try:
+            response = self._make_request('GET', '/boards/none/image_names')
+            image_names = response.json()
+            
+            if isinstance(image_names, list):
+                return image_names
+            return []
+        except requests.HTTPError:
+            return []
+    
+    def delete_board(self, board_id: str, delete_images: bool = False) -> None:
+        """
+        Delete a board.
+        
+        Note: The uncategorized board (board_id="none") cannot be deleted
+        as it is system-managed.
+        
+        Parameters
+        ----------
+        board_id : str
+            The ID of the board to delete.
+        delete_images : bool, optional
+            Whether to also delete all images in the board, by default False.
+            If False, images are moved to uncategorized.
+        
+        Raises
+        ------
+        ValueError
+            If trying to delete the uncategorized board or if board doesn't exist.
+        
+        Examples
+        --------
+        >>> client.delete_board("abc-123")  # Moves images to uncategorized
+        >>> client.delete_board("abc-123", delete_images=True)  # Deletes images too
+        """
+        # Prevent deletion of system boards
+        if board_id == "none" or board_id is None:
+            raise ValueError("Cannot delete the uncategorized board (system-managed)")
+        
+        params = {'delete_board_images': delete_images}
+        
+        try:
+            self._make_request('DELETE', f'/boards/{board_id}', params=params)
+        except requests.HTTPError as e:
+            if e.response.status_code == 404:
+                raise ValueError(f"Board with ID '{board_id}' does not exist")
+            raise
     
     def upload_image(
         self,
