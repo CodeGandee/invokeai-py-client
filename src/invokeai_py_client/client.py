@@ -350,13 +350,12 @@ class InvokeAIClient:
         """
         Create a new board.
         
-        Note: The "Uncategorized" board is system-managed and cannot be created.
-        
         Parameters
         ----------
         name : str
-            The name for the new board (max 300 characters).
-            Cannot be "Uncategorized" or "uncategorized".
+            The name for the new board.
+            Maximum 300 characters (InvokeAI API constraint).
+            Note: Board names are not unique - multiple boards can have the same name.
         is_private : bool, optional
             Whether the board should be private, by default False.
         
@@ -368,17 +367,18 @@ class InvokeAIClient:
         Raises
         ------
         ValueError
-            If the board name is invalid, reserved, or too long.
+            If the board name is too long (>300 characters).
         
         Examples
         --------
         >>> board = client.create_board("My Artwork")
         >>> print(f"Created board: {board.board_name} ({board.board_id})")
-        """
-        # Validate board name
-        if name.lower() == "uncategorized":
-            raise ValueError("Cannot create board with reserved name 'Uncategorized'")
         
+        >>> # Multiple boards can have the same name
+        >>> board1 = client.create_board("Landscapes")
+        >>> board2 = client.create_board("Landscapes")  # This is allowed
+        """
+        # Validate board name length (InvokeAI API constraint from OpenAPI spec)
         if len(name) > 300:
             raise ValueError(f"Board name too long: {len(name)} characters (max 300)")
         
