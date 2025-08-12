@@ -39,5 +39,5 @@ split the `get_board` method into two methods:
 
 # Task 3.3: query for images in a board
 
-- implement `list_images`, `upload_image`, `get_image`, `delete_image`, `download_image` methods for board, using Repository pattern.
+- implement `list_images`, `upload_image`, `get_image`, `delete_image`, `download_image` methods for board, using Repository pattern, see `context\hints\impl\about-api-client-architecture-patterns.md`
 

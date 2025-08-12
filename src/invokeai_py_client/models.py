@@ -181,28 +181,36 @@ class Image(BaseModel):
     """
     Represents an image in the InvokeAI system.
     
+    This matches the ImageDTO structure from the InvokeAI API.
+    
     Examples
     --------
-    >>> image = Image(name="abc-123.png", width=1024, height=768)
-    >>> print(f"Image: {image.name} ({image.width}x{image.height})")
+    >>> image = Image(image_name="abc-123.png", width=1024, height=768)
+    >>> print(f"Image: {image.image_name} ({image.width}x{image.height})")
     """
     
-    name: str = Field(..., description="Server-side image identifier")
-    board_id: Optional[str] = Field(None, description="Associated board ID")
-    category: ImageCategory = Field(ImageCategory.GENERATED, description="Image category type")
+    image_name: str = Field(..., description="Server-side image identifier")
+    board_id: Optional[str] = Field(None, description="Associated board ID (None for uncategorized)")
+    image_category: ImageCategory = Field(ImageCategory.GENERATED, description="Image category type")
     width: Optional[int] = Field(None, gt=0, description="Image width in pixels")
     height: Optional[int] = Field(None, gt=0, description="Image height in pixels")
-    created_at: Optional[datetime] = Field(None, description="Creation timestamp")
-    updated_at: Optional[datetime] = Field(None, description="Last modification timestamp")
+    created_at: Optional[Union[datetime, str]] = Field(None, description="Creation timestamp")
+    updated_at: Optional[Union[datetime, str]] = Field(None, description="Last modification timestamp")
     starred: bool = Field(False, description="Whether the image is starred")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Generation metadata")
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Generation metadata")
     thumbnail_url: Optional[str] = Field(None, description="URL for thumbnail version")
-    full_url: Optional[str] = Field(None, description="URL for full resolution")
+    image_url: Optional[str] = Field(None, description="URL for full resolution image")
+    is_intermediate: bool = Field(False, description="Whether this is an intermediate image")
+    workflow_id: Optional[str] = Field(None, description="Associated workflow ID")
+    node_id: Optional[str] = Field(None, description="Associated node ID")
+    session_id: Optional[str] = Field(None, description="Associated session ID")
     
     @classmethod
     def from_api_response(cls, data: Dict[str, Any]) -> Image:
         """
         Create an Image from API response data.
+        
+        Handles field mapping from API response to model fields.
         
         Parameters
         ----------
@@ -214,6 +222,14 @@ class Image(BaseModel):
         Image
             Parsed image instance.
         """
+        # Map image_category string to enum if needed
+        if 'image_category' in data and isinstance(data['image_category'], str):
+            try:
+                data['image_category'] = ImageCategory(data['image_category'])
+            except ValueError:
+                # If unknown category, default to OTHER
+                data['image_category'] = ImageCategory.OTHER
+        
         return cls(**data)
     
     def to_dict(self) -> Dict[str, Any]:

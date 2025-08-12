@@ -42,24 +42,27 @@ __author__ = "InvokeAI Python Client Contributors"
 # Core client
 from invokeai_py_client.client import InvokeAIClient
 
+# Repositories
+from invokeai_py_client.repositories import BoardRepository
+
 # Workflow management
 from invokeai_py_client.workflow import Workflow
 
-# Field types
-from invokeai_py_client.fields import (
-    Field,
-    IntegerField,
-    FloatField,
-    StringField,
-    BooleanField,
-    ImageField,
-    LatentsField,
-    ModelField,
-    EnumField,
-    ColorField,
-    ConditioningField,
-    CollectionField,
-)
+# Field types - TODO: Implement these modules
+# from invokeai_py_client.fields import (
+#     Field,
+#     IntegerField,
+#     FloatField,
+#     StringField,
+#     BooleanField,
+#     ImageField,
+#     LatentsField,
+#     ModelField,
+#     EnumField,
+#     ColorField,
+#     ConditioningField,
+#     CollectionField,
+# )
 
 # Data models
 from invokeai_py_client.models import (
@@ -74,28 +77,28 @@ from invokeai_py_client.models import (
     BaseModelEnum,
 )
 
-# Exceptions
-from invokeai_py_client.exceptions import (
-    InvokeAIError,
-    ConnectionError,
-    AuthenticationError,
-    APIError,
-    ValidationError,
-    WorkflowError,
-    JobError,
-    ResourceNotFoundError,
-    TimeoutError,
-    FileError,
-    ConfigurationError,
-)
+# Exceptions - TODO: Implement these modules
+# from invokeai_py_client.exceptions import (
+#     InvokeAIError,
+#     ConnectionError,
+#     AuthenticationError,
+#     APIError,
+#     ValidationError,
+#     WorkflowError,
+#     JobError,
+#     ResourceNotFoundError,
+#     TimeoutError,
+#     FileError,
+#     ConfigurationError,
+# )
 
-# Utilities
-from invokeai_py_client.utils import (
-    AssetManager,
-    BoardManager,
-    TypeConverter,
-    ProgressTracker,
-)
+# Utilities - TODO: Implement these modules
+# from invokeai_py_client.utils import (
+#     AssetManager,
+#     BoardManager,
+#     TypeConverter,
+#     ProgressTracker,
+# )
 
 __all__ = [
     # Version
@@ -103,21 +106,8 @@ __all__ = [
     
     # Core
     "InvokeAIClient",
+    "BoardRepository",
     "Workflow",
-    
-    # Field types
-    "Field",
-    "IntegerField",
-    "FloatField",
-    "StringField",
-    "BooleanField",
-    "ImageField",
-    "LatentsField",
-    "ModelField",
-    "EnumField",
-    "ColorField",
-    "ConditioningField",
-    "CollectionField",
     
     # Models
     "Board",
@@ -129,23 +119,4 @@ __all__ = [
     "JobStatus",
     "ImageCategory",
     "BaseModelEnum",
-    
-    # Exceptions
-    "InvokeAIError",
-    "ConnectionError",
-    "AuthenticationError",
-    "APIError",
-    "ValidationError",
-    "WorkflowError",
-    "JobError",
-    "ResourceNotFoundError",
-    "TimeoutError",
-    "FileError",
-    "ConfigurationError",
-    
-    # Utilities
-    "AssetManager",
-    "BoardManager",
-    "TypeConverter",
-    "ProgressTracker",
 ]
