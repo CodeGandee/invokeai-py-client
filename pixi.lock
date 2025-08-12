@@ -5589,7 +5589,7 @@ packages:
 - pypi: ./
   name: invokeai-py-client
   version: 0.1.0
-  sha256: 114164393232c93d365a2a2dcd369e990737c3ce4d0b6fc3984f9da0d64e1efb
+  sha256: 44e5cb21b1471bdea99bffa851ca887968e90f9a0729b39e794d3e357b22c712
   requires_dist:
   - scipy>=1.16.1,<2
   - opencv-python
