@@ -218,9 +218,25 @@ class InvokeAIClient:
         --------
         >>> boards = client.list_boards()
         >>> for board in boards:
-        ...     print(f"{board.name}: {board.image_count} images")
+        ...     print(f"{board.board_name}: {board.image_count} images")
         """
-        raise NotImplementedError
+        params = {'all': all}
+        response = self._make_request('GET', '/boards/', params=params)
+        
+        data = response.json()
+        
+        # Handle both paginated and non-paginated responses
+        if isinstance(data, list):
+            # Direct list response when all=True
+            boards_data = data
+        elif isinstance(data, dict) and 'items' in data:
+            # Paginated response
+            boards_data = data['items']
+        else:
+            boards_data = []
+        
+        # Convert to Board objects
+        return [Board.from_api_response(board_data) for board_data in boards_data]
     
     def get_board(self, board_id: str) -> Board:
         """
@@ -241,18 +257,24 @@ class InvokeAIClient:
         ValueError
             If the board does not exist.
         """
-        raise NotImplementedError
+        try:
+            response = self._make_request('GET', f'/boards/{board_id}')
+            return Board.from_api_response(response.json())
+        except requests.HTTPError as e:
+            if e.response.status_code == 404:
+                raise ValueError(f"Board with ID '{board_id}' does not exist")
+            raise
     
-    def create_board(self, name: str, description: Optional[str] = None) -> Board:
+    def create_board(self, name: str, is_private: bool = False) -> Board:
         """
         Create a new board.
         
         Parameters
         ----------
         name : str
-            The name for the new board.
-        description : str, optional
-            Description of the board's purpose.
+            The name for the new board (max 300 characters).
+        is_private : bool, optional
+            Whether the board should be private, by default False.
         
         Returns
         -------
@@ -262,9 +284,23 @@ class InvokeAIClient:
         Raises
         ------
         ValueError
-            If a board with this name already exists.
+            If the board name is invalid or too long.
+        
+        Examples
+        --------
+        >>> board = client.create_board("My Artwork")
+        >>> print(f"Created board: {board.board_name} ({board.board_id})")
         """
-        raise NotImplementedError
+        if len(name) > 300:
+            raise ValueError(f"Board name too long: {len(name)} characters (max 300)")
+        
+        params = {
+            'board_name': name,
+            'is_private': is_private
+        }
+        
+        response = self._make_request('POST', '/boards/', params=params)
+        return Board.from_api_response(response.json())
     
     def upload_image(
         self,

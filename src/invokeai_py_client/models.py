@@ -51,20 +51,23 @@ class Board(BaseModel):
     """
     Represents an InvokeAI board for organizing images.
     
+    This matches the BoardDTO structure from the InvokeAI API.
+    
     Examples
     --------
-    >>> board = Board(id="abc123", name="Landscapes")
-    >>> print(f"{board.name}: {board.image_count} images")
+    >>> board = Board(board_id="abc123", board_name="Landscapes")
+    >>> print(f"{board.board_name}: {board.image_count} images")
     """
     
-    id: str = Field(..., description="Unique board identifier")
-    name: str = Field(..., description="Board display name")
-    description: Optional[str] = Field(None, description="Board description")
-    image_count: int = Field(0, ge=0, description="Number of images in the board")
-    created_at: Optional[datetime] = Field(None, description="Board creation timestamp")
-    updated_at: Optional[datetime] = Field(None, description="Last modification timestamp")
-    cover_image: Optional[Image] = Field(None, description="Board cover image")
-    archived: bool = Field(False, description="Whether the board is archived")
+    board_id: str = Field(..., description="The unique ID of the board")
+    board_name: str = Field(..., description="The name of the board")
+    created_at: Union[datetime, str] = Field(..., description="The created timestamp of the board")
+    updated_at: Union[datetime, str] = Field(..., description="The updated timestamp of the board")
+    deleted_at: Optional[Union[datetime, str]] = Field(None, description="The deleted timestamp of the board")
+    cover_image_name: Optional[str] = Field(None, description="The name of the board's cover image")
+    archived: bool = Field(..., description="Whether or not the board is archived")
+    is_private: Optional[bool] = Field(None, description="Whether the board is private")
+    image_count: int = Field(..., ge=0, description="The number of images in the board")
     
     @classmethod
     def from_api_response(cls, data: Dict[str, Any]) -> Board:
