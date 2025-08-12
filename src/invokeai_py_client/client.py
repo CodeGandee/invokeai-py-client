@@ -263,7 +263,13 @@ class InvokeAIClient:
         Parameters
         ----------
         board_id : str
-            The unique identifier of the board. Use "none" for uncategorized.
+            The unique identifier of the board.
+            Use the string "none" (not Python's None) for uncategorized board.
+            
+            Why "none" instead of None:
+            - InvokeAI API uses "none" as a special identifier in URL paths
+            - Python's None cannot be used in URL paths (would need string conversion)
+            - This follows InvokeAI's established API convention
         
         Returns
         -------
@@ -280,7 +286,7 @@ class InvokeAIClient:
         >>> # Get regular board
         >>> board = client.get_board("abc-123")
         
-        >>> # Get uncategorized board
+        >>> # Get uncategorized board - must use string "none"
         >>> uncategorized = client.get_board("none")
         """
         # Handle uncategorized board specially
@@ -344,6 +350,10 @@ class InvokeAIClient:
         """
         Get the count of uncategorized images (images not assigned to any board).
         
+        This method uses the API endpoint /boards/none/image_names where "none"
+        is the special board_id value that InvokeAI uses to represent uncategorized
+        items. This is a string literal, not Python's None value.
+        
         Returns
         -------
         int
@@ -371,6 +381,10 @@ class InvokeAIClient:
         """
         Get the list of uncategorized image names.
         
+        Uses the API endpoint /boards/none/image_names where "none" is InvokeAI's
+        special convention for accessing uncategorized items. This must be the
+        string "none", not Python's None value, as it's used as a URL path parameter.
+        
         Returns
         -------
         List[str]
@@ -395,13 +409,15 @@ class InvokeAIClient:
         """
         Delete a board.
         
-        Note: The uncategorized board (board_id="none") cannot be deleted
-        as it is system-managed.
+        Note: The uncategorized board cannot be deleted as it is system-managed.
+        We check for both board_id="none" (the API convention) and board_id=None
+        (edge case) to prevent deletion attempts.
         
         Parameters
         ----------
         board_id : str
             The ID of the board to delete.
+            Cannot be "none" (InvokeAI's identifier for uncategorized board).
         delete_images : bool, optional
             Whether to also delete all images in the board, by default False.
             If False, images are moved to uncategorized.

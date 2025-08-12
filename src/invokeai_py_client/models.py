@@ -103,7 +103,13 @@ class Board(BaseModel):
         Create a special uncategorized board instance.
         
         The uncategorized board represents images not assigned to any board.
-        It uses "none" as its board_id in API calls.
+        
+        Important: We use the string "none" as board_id rather than Python's None
+        because:
+        - InvokeAI API expects the literal string "none" in URL paths
+        - API endpoint: /api/v1/boards/none/image_names requires "none" as a path parameter
+        - Python's None would serialize to null in JSON, which cannot be used in URL paths
+        - "none" is InvokeAI's established convention for uncategorized items
         
         Parameters
         ----------
@@ -113,7 +119,7 @@ class Board(BaseModel):
         Returns
         -------
         Board
-            Uncategorized board instance.
+            Uncategorized board instance with board_id="none".
         """
         from datetime import datetime
         now = datetime.now().isoformat()
@@ -132,6 +138,11 @@ class Board(BaseModel):
     def is_uncategorized(self) -> bool:
         """
         Check if this is the uncategorized board.
+        
+        We check for both "none" (the API convention) and Python's None
+        (for edge cases) to handle different scenarios:
+        - board_id == "none": Standard uncategorized board from API
+        - board_id is None: Fallback for edge cases or uninitialized boards
         
         Returns
         -------
