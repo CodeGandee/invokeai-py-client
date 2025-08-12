@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from invokeai_py_client.fields import Field
-from invokeai_py_client.models import Job, WorkflowDefinition
+from invokeai_py_client.models import IvkJob, WorkflowDefinition
 
 if TYPE_CHECKING:
     from invokeai_py_client.client import InvokeAIClient
@@ -43,7 +43,7 @@ class Workflow:
         Configured workflow inputs by name.
     outputs : Dict[str, Field]
         Workflow outputs after execution.
-    job : Job
+    job : IvkJob
         Current or last job execution.
     
     Examples
@@ -63,7 +63,7 @@ class Workflow:
         self.definition = definition
         self.inputs: Dict[str, Field[Any]] = {}
         self.outputs: Dict[str, Field[Any]] = {}
-        self.job: Optional[Job] = None
+        self.job: Optional[IvkJob] = None
     
     @classmethod
     def from_file(cls, client: InvokeAIClient, workflow_path: Union[str, Path]) -> Workflow:
@@ -223,7 +223,7 @@ class Workflow:
         self,
         validate: bool = True,
         priority: int = 0
-    ) -> Job:
+    ) -> IvkJob:
         """
         Submit the workflow for execution.
         
@@ -236,7 +236,7 @@ class Workflow:
         
         Returns
         -------
-        Job
+        IvkJob
             The submitted job object for tracking.
         
         Raises
@@ -253,7 +253,7 @@ class Workflow:
         """
         raise NotImplementedError
     
-    def submit_sync(self, validate: bool = True, priority: int = 0) -> Job:
+    def submit_sync(self, validate: bool = True, priority: int = 0) -> IvkJob:
         """
         Synchronous version of submit.
         
@@ -266,7 +266,7 @@ class Workflow:
         
         Returns
         -------
-        Job
+        IvkJob
             The submitted job.
         """
         raise NotImplementedError

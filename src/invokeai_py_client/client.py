@@ -16,7 +16,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from invokeai_py_client.models import Board, DnnModel, Image, Job, WorkflowDefinition
+from invokeai_py_client.models import Board, IvkDnnModel, IvkImage, IvkJob, WorkflowDefinition
 from invokeai_py_client.workflow import Workflow
 
 
@@ -494,7 +494,7 @@ class InvokeAIClient:
         image_path: Union[str, Path],
         board_id: Optional[str] = None,
         category: str = "user"
-    ) -> Image:
+    ) -> IvkImage:
         """
         Upload an image to the InvokeAI instance.
         
@@ -509,7 +509,7 @@ class InvokeAIClient:
         
         Returns
         -------
-        Image
+        IvkImage
             The uploaded image object with server-assigned metadata.
         
         Raises
@@ -562,7 +562,7 @@ class InvokeAIClient:
         self,
         status: Optional[str] = None,
         limit: int = 100
-    ) -> List[Job]:
+    ) -> List[IvkJob]:
         """
         List jobs with optional status filtering.
         
@@ -575,12 +575,12 @@ class InvokeAIClient:
         
         Returns
         -------
-        List[Job]
+        List[IvkJob]
             List of job objects.
         """
         raise NotImplementedError
     
-    def get_job(self, job_id: str) -> Job:
+    def get_job(self, job_id: str) -> IvkJob:
         """
         Get detailed information about a specific job.
         
@@ -591,7 +591,7 @@ class InvokeAIClient:
         
         Returns
         -------
-        Job
+        IvkJob
             The job object with current status and results.
         
         Raises
@@ -622,7 +622,7 @@ class InvokeAIClient:
         """
         raise NotImplementedError
     
-    def list_models(self, base_model: Optional[str] = None) -> List[DnnModel]:
+    def list_models(self, base_model: Optional[str] = None) -> List[IvkDnnModel]:
         """
         List available models on the InvokeAI instance.
         
@@ -633,12 +633,12 @@ class InvokeAIClient:
         
         Returns
         -------
-        List[DnnModel]
+        List[IvkDnnModel]
             List of model objects.
         """
         raise NotImplementedError
     
-    def get_model_info(self, model_key: str) -> DnnModel:
+    def get_model_info(self, model_key: str) -> IvkDnnModel:
         """
         Get detailed information about a specific model.
         
@@ -649,8 +649,8 @@ class InvokeAIClient:
         
         Returns
         -------
-        DnnModel
-            DnnModel metadata and configuration.
+        IvkDnnModel
+            IvkDnnModel metadata and configuration.
         
         Raises
         ------

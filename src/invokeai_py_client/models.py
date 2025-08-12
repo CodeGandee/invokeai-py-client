@@ -17,39 +17,112 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class JobStatus(str, Enum):
-    """Enumeration of job execution states."""
+    """
+    InvokeAI job execution states.
     
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
+    Represents the lifecycle states of a workflow execution job in InvokeAI.
+    Jobs transition through these states as they are processed by the queue system.
+    """
+    
+    PENDING = "pending"      # Job is queued, waiting for execution
+    RUNNING = "running"      # Job is actively being processed
+    COMPLETED = "completed"  # Job finished successfully with results
+    FAILED = "failed"        # Job encountered an error during execution
+    CANCELLED = "cancelled"  # Job was cancelled by user or system
 
 
 class ImageCategory(str, Enum):
-    """Enumeration of image categories."""
+    """
+    InvokeAI image categorization system.
+    
+    Defines the purpose and processing pipeline for images in InvokeAI.
+    Each category has specific meaning and affects how the image is used
+    in the generation workflow.
+    
+    Examples
+    --------
+    >>> # User uploads a reference photo
+    >>> category = ImageCategory.USER
+    
+    >>> # ControlNet depth map for guidance
+    >>> category = ImageCategory.CONTROL
+    
+    >>> # Inpainting mask to define edit regions
+    >>> category = ImageCategory.MASK
+    """
     
     USER = "user"
-    GENERATED = "generated"
-    CONTROL = "control"
+    """User-uploaded images: Personal photos, references, source images.
+    These are typically input images provided by users for img2img,
+    reference, or as base images for editing."""
+    
+    GENERAL = "general"
+    """General purpose/AI-generated images: Output from generation models.
+    Note: The API uses 'general' not 'generated'. These are typically
+    the final output images from txt2img or img2img workflows."""
+    
+    CONTROL = "control" 
+    """ControlNet conditioning images: Depth maps, edge detection, pose, etc.
+    Used to guide the generation process with structural information.
+    Examples: Canny edges, OpenPose skeletons, depth maps, normal maps."""
+    
     MASK = "mask"
+    """Inpainting/outpainting masks: Binary masks defining edit regions.
+    Black and white images where white areas indicate regions to regenerate.
+    Used in inpainting and outpainting workflows."""
+    
     OTHER = "other"
+    """Special purpose images: Any image that doesn't fit standard categories.
+    Includes intermediate processing images, custom workflow artifacts, etc."""
 
 
 class BaseModelEnum(str, Enum):
-    """Enumeration of base model architectures."""
+    """
+    InvokeAI base model architectures.
+    
+    Identifies the underlying AI model architecture for generation.
+    Each architecture has different capabilities, requirements, and output characteristics.
+    
+    Model selection affects:
+    - Resolution capabilities
+    - Memory requirements
+    - Generation quality and style
+    - Compatible LoRAs and embeddings
+    - Processing speed
+    """
     
     SD1 = "sd-1"
+    """Stable Diffusion 1.x: Original 512x512 models (SD 1.4, 1.5).
+    Fastest, lowest memory requirements, huge ecosystem of fine-tunes."""
+    
     SD2 = "sd-2"
+    """Stable Diffusion 2.x: Improved 512x512/768x768 models.
+    Better coherence than SD1, different aesthetic, less community support."""
+    
     SDXL = "sdxl"
+    """Stable Diffusion XL: High-res 1024x1024 base models.
+    Superior quality and detail, higher memory requirements, two-stage pipeline."""
+    
     SDXL_REFINER = "sdxl-refiner"
+    """SDXL Refiner: Second stage for SDXL pipeline.
+    Enhances details and quality of SDXL base outputs, typically last 20% of steps."""
+    
     FLUX = "flux"
+    """FLUX: Next-generation architecture from Black Forest Labs.
+    State-of-the-art quality, very high memory requirements (24GB+ VRAM)."""
+    
     FLUX_SCHNELL = "flux-schnell"
+    """FLUX Schnell: Fast distilled version of FLUX.
+    Optimized for speed (4-8 steps), lower quality than full FLUX but much faster."""
 
 
 class Board(BaseModel):
     """
-    Represents an InvokeAI board for organizing images.
+    InvokeAI board for organizing generated images.
+    
+    Boards are InvokeAI's organizational system for managing generated images,
+    similar to folders or albums. They help users organize outputs by project,
+    style, or any custom categorization.
     
     This matches the BoardDTO structure from the InvokeAI API.
     Supports both regular boards and the special "uncategorized" board.
@@ -177,21 +250,23 @@ class Board(BaseModel):
         return self.model_dump(exclude_none=True)
 
 
-class Image(BaseModel):
+class IvkImage(BaseModel):
     """
-    Represents an image in the InvokeAI system.
+    InvokeAI image entity.
     
+    Represents an image stored in the InvokeAI system with its metadata.
+    Images can be user uploads, AI generations, or processing artifacts.
     This matches the ImageDTO structure from the InvokeAI API.
     
     Examples
     --------
-    >>> image = Image(image_name="abc-123.png", width=1024, height=768)
+    >>> image = IvkImage(image_name="abc-123.png", width=1024, height=768)
     >>> print(f"Image: {image.image_name} ({image.width}x{image.height})")
     """
     
     image_name: str = Field(..., description="Server-side image identifier")
     board_id: Optional[str] = Field(None, description="Associated board ID (None for uncategorized)")
-    image_category: ImageCategory = Field(ImageCategory.GENERATED, description="Image category type")
+    image_category: ImageCategory = Field(ImageCategory.GENERAL, description="Image category type")
     width: Optional[int] = Field(None, gt=0, description="Image width in pixels")
     height: Optional[int] = Field(None, gt=0, description="Image height in pixels")
     created_at: Optional[Union[datetime, str]] = Field(None, description="Creation timestamp")
@@ -206,9 +281,9 @@ class Image(BaseModel):
     session_id: Optional[str] = Field(None, description="Associated session ID")
     
     @classmethod
-    def from_api_response(cls, data: Dict[str, Any]) -> Image:
+    def from_api_response(cls, data: Dict[str, Any]) -> IvkImage:
         """
-        Create an Image from API response data.
+        Create an IvkImage from API response data.
         
         Handles field mapping from API response to model fields.
         
@@ -219,7 +294,7 @@ class Image(BaseModel):
         
         Returns
         -------
-        Image
+        IvkImage
             Parsed image instance.
         """
         # Map image_category string to enum if needed
@@ -244,13 +319,17 @@ class Image(BaseModel):
         return self.model_dump(exclude_none=True)
 
 
-class Job(BaseModel):
+class IvkJob(BaseModel):
     """
-    Represents a workflow execution job.
+    InvokeAI workflow execution job.
+    
+    Represents a queued or executing workflow in the InvokeAI queue system.
+    Jobs are created when workflows are submitted and track the execution
+    progress, results, and any errors.
     
     Examples
     --------
-    >>> job = Job(id="job-123", status=JobStatus.RUNNING, progress=0.5)
+    >>> job = IvkJob(id="job-123", status=JobStatus.RUNNING, progress=0.5)
     >>> print(f"Job {job.id}: {job.status} ({job.progress*100:.0f}%)")
     """
     
@@ -266,9 +345,9 @@ class Job(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional job metadata")
     
     @classmethod
-    def from_api_response(cls, data: Dict[str, Any]) -> Job:
+    def from_api_response(cls, data: Dict[str, Any]) -> IvkJob:
         """
-        Create a Job from API response data.
+        Create an IvkJob from API response data.
         
         Parameters
         ----------
@@ -277,7 +356,7 @@ class Job(BaseModel):
         
         Returns
         -------
-        Job
+        IvkJob
             Parsed job instance.
         """
         return cls(**data)
@@ -318,7 +397,11 @@ class Job(BaseModel):
 
 class WorkflowDefinition(BaseModel):
     """
-    Represents a workflow definition from InvokeAI.
+    InvokeAI workflow definition.
+    
+    Represents a node-based processing pipeline exported from the InvokeAI GUI.
+    Workflows define a graph of operations (nodes) connected by data flow (edges)
+    to create complex image generation and processing pipelines.
     
     Examples
     --------
@@ -501,13 +584,16 @@ class WorkflowDefinition(BaseModel):
         return self.model_dump(exclude_none=True)
 
 
-class DnnModel(BaseModel):
+class IvkDnnModel(BaseModel):
     """
-    Represents a DNN (Deep Neural Network) model in InvokeAI.
+    InvokeAI deep neural network model metadata.
+    
+    Represents a AI model installed in InvokeAI (base models, LoRAs, VAEs, etc.).
+    Models are the core components that power image generation and processing.
     
     Examples
     --------
-    >>> model = DnnModel(
+    >>> model = IvkDnnModel(
     ...     key="sdxl-base",
     ...     name="Stable Diffusion XL Base",
     ...     base=BaseModelEnum.SDXL,
@@ -527,9 +613,9 @@ class DnnModel(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional model metadata")
     
     @classmethod
-    def from_api_response(cls, data: Dict[str, Any]) -> DnnModel:
+    def from_api_response(cls, data: Dict[str, Any]) -> IvkDnnModel:
         """
-        Create a DnnModel from API response data.
+        Create an IvkDnnModel from API response data.
         
         Parameters
         ----------
@@ -538,7 +624,7 @@ class DnnModel(BaseModel):
         
         Returns
         -------
-        DnnModel
+        IvkDnnModel
             Parsed model instance.
         """
         return cls(**data)
@@ -557,7 +643,10 @@ class DnnModel(BaseModel):
 
 class SessionEvent(BaseModel):
     """
-    Represents a real-time session event from WebSocket.
+    InvokeAI real-time session event.
+    
+    WebSocket events emitted during workflow execution for progress tracking,
+    intermediate results, and completion notifications.
     
     Examples
     --------

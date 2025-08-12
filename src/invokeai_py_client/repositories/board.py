@@ -8,12 +8,13 @@ keeping data models pure while providing rich functionality.
 from __future__ import annotations
 
 import os
+from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, BinaryIO, Dict, List, Optional, Union
 
 import requests
 
-from invokeai_py_client.models import Board, Image
+from invokeai_py_client.models import Board, IvkImage, ImageCategory
 
 if TYPE_CHECKING:
     from invokeai_py_client.client import InvokeAIClient
@@ -55,7 +56,7 @@ class BoardRepository:
         limit: Optional[int] = None,
         order_dir: str = "DESC",
         starred_first: bool = False
-    ) -> List[Image]:
+    ) -> List[IvkImage]:
         """
         List images in a board.
         
@@ -72,8 +73,8 @@ class BoardRepository:
         
         Returns
         -------
-        List[Image]
-            List of Image objects in the board.
+        List[IvkImage]
+            List of IvkImage objects in the board.
         
         Examples
         --------
@@ -119,10 +120,10 @@ class BoardRepository:
             
             image_dtos = dto_response.json()
             
-            # Convert to Image models
+            # Convert to IvkImage models
             images = []
             for dto in image_dtos:
-                images.append(Image.from_api_response(dto))
+                images.append(IvkImage.from_api_response(dto))
             
             return images
             
@@ -131,15 +132,15 @@ class BoardRepository:
                 return []
             raise
     
-    def upload_image(
+    def upload_image_by_file(
         self,
         file_path: Union[str, Path],
         board_id: Optional[str] = None,
-        image_category: str = "user",
+        image_category: Union[ImageCategory, str] = ImageCategory.USER,
         is_intermediate: bool = False
-    ) -> Image:
+    ) -> IvkImage:
         """
-        Upload an image to a board.
+        Upload an image from a file to a board.
         
         Parameters
         ----------
@@ -147,15 +148,17 @@ class BoardRepository:
             Path to the image file to upload.
         board_id : str, optional
             Target board ID. If None, image goes to uncategorized.
-        image_category : str, optional
-            Image category: "user", "generated", etc., by default "user".
+        image_category : Union[ImageCategory, str], optional
+            Image category type for the uploaded image.
+            Use ImageCategory enum values (USER, GENERAL, CONTROL, MASK, OTHER).
+            Accepts strings for backward compatibility.
         is_intermediate : bool, optional
             Whether this is an intermediate image, by default False.
         
         Returns
         -------
-        Image
-            The uploaded Image object with server-assigned metadata.
+        IvkImage
+            The uploaded IvkImage object with server-assigned metadata.
         
         Raises
         ------
@@ -167,10 +170,10 @@ class BoardRepository:
         Examples
         --------
         >>> # Upload to specific board
-        >>> image = board_repo.upload_image("photo.png", board_id="board-123")
+        >>> image = board_repo.upload_image_by_file("photo.png", board_id="board-123")
         
         >>> # Upload to uncategorized
-        >>> image = board_repo.upload_image("photo.png")
+        >>> image = board_repo.upload_image_by_file("photo.png")
         """
         file_path = Path(file_path)
         
@@ -184,8 +187,11 @@ class BoardRepository:
                     'file': (file_path.name, image_file, self._get_mime_type(file_path))
                 }
                 
+                # Convert ImageCategory enum to string for API
+                category_str = image_category.value if isinstance(image_category, ImageCategory) else image_category
+                
                 params: Dict[str, Any] = {
-                    'image_category': image_category,
+                    'image_category': category_str,
                     'is_intermediate': is_intermediate
                 }
                 
@@ -193,16 +199,28 @@ class BoardRepository:
                     params['board_id'] = board_id
                 
                 # Use the session's post method directly for multipart
+                # Note: Remove Content-Type header for multipart form data
                 url = f"{self._client.base_url}/images/upload"
-                response = self._client.session.post(
-                    url,
-                    files=files,
-                    params=params,
-                    timeout=self._client.timeout
-                )
-                response.raise_for_status()
                 
-                return Image.from_api_response(response.json())
+                # Temporarily store and remove Content-Type header
+                original_content_type = self._client.session.headers.get('Content-Type')
+                if 'Content-Type' in self._client.session.headers:
+                    del self._client.session.headers['Content-Type']
+                
+                try:
+                    response = self._client.session.post(
+                        url,
+                        files=files,
+                        params=params,
+                        timeout=self._client.timeout
+                    )
+                    response.raise_for_status()
+                finally:
+                    # Restore Content-Type header
+                    if original_content_type:
+                        self._client.session.headers['Content-Type'] = original_content_type
+                
+                return IvkImage.from_api_response(response.json())
                 
         except requests.HTTPError as e:
             if e.response is not None:
@@ -215,7 +233,7 @@ class BoardRepository:
                 raise ValueError(error_msg)
             raise
     
-    def get_image(self, image_name: str) -> Optional[Image]:
+    def get_image(self, image_name: str) -> Optional[IvkImage]:
         """
         Get a specific image by name.
         
@@ -226,8 +244,8 @@ class BoardRepository:
         
         Returns
         -------
-        Optional[Image]
-            The Image object if found, None otherwise.
+        Optional[IvkImage]
+            The IvkImage object if found, None otherwise.
         
         Examples
         --------
@@ -237,7 +255,7 @@ class BoardRepository:
         """
         try:
             response = self._client._make_request('GET', f'/images/i/{image_name}')
-            return Image.from_api_response(response.json())
+            return IvkImage.from_api_response(response.json())
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code == 404:
                 return None
@@ -264,11 +282,11 @@ class BoardRepository:
         ...     print("Image deleted")
         """
         try:
-            # The delete endpoint expects a JSON body with image name
+            # The delete endpoint expects a JSON body with image names (list)
             self._client._make_request(
                 'POST',
                 '/images/delete',
-                json={"image_name": image_name}
+                json={"image_names": [image_name]}
             )
             return True
         except requests.HTTPError as e:
@@ -279,64 +297,52 @@ class BoardRepository:
     def download_image(
         self,
         image_name: str,
-        output_path: Optional[Union[str, Path]] = None,
         full_resolution: bool = True
-    ) -> Path:
+    ) -> bytes:
         """
-        Download an image from the server.
+        Download an image from the server as bytes.
         
         Parameters
         ----------
         image_name : str
             The server-side image name/ID.
-        output_path : Union[str, Path], optional
-            Where to save the image. If None, uses current directory with original name.
         full_resolution : bool, optional
             Whether to download full resolution (True) or thumbnail (False), by default True.
         
         Returns
         -------
-        Path
-            Path to the downloaded image file.
+        bytes
+            Image data as bytes that can be decoded with imageio.imdecode().
         
         Raises
         ------
         ValueError
             If the image does not exist.
         IOError
-            If the download or save fails.
+            If the download fails.
         
         Examples
         --------
-        >>> # Download to current directory
-        >>> path = board_repo.download_image("abc-123.png")
-        
-        >>> # Download to specific location
-        >>> path = board_repo.download_image("abc-123.png", "downloads/photo.png")
+        >>> import imageio.v3 as iio
+        >>> import numpy as np
+        >>> 
+        >>> # Download and decode image
+        >>> image_bytes = board_repo.download_image("abc-123.png")
+        >>> image_array = iio.imread(image_bytes)  # RGB/RGBA numpy array
+        >>> print(f"Image shape: {image_array.shape}")
         
         >>> # Download thumbnail
-        >>> path = board_repo.download_image("abc-123.png", full_resolution=False)
+        >>> thumb_bytes = board_repo.download_image("abc-123.png", full_resolution=False)
+        >>> thumb_array = iio.imread(thumb_bytes)
         """
         # Determine endpoint
         endpoint = f'/images/i/{image_name}/full' if full_resolution else f'/images/i/{image_name}/thumbnail'
         
         try:
             response = self._client._make_request('GET', endpoint)
-            
-            # Determine output path
-            if output_path is None:
-                output_path = Path(image_name)
-            else:
-                output_path = Path(output_path)
-            
-            # Create parent directory if needed
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Save the image
-            with open(output_path, 'wb') as f:
-                f.write(response.content)
-            
-            return output_path
+            # response.content is bytes in requests library
+            content: bytes = response.content
+            return content
             
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code == 404:
@@ -364,16 +370,27 @@ class BoardRepository:
         >>> # Move to specific board
         >>> board_repo.move_image_to_board("image.png", "board-123")
         
-        >>> # Move to uncategorized
+        >>> # Move to uncategorized (removes from current board)
         >>> board_repo.move_image_to_board("image.png", "none")
         """
         try:
-            # Update the image with new board_id
-            self._client._make_request(
-                'PATCH',
-                f'/images/i/{image_name}',
-                json={"board_id": board_id if board_id != "none" else None}
-            )
+            if board_id == "none" or board_id is None:
+                # Remove from board (move to uncategorized)
+                self._client._make_request(
+                    'DELETE',
+                    '/board_images/',
+                    json={"image_name": image_name}
+                )
+            else:
+                # Add to specific board
+                self._client._make_request(
+                    'POST',
+                    '/board_images/',
+                    json={
+                        "board_id": board_id,
+                        "image_name": image_name
+                    }
+                )
             return True
         except requests.HTTPError:
             return False
@@ -391,12 +408,17 @@ class BoardRepository:
         -------
         bool
             True if successful.
+        
+        Examples
+        --------
+        >>> board_repo.star_image("abc-123.png")
         """
         try:
+            # The star endpoint expects a list of image names
             self._client._make_request(
                 'POST',
                 '/images/star',
-                json={"image_name": image_name}
+                json={"image_names": [image_name]}
             )
             return True
         except requests.HTTPError:
@@ -415,36 +437,150 @@ class BoardRepository:
         -------
         bool
             True if successful.
+        
+        Examples
+        --------
+        >>> board_repo.unstar_image("abc-123.png")
         """
         try:
+            # The unstar endpoint expects a list of image names
             self._client._make_request(
                 'POST',
                 '/images/unstar',
-                json={"image_name": image_name}
+                json={"image_names": [image_name]}
             )
             return True
         except requests.HTTPError:
             return False
     
-    def get_starred_images(self, board_id: str) -> List[Image]:
+    
+    def upload_image_by_data(
+        self,
+        image_data: bytes,
+        file_extension: str,
+        board_id: Optional[str] = None,
+        image_category: Union[ImageCategory, str] = ImageCategory.USER,
+        is_intermediate: bool = False,
+        filename: Optional[str] = None
+    ) -> IvkImage:
         """
-        Get only starred images from a board.
+        Upload an image from encoded bytes to a board.
+        
+        This method is useful when you have image data in memory
+        (e.g., from imageio.imencode() or cv2.imencode()).
         
         Parameters
         ----------
-        board_id : str
-            The board ID.
+        image_data : bytes
+            Encoded image data as bytes.
+        file_extension : str
+            File extension to determine mime type (e.g., '.png', 'png').
+        board_id : str, optional
+            Target board ID. If None, image goes to uncategorized.
+        image_category : Union[ImageCategory, str], optional
+            Image category type for the uploaded image.
+            Use ImageCategory enum values (USER, GENERAL, CONTROL, MASK, OTHER).
+            Accepts strings for backward compatibility.
+        is_intermediate : bool, optional
+            Whether this is an intermediate image, by default False.
+        filename : str, optional
+            Filename to use for the upload. If None, generates a default.
         
         Returns
         -------
-        List[Image]
-            List of starred images only.
-        """
-        # Get all images with starred first
-        all_images = self.list_images(board_id, starred_first=True)
+        IvkImage
+            The uploaded IvkImage object with server-assigned metadata.
         
-        # Filter for starred only
-        return [img for img in all_images if img.starred]
+        Raises
+        ------
+        ValueError
+            If the upload fails or extension is invalid.
+        
+        Examples
+        --------
+        >>> import imageio.v3 as iio
+        >>> # Read and encode image
+        >>> img = iio.imread("photo.png")
+        >>> encoded = iio.imwrite("<bytes>", img, extension=".png")
+        >>> # Upload encoded data
+        >>> image = board_repo.upload_image_by_data(
+        ...     encoded, ".png", board_id="board-123"
+        ... )
+        
+        >>> # Using cv2 (note: cv2 uses BGR, may need conversion)
+        >>> import cv2
+        >>> img = cv2.imread("photo.jpg")
+        >>> success, encoded = cv2.imencode('.jpg', img)
+        >>> if success:
+        ...     image = board_repo.upload_image_by_data(
+        ...         encoded.tobytes(), '.jpg'
+        ...     )
+        """
+        # Normalize extension
+        if not file_extension.startswith('.'):
+            file_extension = f'.{file_extension}'
+        
+        # Get mime type
+        mime_type = self._get_mime_type_from_extension(file_extension)
+        
+        # Generate filename if not provided
+        if filename is None:
+            import uuid
+            filename = f"upload_{uuid.uuid4().hex[:8]}{file_extension}"
+        elif not filename.endswith(file_extension):
+            filename = f"{filename}{file_extension}"
+        
+        # Prepare multipart form data
+        try:
+            # Create a file-like object from bytes
+            file_like = BytesIO(image_data)
+            
+            files = {
+                'file': (filename, file_like, mime_type)
+            }
+            
+            params: Dict[str, Any] = {
+                'image_category': image_category,
+                'is_intermediate': is_intermediate
+            }
+            
+            if board_id is not None:
+                params['board_id'] = board_id
+            
+            # Use the session's post method directly for multipart
+            # Note: Remove Content-Type header for multipart form data
+            url = f"{self._client.base_url}/images/upload"
+            
+            # Temporarily store and remove Content-Type header
+            original_content_type = self._client.session.headers.get('Content-Type')
+            if 'Content-Type' in self._client.session.headers:
+                del self._client.session.headers['Content-Type']
+            
+            try:
+                response = self._client.session.post(
+                    url,
+                    files=files,
+                    params=params,
+                    timeout=self._client.timeout
+                )
+                response.raise_for_status()
+            finally:
+                # Restore Content-Type header
+                if original_content_type:
+                    self._client.session.headers['Content-Type'] = original_content_type
+            
+            return IvkImage.from_api_response(response.json())
+            
+        except requests.HTTPError as e:
+            if e.response is not None:
+                error_msg = f"Upload failed: {e.response.status_code}"
+                try:
+                    error_detail = e.response.json()
+                    error_msg += f" - {error_detail}"
+                except:
+                    error_msg += f" - {e.response.text}"
+                raise ValueError(error_msg)
+            raise
     
     @staticmethod
     def _get_mime_type(file_path: Path) -> str:
@@ -462,6 +598,28 @@ class BoardRepository:
             MIME type string.
         """
         ext = file_path.suffix.lower()
+        return BoardRepository._get_mime_type_from_extension(ext)
+    
+    @staticmethod
+    def _get_mime_type_from_extension(extension: str) -> str:
+        """
+        Get MIME type from file extension.
+        
+        Parameters
+        ----------
+        extension : str
+            File extension (e.g., '.png' or 'png').
+        
+        Returns
+        -------
+        str
+            MIME type string.
+        """
+        # Normalize extension
+        if not extension.startswith('.'):
+            extension = f'.{extension}'
+        extension = extension.lower()
+        
         mime_types = {
             '.png': 'image/png',
             '.jpg': 'image/jpeg',
@@ -472,4 +630,4 @@ class BoardRepository:
             '.tiff': 'image/tiff',
             '.tif': 'image/tiff'
         }
-        return mime_types.get(ext, 'application/octet-stream')
+        return mime_types.get(extension, 'application/octet-stream')

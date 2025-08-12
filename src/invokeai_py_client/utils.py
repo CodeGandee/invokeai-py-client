@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, BinaryIO, Callable, Dict, List, Optional, Type, Union
 
 from invokeai_py_client.fields import Field
-from invokeai_py_client.models import Board, Image
+from invokeai_py_client.models import Board, IvkImage
 
 if TYPE_CHECKING:
     from invokeai_py_client.client import InvokeAIClient
@@ -66,7 +66,7 @@ class AssetManager:
         board_id: Optional[str] = None,
         category: str = "user",
         progress_callback: Optional[Callable[[int, int], None]] = None
-    ) -> Image:
+    ) -> IvkImage:
         """
         Upload an image to the server.
         
@@ -83,7 +83,7 @@ class AssetManager:
         
         Returns
         -------
-        Image
+        IvkImage
             Uploaded image object with server metadata.
         
         Raises
@@ -145,7 +145,7 @@ class AssetManager:
         board_id: Optional[str] = None,
         category: str = "user",
         parallel: int = 3
-    ) -> List[Image]:
+    ) -> List[IvkImage]:
         """
         Upload multiple images in parallel.
         
@@ -162,7 +162,7 @@ class AssetManager:
         
         Returns
         -------
-        List[Image]
+        List[IvkImage]
             List of uploaded image objects.
         
         Examples

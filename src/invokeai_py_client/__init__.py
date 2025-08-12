@@ -67,10 +67,10 @@ from invokeai_py_client.workflow import Workflow
 # Data models
 from invokeai_py_client.models import (
     Board,
-    Image,
-    Job,
+    IvkImage,
+    IvkJob,
     WorkflowDefinition,
-    DnnModel,
+    IvkDnnModel,
     SessionEvent,
     JobStatus,
     ImageCategory,
@@ -111,10 +111,10 @@ __all__ = [
     
     # Models
     "Board",
-    "Image",
-    "Job",
+    "IvkImage",
+    "IvkJob",
     "WorkflowDefinition",
-    "DnnModel",
+    "IvkDnnModel",
     "SessionEvent",
     "JobStatus",
     "ImageCategory",
