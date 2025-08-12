@@ -41,3 +41,22 @@ split the `get_board` method into two methods:
 
 - implement `list_images`, `upload_image`, `get_image`, `delete_image`, `download_image` methods for board, using Repository pattern, see `context\hints\impl\about-api-client-architecture-patterns.md`
 
+# Task 3.4: implement board image upload
+
+the current `upload_image` method should be refactored into two methods:
+- `upload_image_by_file`: takes a file path and uploads the image to the board, returns the uploaded image object. This will automatically handle the mime type and file size
+- `upload_image_by_data`: upload image by encoded data, takes a byte array of encoded image (with imageio.imencode() or cv2.imencode()) and file extensions (can be something like `.png` or `png`), where file extension is used to determine the mime type, and uploads the image to the board, returns the uploaded image object. This will automatically handle the mime type and file size.
+
+Note that, whenever possible, use `imageio` instead of `cv2` for image encoding/decoding, as it is more flexible and supports more formats, and will not have the rgb/bgr issue.
+
+# Task 3.5: implement remaining image operations
+
+- check if the following functions are correct:
+  - `get_image`
+  - `delete_image`
+  - `move_image_to_board`
+  - `star_image`
+  - `unstar_image`
+- remove `upload_image` method, it is not needed anymore, we have more specific methods for uploading images
+- remove `get_starred_images` method, it is not needed anymore, we have `list_images` method that can filter by starred images
+- `download_image` should not take a file path, it should return the image data as bytes, so that using `imageio`.imdecode() can decode the bytes into np.ndarray, in RGB/RGBA format, depending on the image type. To test this, you should upload an image to the board, then download it, and check if the image is correctly decoded by `imageio`.
