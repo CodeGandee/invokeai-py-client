@@ -140,9 +140,11 @@ If you're using ROS 2 (Python or C++), you don't need a vendor SDK. Use one of t
 - nmea_navsat_driver (serial/socket NMEA)
   - Node: `nmea_serial_driver` (reads from `/dev/tty*`), `nmea_socket_driver` (TCP/UDP)
   - Publishes: `/fix` (NavSatFix), `/time_reference` (optional)
+  - Links: ROS Index https://index.ros.org/p/nmea_navsat_driver/ · GitHub https://github.com/ros-drivers/nmea_navsat_driver
 - gps_umd (gpsd client)
   - Node: `gpsd_client` (reads from a running gpsd on 2947)
   - Publishes: `/fix` (NavSatFix)
+  - Links: ROS Index https://index.ros.org/p/gps_umd/ · GitHub https://github.com/swri-robotics/gps_umd
 
 Install (Ubuntu/Debian; replace $ROS_DISTRO with your distro, e.g., humble/jazzy):
 
