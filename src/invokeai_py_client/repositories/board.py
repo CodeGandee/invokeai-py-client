@@ -50,6 +50,303 @@ class BoardRepository:
         """
         self._client = client
     
+    # =========================================================================
+    # Board Management Methods
+    # =========================================================================
+    
+    def list_boards(self, all: bool = True, include_uncategorized: bool = False) -> List[Board]:
+        """
+        List all available boards in the InvokeAI instance.
+        
+        Note: The uncategorized board is not included by default as it's system-managed.
+        
+        Parameters
+        ----------
+        all : bool, optional
+            Whether to fetch all boards or use pagination, by default True.
+        include_uncategorized : bool, optional
+            Whether to include the uncategorized board in the list, by default False.
+        
+        Returns
+        -------
+        List[Board]
+            List of board objects containing board metadata.
+        
+        Examples
+        --------
+        >>> boards = board_repo.list_boards()
+        >>> for board in boards:
+        ...     print(f"{board.board_name}: {board.image_count} images")
+        
+        >>> # Include uncategorized board
+        >>> boards = board_repo.list_boards(include_uncategorized=True)
+        >>> for board in boards:
+        ...     if board.is_uncategorized():
+        ...         print(f"Uncategorized: {board.image_count} images")
+        """
+        params = {'all': all}
+        response = self._client._make_request('GET', '/boards/', params=params)
+        
+        data = response.json()
+        
+        # Handle both paginated and non-paginated responses
+        if isinstance(data, list):
+            # Direct list response when all=True
+            boards_data = data
+        elif isinstance(data, dict) and 'items' in data:
+            # Paginated response
+            boards_data = data['items']
+        else:
+            boards_data = []
+        
+        # Convert to Board objects
+        boards = [Board.from_api_response(board_data) for board_data in boards_data]
+        
+        # Add uncategorized board if requested
+        if include_uncategorized:
+            uncategorized_count = self.get_uncategorized_images_count()
+            uncategorized_board = Board.uncategorized(image_count=uncategorized_count)
+            boards.insert(0, uncategorized_board)  # Add at beginning
+        
+        return boards
+    
+    def get_board_by_id(self, board_id: str) -> Optional[Board]:
+        """
+        Get a specific board by ID.
+        
+        Parameters
+        ----------
+        board_id : str
+            The unique identifier of the board.
+            Use the string "none" (not Python's None) for uncategorized board.
+            
+            Why "none" instead of None:
+            - InvokeAI API uses "none" as a special identifier in URL paths
+            - Python's None cannot be used in URL paths (would need string conversion)
+            - This follows InvokeAI's established API convention
+        
+        Returns
+        -------
+        Optional[Board]
+            The board object with full metadata, or None if not found.
+        
+        Examples
+        --------
+        >>> # Get regular board
+        >>> board = board_repo.get_board_by_id("abc-123")
+        >>> if board:
+        ...     print(f"Found board: {board.board_name}")
+        
+        >>> # Get uncategorized board - must use string "none"
+        >>> uncategorized = board_repo.get_board_by_id("none")
+        """
+        # Handle uncategorized board specially
+        if board_id == "none" or board_id is None:
+            count = self.get_uncategorized_images_count()
+            return Board.uncategorized(image_count=count)
+        
+        try:
+            response = self._client._make_request('GET', f'/boards/{board_id}')
+            return Board.from_api_response(response.json())
+        except requests.HTTPError as e:
+            if e.response is not None and e.response.status_code == 404:
+                return None
+            raise
+    
+    def get_boards_by_name(self, name: str) -> List[Board]:
+        """
+        Get all boards with a specific name.
+        
+        Since board names are not unique in InvokeAI, this method returns
+        a list of all boards matching the given name.
+        
+        Parameters
+        ----------
+        name : str
+            The name to search for. Use "Uncategorized" (case-sensitive)
+            to include the uncategorized board in results.
+        
+        Returns
+        -------
+        List[Board]
+            List of boards with the matching name. Returns empty list if
+            no boards are found.
+        
+        Examples
+        --------
+        >>> # Get all boards named "Landscapes"
+        >>> boards = board_repo.get_boards_by_name("Landscapes")
+        >>> print(f"Found {len(boards)} board(s) named 'Landscapes'")
+        
+        >>> # Get uncategorized board by name
+        >>> uncategorized_list = board_repo.get_boards_by_name("Uncategorized")
+        >>> if uncategorized_list:
+        ...     print(f"Found uncategorized board with {uncategorized_list[0].image_count} images")
+        """
+        matching_boards: List[Board] = []
+        
+        # Check if searching for uncategorized board
+        if name == "Uncategorized":
+            # Get uncategorized board
+            uncategorized = self.get_board_by_id("none")
+            if uncategorized:
+                matching_boards.append(uncategorized)
+        
+        # Get all regular boards and filter by name
+        all_boards = self.list_boards(include_uncategorized=False)
+        for board in all_boards:
+            if board.board_name == name:
+                matching_boards.append(board)
+        
+        return matching_boards
+    
+    def create_board(self, name: str, is_private: bool = False) -> Board:
+        """
+        Create a new board.
+        
+        Parameters
+        ----------
+        name : str
+            The name for the new board.
+            Maximum 300 characters (InvokeAI API constraint).
+            Note: Board names are not unique - multiple boards can have the same name.
+        is_private : bool, optional
+            Whether the board should be private, by default False.
+        
+        Returns
+        -------
+        Board
+            The newly created board object.
+        
+        Raises
+        ------
+        ValueError
+            If the board name is too long (>300 characters).
+        
+        Examples
+        --------
+        >>> board = board_repo.create_board("My Artwork")
+        >>> print(f"Created board: {board.board_name} ({board.board_id})")
+        
+        >>> # Multiple boards can have the same name
+        >>> board1 = board_repo.create_board("Landscapes")
+        >>> board2 = board_repo.create_board("Landscapes")  # This is allowed
+        """
+        # Validate board name length (InvokeAI API constraint from OpenAPI spec)
+        if len(name) > 300:
+            raise ValueError(f"Board name too long: {len(name)} characters (max 300)")
+        
+        params = {
+            'board_name': name,
+            'is_private': is_private
+        }
+        
+        response = self._client._make_request('POST', '/boards/', params=params)
+        return Board.from_api_response(response.json())
+    
+    def delete_board(self, board_id: str, delete_images: bool = False) -> None:
+        """
+        Delete a board.
+        
+        Note: The uncategorized board cannot be deleted as it is system-managed.
+        We check for both board_id="none" (the API convention) and board_id=None
+        (edge case) to prevent deletion attempts.
+        
+        Parameters
+        ----------
+        board_id : str
+            The ID of the board to delete.
+            Cannot be "none" (InvokeAI's identifier for uncategorized board).
+        delete_images : bool, optional
+            Whether to also delete all images in the board, by default False.
+            If False, images are moved to uncategorized.
+        
+        Raises
+        ------
+        ValueError
+            If trying to delete the uncategorized board or if board doesn't exist.
+        
+        Examples
+        --------
+        >>> board_repo.delete_board("abc-123")  # Moves images to uncategorized
+        >>> board_repo.delete_board("abc-123", delete_images=True)  # Deletes images too
+        """
+        # Prevent deletion of system boards
+        if board_id == "none" or board_id is None:
+            raise ValueError("Cannot delete the uncategorized board (system-managed)")
+        
+        params = {'delete_board_images': delete_images}
+        
+        try:
+            self._client._make_request('DELETE', f'/boards/{board_id}', params=params)
+        except requests.HTTPError as e:
+            if e.response is not None and e.response.status_code == 404:
+                raise ValueError(f"Board with ID '{board_id}' does not exist")
+            raise
+    
+    def get_uncategorized_images_count(self) -> int:
+        """
+        Get the count of uncategorized images (images not assigned to any board).
+        
+        This method uses the API endpoint /boards/none/image_names where "none"
+        is the special board_id value that InvokeAI uses to represent uncategorized
+        items. This is a string literal, not Python's None value.
+        
+        Returns
+        -------
+        int
+            Number of uncategorized images.
+        
+        Examples
+        --------
+        >>> count = board_repo.get_uncategorized_images_count()
+        >>> print(f"Uncategorized images: {count}")
+        """
+        try:
+            # Get list of uncategorized image names
+            response = self._client._make_request('GET', '/boards/none/image_names')
+            image_names = response.json()
+            
+            # Return count of images
+            if isinstance(image_names, list):
+                return len(image_names)
+            return 0
+        except requests.HTTPError:
+            # If endpoint fails, return 0
+            return 0
+    
+    def get_uncategorized_images(self) -> List[str]:
+        """
+        Get the list of uncategorized image names.
+        
+        Uses the API endpoint /boards/none/image_names where "none" is InvokeAI's
+        special convention for accessing uncategorized items. This must be the
+        string "none", not Python's None value, as it's used as a URL path parameter.
+        
+        Returns
+        -------
+        List[str]
+            List of image names that are not assigned to any board.
+        
+        Examples
+        --------
+        >>> images = board_repo.get_uncategorized_images()
+        >>> print(f"Found {len(images)} uncategorized images")
+        """
+        try:
+            response = self._client._make_request('GET', '/boards/none/image_names')
+            image_names = response.json()
+            
+            if isinstance(image_names, list):
+                return image_names
+            return []
+        except requests.HTTPError:
+            return []
+    
+    # =========================================================================
+    # Image Management Methods
+    # =========================================================================
+    
     def list_images(
         self,
         board_id: str,

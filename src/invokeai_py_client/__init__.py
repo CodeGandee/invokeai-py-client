@@ -26,14 +26,16 @@ Basic usage:
 >>> 
 >>> # Download generated image
 >>> image = results["output_image"]
->>> client.download_image(image.get_value(), "output.png")
+>>> image_bytes = client.board_repo.download_image(image.get_value())
+>>> with open("output.png", "wb") as f:
+...     f.write(image_bytes)
 
 Context manager usage:
 
 >>> with InvokeAIClient("localhost", 9090) as client:
-...     boards = client.list_boards()
+...     boards = client.board_repo.list_boards()
 ...     for board in boards:
-...         print(f"{board.name}: {board.image_count} images")
+...         print(f"{board.board_name}: {board.image_count} images")
 """
 
 __version__ = "0.1.0"

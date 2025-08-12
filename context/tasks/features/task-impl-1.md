@@ -60,3 +60,13 @@ Note that, whenever possible, use `imageio` instead of `cv2` for image encoding/
 - remove `upload_image` method, it is not needed anymore, we have more specific methods for uploading images
 - remove `get_starred_images` method, it is not needed anymore, we have `list_images` method that can filter by starred images
 - `download_image` should not take a file path, it should return the image data as bytes, so that using `imageio`.imdecode() can decode the bytes into np.ndarray, in RGB/RGBA format, depending on the image type. To test this, you should upload an image to the board, then download it, and check if the image is correctly decoded by `imageio`.
+
+# Task 3.6: move board-related methods to from `InvokeAIClient` to `BoardRepository`
+
+look for methods related to boards in `InvokeAIClient`, and move them to `BoardRepository`, which is a repository class that handles board-related operations. The methods should be moved to the `BoardRepository` class, and the `InvokeAIClient` should not deal with board-related operations directly.
+
+# Task 3.7: remove board-related methods from `InvokeAIClient`
+
+`InvokeAIClient` does not need to have board-related methods like `get_board_by_id`, `get_boards_by_name`, `list_boards`, `create_board`, etc, let the user use `BoardRepository` to handle board-related operations. 
+
+`InvokeAIClient` only needs to keep the `_board_repo`, and provide a property to access it, like `board_repo`, and let the user use it to access board-related operations.
