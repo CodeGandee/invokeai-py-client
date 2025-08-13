@@ -4,21 +4,28 @@
     {
       "from": "initial",
       "command": "init",
-      "timestamp": "2025-08-12T14:15:57.372Z",
+      "timestamp": "2025-08-13T13:43:40.469Z",
       "args": [
         {
-          "workingDirectory": "D:\\code\\invokeai-py-client"
+          "workingDirectory": "D:\\code\\invokeai-py-client",
+          "ideType": "claude"
         }
       ]
     },
     {
       "from": "initialized",
+      "command": "welcome",
+      "timestamp": "2025-08-13T13:44:18.865Z",
+      "args": []
+    },
+    {
+      "from": "service_discovery",
       "command": "action",
-      "timestamp": "2025-08-12T14:18:35.652Z",
+      "timestamp": "2025-08-13T13:44:49.343Z",
       "args": [
         "webapi-expert"
       ]
     }
   ],
-  "lastUpdated": "2025-08-12T14:18:35.682Z"
+  "lastUpdated": "2025-08-13T13:44:49.375Z"
 }
