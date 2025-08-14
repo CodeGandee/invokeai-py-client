@@ -1,0 +1,1389 @@
+{
+    "item_id": 43,
+    "status": "completed",
+    "priority": 0,
+    "batch_id": "12c11e31-26be-45ca-9a64-f7264da75b18",
+    "origin": "workflows",
+    "destination": "gallery",
+    "session_id": "463b6cff-043b-4e25-a5c7-56bc46318807",
+    "created_at": "2025-08-14 07:05:30.181",
+    "updated_at": "2025-08-14 07:05:54.278",
+    "started_at": "2025-08-14 07:05:30.197",
+    "completed_at": "2025-08-14 07:05:54.278",
+    "queue_id": "default",
+    "field_values": [],
+    "is_api_validation_run": false,
+    "session": {
+        "id": "463b6cff-043b-4e25-a5c7-56bc46318807",
+        "graph": {
+            "id": "0f209a0c-f1e1-4932-9114-13a6b02384a7",
+            "nodes": {
+                "2981a67c-480f-4237-9384-26b68dbf912b": {
+                    "id": "2981a67c-480f-4237-9384-26b68dbf912b",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "type": "flux_vae_encode"
+                },
+                "7e5172eb-48c1-44db-a770-8fd83e1435d1": {
+                    "board": {"board_id": "a8bdc2a2-364f-43cc-8972-66c3b8dad3c2"},
+                    "id": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+                    "is_intermediate": false,
+                    "use_cache": true,
+                    "type": "flux_vae_decode"
+                },
+                "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90": {
+                    "id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                    "is_intermediate": true,
+                    "use_cache": false,
+                    "model": {
+                        "key" : "4ea8c1b5-e56c-47c0-949e-3805d06c1301",
+                        "hash": "blake3:202d1d57667fdc0b5b088a46dce7c801ffcf2e0933d4c521e272399ece17aa7b",
+                        "name": "flux1-schnell",
+                        "base": "flux",
+                        "type": "main"
+                    },
+                    "t5_encoder_model": {
+                        "key" : "cc644930-283a-464f-b48f-831e6add8ed5",
+                        "hash": "blake3:38aafa42899cf4fe8b1055d17de6e7fe15af104d193da4a320e34ca24db32754",
+                        "name": "t5_bnb_int8_quantized_encoder",
+                        "base": "any",
+                        "type": "t5_encoder"
+                    },
+                    "clip_embed_model": {
+                        "key" : "6fca3865-ce3f-45cd-a4d4-1086ea40504e",
+                        "hash": "blake3:17c19f0ef941c3b7609a9c94a659ca5364de0be364a91d4179f0e39ba17c3b70",
+                        "name": "clip-vit-large-patch14",
+                        "base": "any",
+                        "type": "clip_embed"
+                    },
+                    "vae_model": {
+                        "key" : "53fdb8d0-6376-44b4-a02f-d25fdb375451",
+                        "hash": "blake3:ce21cb76364aa6e2421311cf4a4b5eb052a76c4f1cd207b50703d8978198a068",
+                        "name": "FLUX.1-schnell_ae",
+                        "base": "flux",
+                        "type": "vae"
+                    },
+                    "type": "flux_model_loader"
+                },
+                "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c": {
+                    "id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "prompt": "good looking girl",
+                    "type": "flux_text_encoder"
+                },
+                "4754c534-a5f3-4ad0-9382-7887985e668c": {
+                    "id": "4754c534-a5f3-4ad0-9382-7887985e668c",
+                    "is_intermediate": true,
+                    "use_cache": false,
+                    "low": 0,
+                    "high": 2147483647,
+                    "type": "rand_int"
+                },
+                "e87ba3b6-c98f-4644-903a-e13c421f2add": {
+                    "id": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "t5_max_seq_len": 256,
+                    "prompt": "naked, adult",
+                    "type": "flux_text_encoder"
+                },
+                "f14341d4-34a5-42a5-8221-acf98d82add7": {
+                    "id": "f14341d4-34a5-42a5-8221-acf98d82add7",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "type": "metadata_from_image"
+                },
+                "7b056f05-a4fe-40d3-b913-1a4b3897230f": {
+                    "id": "7b056f05-a4fe-40d3-b913-1a4b3897230f",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "image": {"image_name": "e95bfe35-42f9-4693-968a-65ea655641a5.png"},
+                    "type": "image"
+                },
+                "9c773392-5647-4f2b-958e-9da1707b6e6a": {
+                    "id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "denoising_start": 0.4,
+                    "denoising_end": 1,
+                    "add_noise": true,
+                    "cfg_scale": 1,
+                    "cfg_scale_start_step": 0,
+                    "cfg_scale_end_step": -1,
+                    "width": 1024,
+                    "height": 1024,
+                    "num_steps": 10,
+                    "guidance": 4,
+                    "seed": 0,
+                    "type": "flux_denoise_meta"
+                }
+            },
+            "edges": [
+                {
+                    "source"     : {"node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "field": "vae"},
+                    "destination": {"node_id": "2981a67c-480f-4237-9384-26b68dbf912b", "field": "vae"}
+                },
+                {
+                    "source"     : {"node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "field": "vae"},
+                    "destination": {"node_id": "7e5172eb-48c1-44db-a770-8fd83e1435d1", "field": "vae"}
+                },
+                {
+                    "source"     : {"node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "field": "max_seq_len"   },
+                    "destination": {"node_id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c", "field": "t5_max_seq_len"}
+                },
+                {
+                    "source"     : {"node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "field": "t5_encoder"},
+                    "destination": {"node_id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c", "field": "t5_encoder"}
+                },
+                {
+                    "source"     : {"node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "field": "clip"},
+                    "destination": {"node_id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c", "field": "clip"}
+                },
+                {
+                    "source"     : {"node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "field": "clip"},
+                    "destination": {"node_id": "e87ba3b6-c98f-4644-903a-e13c421f2add", "field": "clip"}
+                },
+                {
+                    "source"     : {"node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "field": "t5_encoder"},
+                    "destination": {"node_id": "e87ba3b6-c98f-4644-903a-e13c421f2add", "field": "t5_encoder"}
+                },
+                {
+                    "source"     : {"node_id": "7b056f05-a4fe-40d3-b913-1a4b3897230f", "field": "image"},
+                    "destination": {"node_id": "f14341d4-34a5-42a5-8221-acf98d82add7", "field": "image"}
+                },
+                {
+                    "source"     : {"node_id": "f14341d4-34a5-42a5-8221-acf98d82add7", "field": "metadata"},
+                    "destination": {"node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a", "field": "metadata"}
+                },
+                {
+                    "source"     : {"node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a", "field": "metadata"},
+                    "destination": {"node_id": "7e5172eb-48c1-44db-a770-8fd83e1435d1", "field": "metadata"}
+                },
+                {
+                    "source"     : {"node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "field": "transformer"},
+                    "destination": {"node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a", "field": "transformer"}
+                },
+                {
+                    "source": {"node_id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c", "field": "conditioning"},
+                    "destination": {
+                        "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                        "field"  : "positive_text_conditioning"
+                    }
+                },
+                {
+                    "source": {"node_id": "e87ba3b6-c98f-4644-903a-e13c421f2add", "field": "conditioning"},
+                    "destination": {
+                        "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                        "field"  : "negative_text_conditioning"
+                    }
+                },
+                {
+                    "source"     : {"node_id": "2981a67c-480f-4237-9384-26b68dbf912b", "field": "latents"},
+                    "destination": {"node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a", "field": "latents"}
+                },
+                {
+                    "source"     : {"node_id": "2981a67c-480f-4237-9384-26b68dbf912b", "field": "width"},
+                    "destination": {"node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a", "field": "width"}
+                },
+                {
+                    "source"     : {"node_id": "2981a67c-480f-4237-9384-26b68dbf912b", "field": "height"},
+                    "destination": {"node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a", "field": "height"}
+                },
+                {
+                    "source"     : {"node_id": "4754c534-a5f3-4ad0-9382-7887985e668c", "field": "value"},
+                    "destination": {"node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a", "field": "seed" }
+                },
+                {
+                    "source"     : {"node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a", "field": "latents"},
+                    "destination": {"node_id": "7e5172eb-48c1-44db-a770-8fd83e1435d1", "field": "latents"}
+                },
+                {
+                    "source"     : {"node_id": "7b056f05-a4fe-40d3-b913-1a4b3897230f", "field": "image"},
+                    "destination": {"node_id": "2981a67c-480f-4237-9384-26b68dbf912b", "field": "image"}
+                }
+            ]
+        },
+        "execution_graph": {
+            "id": "71b8133b-0330-4faf-abed-d260e65907d8",
+            "nodes": {
+                "69ffe705-2589-4261-a4a3-304d75479123": {
+                    "id": "69ffe705-2589-4261-a4a3-304d75479123",
+                    "is_intermediate": true,
+                    "use_cache": false,
+                    "model": {
+                        "key" : "4ea8c1b5-e56c-47c0-949e-3805d06c1301",
+                        "hash": "blake3:202d1d57667fdc0b5b088a46dce7c801ffcf2e0933d4c521e272399ece17aa7b",
+                        "name": "flux1-schnell",
+                        "base": "flux",
+                        "type": "main"
+                    },
+                    "t5_encoder_model": {
+                        "key" : "cc644930-283a-464f-b48f-831e6add8ed5",
+                        "hash": "blake3:38aafa42899cf4fe8b1055d17de6e7fe15af104d193da4a320e34ca24db32754",
+                        "name": "t5_bnb_int8_quantized_encoder",
+                        "base": "any",
+                        "type": "t5_encoder"
+                    },
+                    "clip_embed_model": {
+                        "key" : "6fca3865-ce3f-45cd-a4d4-1086ea40504e",
+                        "hash": "blake3:17c19f0ef941c3b7609a9c94a659ca5364de0be364a91d4179f0e39ba17c3b70",
+                        "name": "clip-vit-large-patch14",
+                        "base": "any",
+                        "type": "clip_embed"
+                    },
+                    "vae_model": {
+                        "key" : "53fdb8d0-6376-44b4-a02f-d25fdb375451",
+                        "hash": "blake3:ce21cb76364aa6e2421311cf4a4b5eb052a76c4f1cd207b50703d8978198a068",
+                        "name": "FLUX.1-schnell_ae",
+                        "base": "flux",
+                        "type": "vae"
+                    },
+                    "type": "flux_model_loader"
+                },
+                "de16fd38-aec1-443c-ad83-91a8d4fdbafb": {
+                    "id": "de16fd38-aec1-443c-ad83-91a8d4fdbafb",
+                    "is_intermediate": true,
+                    "use_cache": false,
+                    "low": 0,
+                    "high": 2147483647,
+                    "type": "rand_int"
+                },
+                "6f3efe48-de6d-4ffe-8a52-3550ec2deb4a": {
+                    "id": "6f3efe48-de6d-4ffe-8a52-3550ec2deb4a",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "image": {"image_name": "e95bfe35-42f9-4693-968a-65ea655641a5.png"},
+                    "type": "image"
+                },
+                "65f0eda3-a019-4673-8c75-0ab36b04b21f": {
+                    "id": "65f0eda3-a019-4673-8c75-0ab36b04b21f",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "clip": {
+                        "tokenizer": {
+                            "key"          : "6fca3865-ce3f-45cd-a4d4-1086ea40504e",
+                            "hash"         : "blake3:17c19f0ef941c3b7609a9c94a659ca5364de0be364a91d4179f0e39ba17c3b70",
+                            "name"         : "clip-vit-large-patch14",
+                            "base"         : "any",
+                            "type"         : "clip_embed",
+                            "submodel_type": "tokenizer"
+                        },
+                        "text_encoder": {
+                            "key"          : "6fca3865-ce3f-45cd-a4d4-1086ea40504e",
+                            "hash"         : "blake3:17c19f0ef941c3b7609a9c94a659ca5364de0be364a91d4179f0e39ba17c3b70",
+                            "name"         : "clip-vit-large-patch14",
+                            "base"         : "any",
+                            "type"         : "clip_embed",
+                            "submodel_type": "text_encoder"
+                        },
+                        "skipped_layers": 0,
+                        "loras": []
+                    },
+                    "t5_encoder": {
+                        "tokenizer": {
+                            "key"          : "cc644930-283a-464f-b48f-831e6add8ed5",
+                            "hash"         : "blake3:38aafa42899cf4fe8b1055d17de6e7fe15af104d193da4a320e34ca24db32754",
+                            "name"         : "t5_bnb_int8_quantized_encoder",
+                            "base"         : "any",
+                            "type"         : "t5_encoder",
+                            "submodel_type": "tokenizer_2"
+                        },
+                        "text_encoder": {
+                            "key"          : "cc644930-283a-464f-b48f-831e6add8ed5",
+                            "hash"         : "blake3:38aafa42899cf4fe8b1055d17de6e7fe15af104d193da4a320e34ca24db32754",
+                            "name"         : "t5_bnb_int8_quantized_encoder",
+                            "base"         : "any",
+                            "type"         : "t5_encoder",
+                            "submodel_type": "text_encoder_2"
+                        },
+                        "loras": []
+                    },
+                    "t5_max_seq_len": 256,
+                    "prompt": "naked, adult",
+                    "type": "flux_text_encoder"
+                },
+                "b8bc5a45-1c39-4167-b3ed-b9219ae1215d": {
+                    "id": "b8bc5a45-1c39-4167-b3ed-b9219ae1215d",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "clip": {
+                        "tokenizer": {
+                            "key"          : "6fca3865-ce3f-45cd-a4d4-1086ea40504e",
+                            "hash"         : "blake3:17c19f0ef941c3b7609a9c94a659ca5364de0be364a91d4179f0e39ba17c3b70",
+                            "name"         : "clip-vit-large-patch14",
+                            "base"         : "any",
+                            "type"         : "clip_embed",
+                            "submodel_type": "tokenizer"
+                        },
+                        "text_encoder": {
+                            "key"          : "6fca3865-ce3f-45cd-a4d4-1086ea40504e",
+                            "hash"         : "blake3:17c19f0ef941c3b7609a9c94a659ca5364de0be364a91d4179f0e39ba17c3b70",
+                            "name"         : "clip-vit-large-patch14",
+                            "base"         : "any",
+                            "type"         : "clip_embed",
+                            "submodel_type": "text_encoder"
+                        },
+                        "skipped_layers": 0,
+                        "loras": []
+                    },
+                    "t5_encoder": {
+                        "tokenizer": {
+                            "key"          : "cc644930-283a-464f-b48f-831e6add8ed5",
+                            "hash"         : "blake3:38aafa42899cf4fe8b1055d17de6e7fe15af104d193da4a320e34ca24db32754",
+                            "name"         : "t5_bnb_int8_quantized_encoder",
+                            "base"         : "any",
+                            "type"         : "t5_encoder",
+                            "submodel_type": "tokenizer_2"
+                        },
+                        "text_encoder": {
+                            "key"          : "cc644930-283a-464f-b48f-831e6add8ed5",
+                            "hash"         : "blake3:38aafa42899cf4fe8b1055d17de6e7fe15af104d193da4a320e34ca24db32754",
+                            "name"         : "t5_bnb_int8_quantized_encoder",
+                            "base"         : "any",
+                            "type"         : "t5_encoder",
+                            "submodel_type": "text_encoder_2"
+                        },
+                        "loras": []
+                    },
+                    "t5_max_seq_len": 256,
+                    "prompt": "good looking girl",
+                    "type": "flux_text_encoder"
+                },
+                "67328394-2afa-405f-927d-2d5f21848370": {
+                    "id": "67328394-2afa-405f-927d-2d5f21848370",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "image": {"image_name": "e95bfe35-42f9-4693-968a-65ea655641a5.png"},
+                    "type": "metadata_from_image"
+                },
+                "f46705f7-1f13-41d3-9ff4-3af6bc940bcc": {
+                    "id": "f46705f7-1f13-41d3-9ff4-3af6bc940bcc",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "image": {"image_name": "e95bfe35-42f9-4693-968a-65ea655641a5.png"},
+                    "vae": {
+                        "vae": {
+                            "key"          : "53fdb8d0-6376-44b4-a02f-d25fdb375451",
+                            "hash"         : "blake3:ce21cb76364aa6e2421311cf4a4b5eb052a76c4f1cd207b50703d8978198a068",
+                            "name"         : "FLUX.1-schnell_ae",
+                            "base"         : "flux",
+                            "type"         : "vae",
+                            "submodel_type": "vae"
+                        },
+                        "seamless_axes": []
+                    },
+                    "type": "flux_vae_encode"
+                },
+                "c4c36286-14b9-45d2-bb13-557000e4608d": {
+                    "metadata": {
+                        "generation_mode": "sdxl_txt2img",
+                        "positive_prompt": "beautiful young-- girl at bar, lace",
+                        "negative_prompt": "naked",
+                        "width": 1024,
+                        "height": 1024,
+                        "seed": 546553575,
+                        "rand_device": "cpu",
+                        "cfg_scale": 1,
+                        "cfg_rescale_multiplier": 0,
+                        "steps": 10,
+                        "scheduler": "euler",
+                        "seamless_x": false,
+                        "seamless_y": false,
+                        "model": {
+                            "key"          : "4ea8c1b5-e56c-47c0-949e-3805d06c1301",
+                            "hash"         : "blake3:202d1d57667fdc0b5b088a46dce7c801ffcf2e0933d4c521e272399ece17aa7b",
+                            "name"         : "flux1-schnell",
+                            "base"         : "flux",
+                            "type"         : "main",
+                            "submodel_type": "transformer"
+                        },
+                        "positive_style_prompt": "beautiful young-- girl at bar, lace",
+                        "negative_style_prompt": "naked",
+                        "ref_images": [],
+                        "app_version": "6.3.0",
+                        "guidance": 4,
+                        "denoising_start": 0.4,
+                        "denoising_end": 1,
+                        "cfg_scale_start_step": 0,
+                        "cfg_scale_end_step": -1
+                    },
+                    "id": "c4c36286-14b9-45d2-bb13-557000e4608d",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "latents": {"latents_name": "Tensor_90dba07f-9ae4-44e0-a85b-876c5fd87fa0"},
+                    "denoising_start": 0.4,
+                    "denoising_end": 1,
+                    "add_noise": true,
+                    "transformer": {
+                        "transformer": {
+                            "key"          : "4ea8c1b5-e56c-47c0-949e-3805d06c1301",
+                            "hash"         : "blake3:202d1d57667fdc0b5b088a46dce7c801ffcf2e0933d4c521e272399ece17aa7b",
+                            "name"         : "flux1-schnell",
+                            "base"         : "flux",
+                            "type"         : "main",
+                            "submodel_type": "transformer"
+                        },
+                        "loras": []
+                    },
+                    "positive_text_conditioning": {
+                        "conditioning_name": "ConditioningFieldData_6c2d500e-4bd6-4e87-bb62-4b239343f4dc"
+                    },
+                    "negative_text_conditioning": {
+                        "conditioning_name": "ConditioningFieldData_c2b0a783-a55c-4d94-9dc1-1f251483960e"
+                    },
+                    "cfg_scale": 1,
+                    "cfg_scale_start_step": 0,
+                    "cfg_scale_end_step": -1,
+                    "width": 1024,
+                    "height": 1024,
+                    "num_steps": 10,
+                    "guidance": 4,
+                    "seed": 546553575,
+                    "type": "flux_denoise_meta"
+                },
+                "224054de-ea1c-413a-9418-8ca29f543c64": {
+                    "board": {"board_id": "a8bdc2a2-364f-43cc-8972-66c3b8dad3c2"},
+                    "metadata": {
+                        "generation_mode": "sdxl_txt2img",
+                        "positive_prompt": "beautiful young-- girl at bar, lace",
+                        "negative_prompt": "naked",
+                        "width": 1024,
+                        "height": 1024,
+                        "seed": 546553575,
+                        "rand_device": "cpu",
+                        "cfg_scale": 1,
+                        "cfg_rescale_multiplier": 0,
+                        "steps": 10,
+                        "scheduler": "euler",
+                        "seamless_x": false,
+                        "seamless_y": false,
+                        "model": {
+                            "key"          : "4ea8c1b5-e56c-47c0-949e-3805d06c1301",
+                            "hash"         : "blake3:202d1d57667fdc0b5b088a46dce7c801ffcf2e0933d4c521e272399ece17aa7b",
+                            "name"         : "flux1-schnell",
+                            "base"         : "flux",
+                            "type"         : "main",
+                            "submodel_type": "transformer"
+                        },
+                        "positive_style_prompt": "beautiful young-- girl at bar, lace",
+                        "negative_style_prompt": "naked",
+                        "ref_images": [],
+                        "app_version": "6.3.0",
+                        "guidance": 4,
+                        "denoising_start": 0.4,
+                        "denoising_end": 1,
+                        "cfg_scale_start_step": 0,
+                        "cfg_scale_end_step": -1
+                    },
+                    "id": "224054de-ea1c-413a-9418-8ca29f543c64",
+                    "is_intermediate": false,
+                    "use_cache": true,
+                    "latents": {"latents_name": "Tensor_8e5bead4-840b-402d-9b9b-c6f0ddda6c29"},
+                    "vae": {
+                        "vae": {
+                            "key"          : "53fdb8d0-6376-44b4-a02f-d25fdb375451",
+                            "hash"         : "blake3:ce21cb76364aa6e2421311cf4a4b5eb052a76c4f1cd207b50703d8978198a068",
+                            "name"         : "FLUX.1-schnell_ae",
+                            "base"         : "flux",
+                            "type"         : "vae",
+                            "submodel_type": "vae"
+                        },
+                        "seamless_axes": []
+                    },
+                    "type": "flux_vae_decode"
+                }
+            },
+            "edges": [
+                {
+                    "source"     : {"node_id": "69ffe705-2589-4261-a4a3-304d75479123", "field": "clip"},
+                    "destination": {"node_id": "65f0eda3-a019-4673-8c75-0ab36b04b21f", "field": "clip"}
+                },
+                {
+                    "source"     : {"node_id": "69ffe705-2589-4261-a4a3-304d75479123", "field": "t5_encoder"},
+                    "destination": {"node_id": "65f0eda3-a019-4673-8c75-0ab36b04b21f", "field": "t5_encoder"}
+                },
+                {
+                    "source"     : {"node_id": "69ffe705-2589-4261-a4a3-304d75479123", "field": "max_seq_len"   },
+                    "destination": {"node_id": "b8bc5a45-1c39-4167-b3ed-b9219ae1215d", "field": "t5_max_seq_len"}
+                },
+                {
+                    "source"     : {"node_id": "69ffe705-2589-4261-a4a3-304d75479123", "field": "t5_encoder"},
+                    "destination": {"node_id": "b8bc5a45-1c39-4167-b3ed-b9219ae1215d", "field": "t5_encoder"}
+                },
+                {
+                    "source"     : {"node_id": "69ffe705-2589-4261-a4a3-304d75479123", "field": "clip"},
+                    "destination": {"node_id": "b8bc5a45-1c39-4167-b3ed-b9219ae1215d", "field": "clip"}
+                },
+                {
+                    "source"     : {"node_id": "6f3efe48-de6d-4ffe-8a52-3550ec2deb4a", "field": "image"},
+                    "destination": {"node_id": "67328394-2afa-405f-927d-2d5f21848370", "field": "image"}
+                },
+                {
+                    "source"     : {"node_id": "69ffe705-2589-4261-a4a3-304d75479123", "field": "vae"},
+                    "destination": {"node_id": "f46705f7-1f13-41d3-9ff4-3af6bc940bcc", "field": "vae"}
+                },
+                {
+                    "source"     : {"node_id": "6f3efe48-de6d-4ffe-8a52-3550ec2deb4a", "field": "image"},
+                    "destination": {"node_id": "f46705f7-1f13-41d3-9ff4-3af6bc940bcc", "field": "image"}
+                },
+                {
+                    "source"     : {"node_id": "67328394-2afa-405f-927d-2d5f21848370", "field": "metadata"},
+                    "destination": {"node_id": "c4c36286-14b9-45d2-bb13-557000e4608d", "field": "metadata"}
+                },
+                {
+                    "source"     : {"node_id": "69ffe705-2589-4261-a4a3-304d75479123", "field": "transformer"},
+                    "destination": {"node_id": "c4c36286-14b9-45d2-bb13-557000e4608d", "field": "transformer"}
+                },
+                {
+                    "source": {"node_id": "b8bc5a45-1c39-4167-b3ed-b9219ae1215d", "field": "conditioning"},
+                    "destination": {
+                        "node_id": "c4c36286-14b9-45d2-bb13-557000e4608d",
+                        "field"  : "positive_text_conditioning"
+                    }
+                },
+                {
+                    "source": {"node_id": "65f0eda3-a019-4673-8c75-0ab36b04b21f", "field": "conditioning"},
+                    "destination": {
+                        "node_id": "c4c36286-14b9-45d2-bb13-557000e4608d",
+                        "field"  : "negative_text_conditioning"
+                    }
+                },
+                {
+                    "source"     : {"node_id": "f46705f7-1f13-41d3-9ff4-3af6bc940bcc", "field": "latents"},
+                    "destination": {"node_id": "c4c36286-14b9-45d2-bb13-557000e4608d", "field": "latents"}
+                },
+                {
+                    "source"     : {"node_id": "f46705f7-1f13-41d3-9ff4-3af6bc940bcc", "field": "width"},
+                    "destination": {"node_id": "c4c36286-14b9-45d2-bb13-557000e4608d", "field": "width"}
+                },
+                {
+                    "source"     : {"node_id": "f46705f7-1f13-41d3-9ff4-3af6bc940bcc", "field": "height"},
+                    "destination": {"node_id": "c4c36286-14b9-45d2-bb13-557000e4608d", "field": "height"}
+                },
+                {
+                    "source"     : {"node_id": "de16fd38-aec1-443c-ad83-91a8d4fdbafb", "field": "value"},
+                    "destination": {"node_id": "c4c36286-14b9-45d2-bb13-557000e4608d", "field": "seed" }
+                },
+                {
+                    "source"     : {"node_id": "69ffe705-2589-4261-a4a3-304d75479123", "field": "vae"},
+                    "destination": {"node_id": "224054de-ea1c-413a-9418-8ca29f543c64", "field": "vae"}
+                },
+                {
+                    "source"     : {"node_id": "c4c36286-14b9-45d2-bb13-557000e4608d", "field": "metadata"},
+                    "destination": {"node_id": "224054de-ea1c-413a-9418-8ca29f543c64", "field": "metadata"}
+                },
+                {
+                    "source"     : {"node_id": "c4c36286-14b9-45d2-bb13-557000e4608d", "field": "latents"},
+                    "destination": {"node_id": "224054de-ea1c-413a-9418-8ca29f543c64", "field": "latents"}
+                }
+            ]
+        },
+        "executed": [
+            "f14341d4-34a5-42a5-8221-acf98d82add7",
+            "69ffe705-2589-4261-a4a3-304d75479123",
+            "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+            "67328394-2afa-405f-927d-2d5f21848370",
+            "65f0eda3-a019-4673-8c75-0ab36b04b21f",
+            "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+            "de16fd38-aec1-443c-ad83-91a8d4fdbafb",
+            "c4c36286-14b9-45d2-bb13-557000e4608d",
+            "4754c534-a5f3-4ad0-9382-7887985e668c",
+            "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "6f3efe48-de6d-4ffe-8a52-3550ec2deb4a",
+            "e87ba3b6-c98f-4644-903a-e13c421f2add",
+            "7b056f05-a4fe-40d3-b913-1a4b3897230f",
+            "f46705f7-1f13-41d3-9ff4-3af6bc940bcc",
+            "2981a67c-480f-4237-9384-26b68dbf912b",
+            "b8bc5a45-1c39-4167-b3ed-b9219ae1215d",
+            "224054de-ea1c-413a-9418-8ca29f543c64"
+        ],
+        "executed_history": [
+            "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "e87ba3b6-c98f-4644-903a-e13c421f2add",
+            "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+            "4754c534-a5f3-4ad0-9382-7887985e668c",
+            "7b056f05-a4fe-40d3-b913-1a4b3897230f",
+            "2981a67c-480f-4237-9384-26b68dbf912b",
+            "f14341d4-34a5-42a5-8221-acf98d82add7",
+            "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "7e5172eb-48c1-44db-a770-8fd83e1435d1"
+        ],
+        "results": {
+            "69ffe705-2589-4261-a4a3-304d75479123": {
+                "transformer": {
+                    "transformer": {
+                        "key"          : "4ea8c1b5-e56c-47c0-949e-3805d06c1301",
+                        "hash"         : "blake3:202d1d57667fdc0b5b088a46dce7c801ffcf2e0933d4c521e272399ece17aa7b",
+                        "name"         : "flux1-schnell",
+                        "base"         : "flux",
+                        "type"         : "main",
+                        "submodel_type": "transformer"
+                    },
+                    "loras": []
+                },
+                "clip": {
+                    "tokenizer": {
+                        "key"          : "6fca3865-ce3f-45cd-a4d4-1086ea40504e",
+                        "hash"         : "blake3:17c19f0ef941c3b7609a9c94a659ca5364de0be364a91d4179f0e39ba17c3b70",
+                        "name"         : "clip-vit-large-patch14",
+                        "base"         : "any",
+                        "type"         : "clip_embed",
+                        "submodel_type": "tokenizer"
+                    },
+                    "text_encoder": {
+                        "key"          : "6fca3865-ce3f-45cd-a4d4-1086ea40504e",
+                        "hash"         : "blake3:17c19f0ef941c3b7609a9c94a659ca5364de0be364a91d4179f0e39ba17c3b70",
+                        "name"         : "clip-vit-large-patch14",
+                        "base"         : "any",
+                        "type"         : "clip_embed",
+                        "submodel_type": "text_encoder"
+                    },
+                    "skipped_layers": 0,
+                    "loras": []
+                },
+                "t5_encoder": {
+                    "tokenizer": {
+                        "key"          : "cc644930-283a-464f-b48f-831e6add8ed5",
+                        "hash"         : "blake3:38aafa42899cf4fe8b1055d17de6e7fe15af104d193da4a320e34ca24db32754",
+                        "name"         : "t5_bnb_int8_quantized_encoder",
+                        "base"         : "any",
+                        "type"         : "t5_encoder",
+                        "submodel_type": "tokenizer_2"
+                    },
+                    "text_encoder": {
+                        "key"          : "cc644930-283a-464f-b48f-831e6add8ed5",
+                        "hash"         : "blake3:38aafa42899cf4fe8b1055d17de6e7fe15af104d193da4a320e34ca24db32754",
+                        "name"         : "t5_bnb_int8_quantized_encoder",
+                        "base"         : "any",
+                        "type"         : "t5_encoder",
+                        "submodel_type": "text_encoder_2"
+                    },
+                    "loras": []
+                },
+                "vae": {
+                    "vae": {
+                        "key"          : "53fdb8d0-6376-44b4-a02f-d25fdb375451",
+                        "hash"         : "blake3:ce21cb76364aa6e2421311cf4a4b5eb052a76c4f1cd207b50703d8978198a068",
+                        "name"         : "FLUX.1-schnell_ae",
+                        "base"         : "flux",
+                        "type"         : "vae",
+                        "submodel_type": "vae"
+                    },
+                    "seamless_axes": []
+                },
+                "max_seq_len": 256,
+                "type": "flux_model_loader_output"
+            },
+            "65f0eda3-a019-4673-8c75-0ab36b04b21f": {
+                "conditioning": {"conditioning_name": "ConditioningFieldData_c2b0a783-a55c-4d94-9dc1-1f251483960e"},
+                "type": "flux_conditioning_output"
+            },
+            "b8bc5a45-1c39-4167-b3ed-b9219ae1215d": {
+                "conditioning": {"conditioning_name": "ConditioningFieldData_6c2d500e-4bd6-4e87-bb62-4b239343f4dc"},
+                "type": "flux_conditioning_output"
+            },
+            "de16fd38-aec1-443c-ad83-91a8d4fdbafb": {"value": 546553575, "type": "integer_output"},
+            "6f3efe48-de6d-4ffe-8a52-3550ec2deb4a": {
+                "image": {"image_name": "e95bfe35-42f9-4693-968a-65ea655641a5.png"},
+                "width": 1024,
+                "height": 1024,
+                "type": "image_output"
+            },
+            "f46705f7-1f13-41d3-9ff4-3af6bc940bcc": {
+                "latents": {"latents_name": "Tensor_90dba07f-9ae4-44e0-a85b-876c5fd87fa0"},
+                "width": 1024,
+                "height": 1024,
+                "type": "latents_output"
+            },
+            "67328394-2afa-405f-927d-2d5f21848370": {
+                "metadata": {
+                    "generation_mode": "sdxl_txt2img",
+                    "positive_prompt": "beautiful young-- girl at bar, lace",
+                    "negative_prompt": "naked",
+                    "width": 1024,
+                    "height": 1024,
+                    "seed": 380461945,
+                    "rand_device": "cpu",
+                    "cfg_scale": 7.5,
+                    "cfg_rescale_multiplier": 0,
+                    "steps": 20,
+                    "scheduler": "euler",
+                    "seamless_x": false,
+                    "seamless_y": false,
+                    "model": {
+                        "key" : "b5f70e1b-17fd-403c-8f57-818bb20f0d77",
+                        "hash": "blake3:a7656bb5114035b907c48f5f50cd5d006e1384f94fbd4ed55398b57b52727bac",
+                        "name": "sdxlUnstableDiffusers_v11Rundiffusion",
+                        "base": "sdxl",
+                        "type": "main"
+                    },
+                    "positive_style_prompt": "beautiful young-- girl at bar, lace",
+                    "negative_style_prompt": "naked",
+                    "ref_images": [],
+                    "app_version": "6.3.0"
+                },
+                "type": "metadata_output"
+            },
+            "c4c36286-14b9-45d2-bb13-557000e4608d": {
+                "metadata": {
+                    "generation_mode": "sdxl_txt2img",
+                    "positive_prompt": "beautiful young-- girl at bar, lace",
+                    "negative_prompt": "naked",
+                    "width": 1024,
+                    "height": 1024,
+                    "seed": 546553575,
+                    "rand_device": "cpu",
+                    "cfg_scale": 1,
+                    "cfg_rescale_multiplier": 0,
+                    "steps": 10,
+                    "scheduler": "euler",
+                    "seamless_x": false,
+                    "seamless_y": false,
+                    "model": {
+                        "key"          : "4ea8c1b5-e56c-47c0-949e-3805d06c1301",
+                        "hash"         : "blake3:202d1d57667fdc0b5b088a46dce7c801ffcf2e0933d4c521e272399ece17aa7b",
+                        "name"         : "flux1-schnell",
+                        "base"         : "flux",
+                        "type"         : "main",
+                        "submodel_type": "transformer"
+                    },
+                    "positive_style_prompt": "beautiful young-- girl at bar, lace",
+                    "negative_style_prompt": "naked",
+                    "ref_images": [],
+                    "app_version": "6.3.0",
+                    "guidance": 4,
+                    "denoising_start": 0.4,
+                    "denoising_end": 1,
+                    "cfg_scale_start_step": 0,
+                    "cfg_scale_end_step": -1
+                },
+                "type": "latents_meta_output",
+                "latents": {"latents_name": "Tensor_8e5bead4-840b-402d-9b9b-c6f0ddda6c29"},
+                "width": 1024,
+                "height": 1024
+            },
+            "224054de-ea1c-413a-9418-8ca29f543c64": {
+                "image": {"image_name": "de981613-6dea-4ae9-b8f0-b5019372b90d.png"},
+                "width": 1024,
+                "height": 1024,
+                "type": "image_output"
+            }
+        },
+        "errors": {},
+        "prepared_source_mapping": {
+            "69ffe705-2589-4261-a4a3-304d75479123": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "de16fd38-aec1-443c-ad83-91a8d4fdbafb": "4754c534-a5f3-4ad0-9382-7887985e668c",
+            "6f3efe48-de6d-4ffe-8a52-3550ec2deb4a": "7b056f05-a4fe-40d3-b913-1a4b3897230f",
+            "65f0eda3-a019-4673-8c75-0ab36b04b21f": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+            "b8bc5a45-1c39-4167-b3ed-b9219ae1215d": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+            "67328394-2afa-405f-927d-2d5f21848370": "f14341d4-34a5-42a5-8221-acf98d82add7",
+            "f46705f7-1f13-41d3-9ff4-3af6bc940bcc": "2981a67c-480f-4237-9384-26b68dbf912b",
+            "c4c36286-14b9-45d2-bb13-557000e4608d": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "224054de-ea1c-413a-9418-8ca29f543c64": "7e5172eb-48c1-44db-a770-8fd83e1435d1"
+        },
+        "source_prepared_mapping": {
+            "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90": ["69ffe705-2589-4261-a4a3-304d75479123"],
+            "4754c534-a5f3-4ad0-9382-7887985e668c": ["de16fd38-aec1-443c-ad83-91a8d4fdbafb"],
+            "7b056f05-a4fe-40d3-b913-1a4b3897230f": ["6f3efe48-de6d-4ffe-8a52-3550ec2deb4a"],
+            "e87ba3b6-c98f-4644-903a-e13c421f2add": ["65f0eda3-a019-4673-8c75-0ab36b04b21f"],
+            "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c": ["b8bc5a45-1c39-4167-b3ed-b9219ae1215d"],
+            "f14341d4-34a5-42a5-8221-acf98d82add7": ["67328394-2afa-405f-927d-2d5f21848370"],
+            "2981a67c-480f-4237-9384-26b68dbf912b": ["f46705f7-1f13-41d3-9ff4-3af6bc940bcc"],
+            "9c773392-5647-4f2b-958e-9da1707b6e6a": ["c4c36286-14b9-45d2-bb13-557000e4608d"],
+            "7e5172eb-48c1-44db-a770-8fd83e1435d1": ["224054de-ea1c-413a-9418-8ca29f543c64"]
+        }
+    },
+    "workflow": {
+        "name": "flux-image-to-image",
+        "author": "InvokeAI",
+        "description": "A simple image-to-image workflow using a FLUX dev model. ",
+        "version": "1.1.0",
+        "contact": "",
+        "tags": "flux, image to image",
+        "notes": "Prerequisite model downloads: T5 Encoder, CLIP-L Encoder, and FLUX VAE. Quantized and un-quantized versions can be found in the starter models tab within your Model Manager. We recommend using FLUX dev models for image-to-image workflows. The image-to-image performance with FLUX schnell models is poor.",
+        "exposedFields": [
+            {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "model"           },
+            {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "t5_encoder_model"},
+            {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "clip_embed_model"},
+            {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "vae_model"       },
+            {"nodeId": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c", "fieldName": "prompt"          },
+            {"nodeId": "2981a67c-480f-4237-9384-26b68dbf912b", "fieldName": "image"           }
+        ],
+        "meta": {"version": "3.0.0", "category": "user"},
+        "nodes": [
+            {
+                "id": "2981a67c-480f-4237-9384-26b68dbf912b",
+                "type": "invocation",
+                "data": {
+                    "id": "2981a67c-480f-4237-9384-26b68dbf912b",
+                    "version": "1.0.1",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "flux_vae_encode",
+                    "inputs": {
+                        "image": {"name": "image", "label": "", "description": ""},
+                        "vae"  : {"name": "vae",   "label": "", "description": ""}
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": 276.7626039605479, "y": 664.7050903471228}
+            },
+            {
+                "id": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+                "type": "invocation",
+                "data": {
+                    "id": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+                    "version": "1.0.2",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "flux_vae_decode",
+                    "inputs": {
+                        "board": {
+                            "name": "board",
+                            "label": "",
+                            "description": "",
+                            "value": {"board_id": "a8bdc2a2-364f-43cc-8972-66c3b8dad3c2"}
+                        },
+                        "metadata": {"name": "metadata", "label": "", "description": ""},
+                        "latents": {"name": "latents", "label": "", "description": ""},
+                        "vae": {"name": "vae", "label": "", "description": ""}
+                    },
+                    "isOpen": true,
+                    "isIntermediate": false,
+                    "useCache": true
+                },
+                "position": {"x": 1278, "y": 110}
+            },
+            {
+                "id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                "type": "invocation",
+                "data": {
+                    "id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                    "version": "1.0.6",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "flux_model_loader",
+                    "inputs": {
+                        "model": {
+                            "name": "model",
+                            "label": "Model (dev variant recommended for Image-to-Image)",
+                            "description": "",
+                            "value": {
+                                "key" : "4ea8c1b5-e56c-47c0-949e-3805d06c1301",
+                                "hash": "blake3:202d1d57667fdc0b5b088a46dce7c801ffcf2e0933d4c521e272399ece17aa7b",
+                                "name": "flux1-schnell",
+                                "base": "flux",
+                                "type": "main"
+                            }
+                        },
+                        "t5_encoder_model": {
+                            "name": "t5_encoder_model",
+                            "label": "",
+                            "description": "",
+                            "value": {
+                                "key" : "cc644930-283a-464f-b48f-831e6add8ed5",
+                                "hash": "blake3:38aafa42899cf4fe8b1055d17de6e7fe15af104d193da4a320e34ca24db32754",
+                                "name": "t5_bnb_int8_quantized_encoder",
+                                "base": "any",
+                                "type": "t5_encoder"
+                            }
+                        },
+                        "clip_embed_model": {
+                            "name": "clip_embed_model",
+                            "label": "",
+                            "description": "",
+                            "value": {
+                                "key" : "6fca3865-ce3f-45cd-a4d4-1086ea40504e",
+                                "hash": "blake3:17c19f0ef941c3b7609a9c94a659ca5364de0be364a91d4179f0e39ba17c3b70",
+                                "name": "clip-vit-large-patch14",
+                                "base": "any",
+                                "type": "clip_embed"
+                            }
+                        },
+                        "vae_model": {
+                            "name": "vae_model",
+                            "label": "",
+                            "description": "",
+                            "value": {
+                                "key" : "53fdb8d0-6376-44b4-a02f-d25fdb375451",
+                                "hash": "blake3:ce21cb76364aa6e2421311cf4a4b5eb052a76c4f1cd207b50703d8978198a068",
+                                "name": "FLUX.1-schnell_ae",
+                                "base": "flux",
+                                "type": "vae"
+                            }
+                        }
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": false
+                },
+                "position": {"x": -249.97263836608238, "y": -1.8654674504931563}
+            },
+            {
+                "id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+                "type": "invocation",
+                "data": {
+                    "id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+                    "version": "1.1.2",
+                    "nodePack": "invokeai",
+                    "label": "Positive Prompt - FLUX",
+                    "notes": "",
+                    "type": "flux_text_encoder",
+                    "inputs": {
+                        "clip": {"name": "clip", "label": "", "description": ""},
+                        "t5_encoder": {"name": "t5_encoder", "label": "", "description": ""},
+                        "t5_max_seq_len": {
+                            "name": "t5_max_seq_len",
+                            "label": "T5 Max Seq Len",
+                            "description": "",
+                            "value": 256
+                        },
+                        "prompt": {
+                            "name"       : "prompt",
+                            "label"      : "Positive Prompt",
+                            "description": "",
+                            "value"      : "good looking girl"
+                        },
+                        "mask": {"name": "mask", "label": "", "description": ""}
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": 276.7626039605479, "y": 104.70509034712279}
+            },
+            {
+                "id": "4754c534-a5f3-4ad0-9382-7887985e668c",
+                "type": "invocation",
+                "data": {
+                    "id": "4754c534-a5f3-4ad0-9382-7887985e668c",
+                    "version": "1.0.1",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "rand_int",
+                    "inputs": {
+                        "low" : {"name": "low",  "label": "", "description": "", "value":          0},
+                        "high": {"name": "high", "label": "", "description": "", "value": 2147483647}
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": false
+                },
+                "position": {"x": 276.7626039605479, "y": 860.7050903471228}
+            },
+            {
+                "id": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+                "type": "invocation",
+                "data": {
+                    "id": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+                    "version": "1.1.2",
+                    "nodePack": "invokeai",
+                    "label": "Negative Prompt - FLUX",
+                    "notes": "",
+                    "type": "flux_text_encoder",
+                    "inputs": {
+                        "clip": {"name": "clip", "label": "", "description": ""},
+                        "t5_encoder": {"name": "t5_encoder", "label": "", "description": ""},
+                        "t5_max_seq_len": {
+                            "name": "t5_max_seq_len",
+                            "label": "T5 Max Seq Len",
+                            "description": "",
+                            "value": 256
+                        },
+                        "prompt": {
+                            "name"       : "prompt",
+                            "label"      : "Negative Prompt",
+                            "description": "",
+                            "value"      : "naked, adult"
+                        },
+                        "mask": {"name": "mask", "label": "", "description": ""}
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": 276.7626039605479, "y": 384.7050903471228}
+            },
+            {
+                "id": "f14341d4-34a5-42a5-8221-acf98d82add7",
+                "type": "invocation",
+                "data": {
+                    "id": "f14341d4-34a5-42a5-8221-acf98d82add7",
+                    "version": "1.0.1",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "metadata_from_image",
+                    "inputs": { "image": {"name": "image", "label": "", "description": ""} },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": 276.7626039605479, "y": -63.29490965287721}
+            },
+            {
+                "id": "7b056f05-a4fe-40d3-b913-1a4b3897230f",
+                "type": "invocation",
+                "data": {
+                    "id": "7b056f05-a4fe-40d3-b913-1a4b3897230f",
+                    "version": "1.0.2",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "image",
+                    "inputs": {
+                        "image": {
+                            "name": "image",
+                            "label": "",
+                            "description": "",
+                            "value": {"image_name": "e95bfe35-42f9-4693-968a-65ea655641a5.png"}
+                        }
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": -249.97263836608238, "y": 441.13453254950684}
+            },
+            {
+                "id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                "type": "invocation",
+                "data": {
+                    "id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                    "version": "1.0.1",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "flux_denoise_meta",
+                    "inputs": {
+                        "metadata": {"name": "metadata", "label": "", "description": ""},
+                        "latents": {"name": "latents", "label": "", "description": ""},
+                        "denoise_mask": {"name": "denoise_mask", "label": "", "description": ""},
+                        "denoising_start": {"name": "denoising_start", "label": "", "description": "", "value": 0.4},
+                        "denoising_end": {"name": "denoising_end", "label": "", "description": "", "value": 1},
+                        "add_noise": {"name": "add_noise", "label": "", "description": "", "value": true},
+                        "transformer": {"name": "transformer", "label": "", "description": ""},
+                        "control_lora": {"name": "control_lora", "label": "", "description": ""},
+                        "positive_text_conditioning": {
+                            "name"       : "positive_text_conditioning",
+                            "label"      : "",
+                            "description": ""
+                        },
+                        "negative_text_conditioning": {
+                            "name"       : "negative_text_conditioning",
+                            "label"      : "",
+                            "description": ""
+                        },
+                        "redux_conditioning": {"name": "redux_conditioning", "label": "", "description": ""},
+                        "fill_conditioning": {"name": "fill_conditioning", "label": "", "description": ""},
+                        "cfg_scale": {"name": "cfg_scale", "label": "", "description": "", "value": 1},
+                        "cfg_scale_start_step": {
+                            "name": "cfg_scale_start_step",
+                            "label": "",
+                            "description": "",
+                            "value": 0
+                        },
+                        "cfg_scale_end_step": {
+                            "name": "cfg_scale_end_step",
+                            "label": "",
+                            "description": "",
+                            "value": -1
+                        },
+                        "width": {"name": "width", "label": "", "description": "", "value": 1024},
+                        "height": {"name": "height", "label": "", "description": "", "value": 1024},
+                        "num_steps": {"name": "num_steps", "label": "", "description": "", "value": 10},
+                        "guidance": {"name": "guidance", "label": "", "description": "", "value": 4},
+                        "seed": {"name": "seed", "label": "", "description": "", "value": 0},
+                        "control": {"name": "control", "label": "", "description": ""},
+                        "controlnet_vae": {"name": "controlnet_vae", "label": "", "description": ""},
+                        "ip_adapter": {"name": "ip_adapter", "label": "", "description": ""},
+                        "kontext_conditioning": {"name": "kontext_conditioning", "label": "", "description": ""}
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": 825.8834556930959, "y": 85.12161027257513}
+            }
+        ],
+        "edges": [
+            {
+                "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90vae-2981a67c-480f-4237-9384-26b68dbf912bvae",
+                "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                "target": "2981a67c-480f-4237-9384-26b68dbf912b",
+                "type": "default",
+                "sourceHandle": "vae",
+                "targetHandle": "vae"
+            },
+            {
+                "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90vae-7e5172eb-48c1-44db-a770-8fd83e1435d1vae",
+                "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                "target": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+                "type": "default",
+                "sourceHandle": "vae",
+                "targetHandle": "vae"
+            },
+            {
+                "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90max_seq_len-01f674f8-b3d1-4df1-acac-6cb8e0bfb63ct5_max_seq_len",
+                "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                "target": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+                "type": "default",
+                "sourceHandle": "max_seq_len",
+                "targetHandle": "t5_max_seq_len"
+            },
+            {
+                "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90t5_encoder-01f674f8-b3d1-4df1-acac-6cb8e0bfb63ct5_encoder",
+                "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                "target": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+                "type": "default",
+                "sourceHandle": "t5_encoder",
+                "targetHandle": "t5_encoder"
+            },
+            {
+                "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90clip-01f674f8-b3d1-4df1-acac-6cb8e0bfb63cclip",
+                "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                "target": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+                "type": "default",
+                "sourceHandle": "clip",
+                "targetHandle": "clip"
+            },
+            {
+                "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90clip-e87ba3b6-c98f-4644-903a-e13c421f2addclip",
+                "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                "target": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+                "type": "default",
+                "sourceHandle": "clip",
+                "targetHandle": "clip"
+            },
+            {
+                "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90t5_encoder-e87ba3b6-c98f-4644-903a-e13c421f2addt5_encoder",
+                "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                "target": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+                "type": "default",
+                "sourceHandle": "t5_encoder",
+                "targetHandle": "t5_encoder"
+            },
+            {
+                "id": "reactflow__edge-7b056f05-a4fe-40d3-b913-1a4b3897230fimage-f14341d4-34a5-42a5-8221-acf98d82add7image",
+                "source": "7b056f05-a4fe-40d3-b913-1a4b3897230f",
+                "target": "f14341d4-34a5-42a5-8221-acf98d82add7",
+                "type": "default",
+                "sourceHandle": "image",
+                "targetHandle": "image"
+            },
+            {
+                "id": "reactflow__edge-f14341d4-34a5-42a5-8221-acf98d82add7metadata-9c773392-5647-4f2b-958e-9da1707b6e6ametadata",
+                "source": "f14341d4-34a5-42a5-8221-acf98d82add7",
+                "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                "type": "default",
+                "sourceHandle": "metadata",
+                "targetHandle": "metadata"
+            },
+            {
+                "id": "reactflow__edge-9c773392-5647-4f2b-958e-9da1707b6e6ametadata-7e5172eb-48c1-44db-a770-8fd83e1435d1metadata",
+                "source": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                "target": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+                "type": "default",
+                "sourceHandle": "metadata",
+                "targetHandle": "metadata"
+            },
+            {
+                "id": "reactflow__edge-f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90transformer-9c773392-5647-4f2b-958e-9da1707b6e6atransformer",
+                "source": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                "type": "default",
+                "sourceHandle": "transformer",
+                "targetHandle": "transformer"
+            },
+            {
+                "id": "reactflow__edge-01f674f8-b3d1-4df1-acac-6cb8e0bfb63cconditioning-9c773392-5647-4f2b-958e-9da1707b6e6apositive_text_conditioning",
+                "source": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+                "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                "type": "default",
+                "sourceHandle": "conditioning",
+                "targetHandle": "positive_text_conditioning"
+            },
+            {
+                "id": "reactflow__edge-e87ba3b6-c98f-4644-903a-e13c421f2addconditioning-9c773392-5647-4f2b-958e-9da1707b6e6anegative_text_conditioning",
+                "source": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+                "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                "type": "default",
+                "sourceHandle": "conditioning",
+                "targetHandle": "negative_text_conditioning"
+            },
+            {
+                "id": "reactflow__edge-2981a67c-480f-4237-9384-26b68dbf912blatents-9c773392-5647-4f2b-958e-9da1707b6e6alatents",
+                "source": "2981a67c-480f-4237-9384-26b68dbf912b",
+                "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                "type": "default",
+                "sourceHandle": "latents",
+                "targetHandle": "latents"
+            },
+            {
+                "id": "reactflow__edge-2981a67c-480f-4237-9384-26b68dbf912bwidth-9c773392-5647-4f2b-958e-9da1707b6e6awidth",
+                "source": "2981a67c-480f-4237-9384-26b68dbf912b",
+                "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                "type": "default",
+                "sourceHandle": "width",
+                "targetHandle": "width"
+            },
+            {
+                "id": "reactflow__edge-2981a67c-480f-4237-9384-26b68dbf912bheight-9c773392-5647-4f2b-958e-9da1707b6e6aheight",
+                "source": "2981a67c-480f-4237-9384-26b68dbf912b",
+                "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                "type": "default",
+                "sourceHandle": "height",
+                "targetHandle": "height"
+            },
+            {
+                "id": "reactflow__edge-4754c534-a5f3-4ad0-9382-7887985e668cvalue-9c773392-5647-4f2b-958e-9da1707b6e6aseed",
+                "source": "4754c534-a5f3-4ad0-9382-7887985e668c",
+                "target": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                "type": "default",
+                "sourceHandle": "value",
+                "targetHandle": "seed"
+            },
+            {
+                "id": "reactflow__edge-9c773392-5647-4f2b-958e-9da1707b6e6alatents-7e5172eb-48c1-44db-a770-8fd83e1435d1latents",
+                "source": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                "target": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+                "type": "default",
+                "sourceHandle": "latents",
+                "targetHandle": "latents"
+            },
+            {
+                "id": "reactflow__edge-7b056f05-a4fe-40d3-b913-1a4b3897230fimage-2981a67c-480f-4237-9384-26b68dbf912bimage",
+                "source": "7b056f05-a4fe-40d3-b913-1a4b3897230f",
+                "target": "2981a67c-480f-4237-9384-26b68dbf912b",
+                "type": "default",
+                "sourceHandle": "image",
+                "targetHandle": "image"
+            }
+        ],
+        "form": {
+            "elements": {
+                "root": {
+                    "id": "root",
+                    "data": {
+                        "layout": "column",
+                        "children": [
+                            "node-field-ijo7m63hDi", "node-field-QuO8FhTq6c", "node-field-a1nav5kDNi",
+                            "node-field-2lhCG395of", "node-field-ydWKtxVLEk", "node-field-mArU8Uy5GY",
+                            "node-field-DudUc3rqpl", "node-field-mcjNlse2cM", "node-field-doVk7pdRxy"
+                        ]
+                    },
+                    "type": "container"
+                },
+                "node-field-mArU8Uy5GY": {
+                    "id": "node-field-mArU8Uy5GY",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {"nodeId": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c", "fieldName": "prompt"},
+                        "showDescription": false,
+                        "settings": {"type": "string-field-config", "component": "input"}
+                    },
+                    "type": "node-field"
+                },
+                "node-field-ydWKtxVLEk": {
+                    "id": "node-field-ydWKtxVLEk",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {
+                            "nodeId"   : "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                            "fieldName": "vae_model"
+                        },
+                        "showDescription": false
+                    },
+                    "type": "node-field"
+                },
+                "node-field-2lhCG395of": {
+                    "id": "node-field-2lhCG395of",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {
+                            "nodeId"   : "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                            "fieldName": "clip_embed_model"
+                        },
+                        "showDescription": false
+                    },
+                    "type": "node-field"
+                },
+                "node-field-a1nav5kDNi": {
+                    "id": "node-field-a1nav5kDNi",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {
+                            "nodeId"   : "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+                            "fieldName": "t5_encoder_model"
+                        },
+                        "showDescription": false
+                    },
+                    "type": "node-field"
+                },
+                "node-field-ijo7m63hDi": {
+                    "id": "node-field-ijo7m63hDi",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "model"},
+                        "showDescription": false
+                    },
+                    "type": "node-field"
+                },
+                "node-field-DudUc3rqpl": {
+                    "id": "node-field-DudUc3rqpl",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {"nodeId": "e87ba3b6-c98f-4644-903a-e13c421f2add", "fieldName": "prompt"},
+                        "showDescription": true,
+                        "settings": {"type": "string-field-config", "component": "input"}
+                    },
+                    "type": "node-field"
+                },
+                "node-field-mcjNlse2cM": {
+                    "id": "node-field-mcjNlse2cM",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {
+                            "nodeId"   : "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                            "fieldName": "num_steps"
+                        },
+                        "showDescription": true,
+                        "settings": {"type": "integer-field-config", "component": "number-input"}
+                    },
+                    "type": "node-field"
+                },
+                "node-field-doVk7pdRxy": {
+                    "id": "node-field-doVk7pdRxy",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {
+                            "nodeId"   : "9c773392-5647-4f2b-958e-9da1707b6e6a",
+                            "fieldName": "denoising_start"
+                        },
+                        "showDescription": true,
+                        "settings": {"type": "float-field-config", "component": "number-input"}
+                    },
+                    "type": "node-field"
+                },
+                "node-field-QuO8FhTq6c": {
+                    "id": "node-field-QuO8FhTq6c",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {"nodeId": "7b056f05-a4fe-40d3-b913-1a4b3897230f", "fieldName": "image"},
+                        "showDescription": true
+                    },
+                    "type": "node-field"
+                }
+            },
+            "rootElementId": "root"
+        }
+    }
+}
