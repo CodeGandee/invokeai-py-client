@@ -527,15 +527,312 @@ Total execution time: 18.234s
    - `workflow.cancel()` for user-initiated cancellation
    - Cleanup of partial results on failure
 
-5. **Performance Considerations**:
-   - API polling: ~50ms per status check (synchronous mode)
-   - Socket.IO events: <5ms latency (real-time async mode)
-   - Choose async with events for responsive UIs
-   - Use sync polling for simple scripts and batch operations
-
-6. **Queue Management**:
-   - Support for multiple queues (default, priority, batch)
-   - Queue position tracking for job scheduling
-   - Batch ID for grouping related workflows
-
 ### Use case 4: retrieving outputs and cleaning up
+
+**Scenario**: After workflow execution completes (from Use Case 3), the developer needs to retrieve generated outputs, download images, and clean up temporary resources (uploaded inputs, intermediate files).
+
+**Code Example**:
+```python
+# Continuing from Use Case 3, we have:
+# - workflow: Workflow instance with completed job
+# - job: SessionQueueItem with status='completed'
+
+from pathlib import Path
+from typing import List, Dict, Any, Optional
+import requests
+
+def retrieve_outputs_and_cleanup():
+    """Retrieve workflow outputs and perform cleanup of temporary resources."""
+    
+    # Step 1: Get detailed session results from completed queue item
+    print("📊 Retrieving workflow outputs...")
+    
+    # Get the full queue item with session data
+    item_url = f"http://localhost:9090/api/v1/queue/default/i/{job.item_id}"
+    response = requests.get(item_url)
+    detailed_item = response.json()
+    
+    # Extract session results
+    session_data = detailed_item.get('session', {})
+    results = session_data.get('results', {})  # Dict of node outputs
+    
+    print(f"Found {len(results)} output nodes")
+    
+    # Step 2: Process and download generated images
+    downloaded_images = []
+    generated_images = []
+    
+    for node_id, node_output in results.items():
+        output_type = node_output.get('type')
+        
+        if output_type == 'image_output':
+            # Extract image information
+            image_data = node_output.get('image', {})
+            image_name = image_data.get('image_name')
+            width = image_data.get('width')
+            height = image_data.get('height')
+            board_id = image_data.get('board_id', 'none')
+            
+            if image_name:
+                generated_images.append({
+                    'name': image_name,
+                    'width': width,
+                    'height': height,
+                    'board_id': board_id,
+                    'node_id': node_id
+                })
+                
+                print(f"✅ Found image: {image_name} ({width}x{height})")
+    
+    # Download the images
+    download_dir = Path("./outputs") / job.batch_id
+    download_dir.mkdir(parents=True, exist_ok=True)
+    
+    for img_info in generated_images:
+        image_name = img_info['name']
+        
+        # Download full resolution image
+        image_url = f"http://localhost:9090/api/v1/images/i/{image_name}/full"
+        response = requests.get(image_url)
+        
+        if response.ok:
+            local_path = download_dir / image_name
+            with open(local_path, 'wb') as f:
+                f.write(response.content)
+            
+            downloaded_images.append(str(local_path))
+            print(f"📥 Downloaded: {local_path}")
+            
+            # Also get metadata if needed
+            metadata_url = f"http://localhost:9090/api/v1/images/i/{image_name}/metadata"
+            metadata_response = requests.get(metadata_url)
+            if metadata_response.ok:
+                metadata = metadata_response.json()
+                # Save metadata alongside image
+                metadata_path = download_dir / f"{image_name}.json"
+                import json
+                with open(metadata_path, 'w') as f:
+                    json.dump(metadata, f, indent=2)
+        else:
+            print(f"❌ Failed to download {image_name}: {response.status_code}")
+    
+    print(f"\n✅ Downloaded {len(downloaded_images)} images to {download_dir}")
+    
+    # Step 3: Get other output types (latents, conditioning, etc.)
+    other_outputs = {}
+    
+    for node_id, node_output in results.items():
+        output_type = node_output.get('type')
+        
+        if output_type == 'latents_output':
+            # Latents are referenced by name, stored server-side
+            latents_name = node_output.get('latents', {}).get('latents_name')
+            other_outputs[node_id] = {
+                'type': 'latents',
+                'name': latents_name,
+                'shape': node_output.get('shape')
+            }
+            print(f"📦 Found latents: {latents_name}")
+            
+        elif output_type == 'conditioning_output':
+            # Conditioning data
+            conditioning_name = node_output.get('conditioning', {}).get('conditioning_name')
+            other_outputs[node_id] = {
+                'type': 'conditioning',
+                'name': conditioning_name
+            }
+            print(f"🎨 Found conditioning: {conditioning_name}")
+    
+    # Step 4: Package results for return
+    workflow_results = {
+        'images': downloaded_images,
+        'image_metadata': generated_images,
+        'other_outputs': other_outputs,
+        'session_id': job.session_id,
+        'batch_id': job.batch_id,
+        'execution_time': (job.completed_at - job.started_at).total_seconds()
+    }
+    
+    # Step 5: Cleanup uploaded inputs (optional)
+    print("\n🧹 Cleaning up temporary resources...")
+    
+    # Get list of images that were uploaded as inputs
+    uploaded_images = workflow.get_uploaded_assets()  # Track during upload
+    
+    for image_name in uploaded_images:
+        try:
+            # Delete uploaded input image
+            delete_url = f"http://localhost:9090/api/v1/images/i/{image_name}"
+            response = requests.delete(delete_url)
+            
+            if response.ok:
+                print(f"   ✅ Deleted input: {image_name}")
+            else:
+                print(f"   ⚠️ Could not delete: {image_name}")
+        except Exception as e:
+            print(f"   ❌ Error deleting {image_name}: {e}")
+    
+    # Step 6: Optional - Clean up the output board
+    if workflow.cleanup_board_after_download:
+        board_id = workflow.output_board_id
+        if board_id and board_id != "none":
+            # First remove all images from board (moves to uncategorized)
+            response = requests.post(
+                "http://localhost:9090/api/v1/board_images/batch/delete",
+                json={"board_id": board_id, "image_names": [img['name'] for img in generated_images]}
+            )
+            
+            if response.ok:
+                print(f"   ✅ Removed images from board {board_id}")
+            
+            # Then delete the board itself
+            response = requests.delete(f"http://localhost:9090/api/v1/boards/{board_id}")
+            if response.ok:
+                print(f"   ✅ Deleted temporary board {board_id}")
+    
+    # Step 7: Clean completed queue items (optional)
+    if workflow.cleanup_queue_after_completion:
+        # Prune completed items from queue
+        response = requests.put(f"http://localhost:9090/api/v1/queue/default/prune")
+        if response.ok:
+            prune_result = response.json()
+            print(f"   ✅ Pruned {prune_result.get('deleted', 0)} completed queue items")
+    
+    return workflow_results
+
+
+# Alternative: Batch cleanup for multiple workflows
+def cleanup_batch_workflows(batch_id: str, keep_outputs: bool = True):
+    """Clean up all resources from a batch of workflows."""
+    
+    print(f"🧹 Batch cleanup for: {batch_id}")
+    
+    # Get all items from this batch
+    response = requests.get(f"http://localhost:9090/api/v1/queue/default/b/{batch_id}/status")
+    batch_status = response.json()
+    
+    print(f"   Batch status: {batch_status['completed']} completed, {batch_status['failed']} failed")
+    
+    if not keep_outputs:
+        # Get all images from this batch's board
+        # This assumes we used a batch-specific board
+        board_name = f"batch_{batch_id}"
+        
+        # Get board
+        response = requests.get(f"http://localhost:9090/api/v1/boards/?all=true")
+        boards = response.json()
+        
+        target_board = None
+        for board in boards:
+            if board['board_name'] == board_name:
+                target_board = board
+                break
+        
+        if target_board:
+            # Get all images in board
+            response = requests.get(f"http://localhost:9090/api/v1/boards/{target_board['board_id']}/image_names")
+            image_names = response.json()
+            
+            # Delete all images
+            if image_names:
+                response = requests.post(
+                    "http://localhost:9090/api/v1/images/delete",
+                    json={"image_names": image_names}
+                )
+                
+                if response.ok:
+                    print(f"   ✅ Deleted {len(image_names)} output images")
+            
+            # Delete the board
+            response = requests.delete(f"http://localhost:9090/api/v1/boards/{target_board['board_id']}")
+            if response.ok:
+                print(f"   ✅ Deleted board '{board_name}'")
+    
+    # Cancel any remaining items from this batch
+    response = requests.post(
+        f"http://localhost:9090/api/v1/queue/default/cancel_by_batch_ids",
+        json={"batch_ids": [batch_id]}
+    )
+    
+    if response.ok:
+        result = response.json()
+        print(f"   ✅ Cancelled {result.get('canceled', 0)} pending items")
+    
+    print(f"✅ Batch cleanup complete")
+
+
+# Usage example
+print("=== Retrieving Outputs and Cleanup ===")
+results = retrieve_outputs_and_cleanup()
+
+print(f"\n📊 Workflow Results Summary:")
+print(f"   Images downloaded: {len(results['images'])}")
+print(f"   Execution time: {results['execution_time']:.2f}s")
+print(f"   Output location: ./outputs/{results['batch_id']}/")
+
+# Optional batch cleanup
+if multiple_workflows_run:
+    cleanup_batch_workflows(batch_id, keep_outputs=False)
+```
+
+**Expected Output**:
+```
+=== Retrieving Outputs and Cleanup ===
+📊 Retrieving workflow outputs...
+Found 3 output nodes
+✅ Found image: abc123_mountain_landscape.png (1024x768)
+📥 Downloaded: outputs/batch_def456/abc123_mountain_landscape.png
+
+✅ Downloaded 1 images to outputs/batch_def456
+📦 Found latents: latents_xyz789
+🎨 Found conditioning: conditioning_abc456
+
+🧹 Cleaning up temporary resources...
+   ✅ Deleted input: uploaded_source_image.png
+   ✅ Deleted input: uploaded_mask.png
+   ✅ Removed images from board samples
+   ✅ Deleted temporary board samples
+   ✅ Pruned 1 completed queue items
+
+📊 Workflow Results Summary:
+   Images downloaded: 1
+   Execution time: 18.23s
+   Output location: ./outputs/batch_def456/
+```
+
+**Key Design Points**:
+
+1. **Output Retrieval**:
+   - Queue item contains `session.results` dict with all node outputs
+   - Image outputs have `image_name`, `width`, `height`, `board_id`
+   - Other outputs (latents, conditioning) referenced by name
+
+2. **Image Download**:
+   - `/api/v1/images/i/{image_name}/full` - Full resolution image
+   - `/api/v1/images/i/{image_name}/thumbnail` - Thumbnail version
+   - `/api/v1/images/i/{image_name}/metadata` - Generation metadata
+
+3. **Asset Cleanup**:
+   - **DELETE** `/api/v1/images/i/{image_name}` - Delete single image
+   - **POST** `/api/v1/images/delete` - Batch delete images
+   - **DELETE** `/api/v1/boards/{board_id}` - Delete board
+   - **POST** `/api/v1/board_images/batch/delete` - Remove images from board
+
+4. **Queue Cleanup**:
+   - **PUT** `/api/v1/queue/{queue_id}/prune` - Remove completed items
+   - **POST** `/api/v1/queue/{queue_id}/cancel_by_batch_ids` - Cancel batch items
+
+5. **Resource Tracking**:
+   - Workflow should track uploaded assets for cleanup
+   - Use batch_id to organize outputs
+   - Optional board cleanup after download
+
+6. **Error Handling**:
+   - Continue cleanup even if some deletions fail
+   - Log but don't fail on cleanup errors
+   - Keep outputs by default (explicit cleanup)
+
+7. **Batch Operations**:
+   - Support cleaning up multiple workflows by batch_id
+   - Option to keep or delete outputs
+   - Cancel any remaining pending items
