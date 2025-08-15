@@ -129,4 +129,109 @@
     </content>
     <tags>#其他</tags>
   </item>
+  <item id="mem_1755286020419_u5t9rz3n0" time="2025/08/16 03:27">
+    <content>
+      Created comprehensive InvokeAI workflow form field interpretation guide at context/hints/invokeai-kb/howto-interpret-workflow-form-field.md
+    
+      Key findings about workflow form structure:
+      1. Form field creates hierarchical GUI with containers (row/column layout), node-fields (actual workflow inputs), dividers, and text elements
+      2. Node-field elements reference workflow nodes via nodeId + fieldName
+      3. Field labels come from node.data.inputs[field].label, fallback to node.data.label, then node.data.type
+      4. Form structure is purely for UI, not workflow execution order
+      5. exposedFields array should match node-field elements in form
+    
+      Critical JSONPath queries:
+      - All form elements: $.form.elements.*
+      - Node fields only: $.form.elements[?(@.type == &quot;node-field&quot;)]
+      - Field references: $.form.elements[*].data.fieldIdentifier
+      - Node label: $.nodes[?(@.id == &quot;nodeId&quot;)].data.inputs.fieldName.label
+    
+      Example: Positive Prompt field
+      - Form element: node-field-I7XLCaNo7D
+      - References: Node 0a167316-ba62-4218-9fcf-b3cff7963df8, field &quot;value&quot;
+      - Field label from node: &quot;Positive Prompt&quot;
+      - Display format: &quot;NodeLabel: FieldLabel&quot;
+    </content>
+    <tags>#其他</tags>
+  </item>
+  <item id="mem_1755286376277_wft1tdu4p" time="2025/08/16 03:32">
+    <content>
+      CRITICAL: InvokeAI workflow form fields have total ordering with unique input-index
+    
+      The input-index is a 0-based index assigned to each node-field element based on depth-first tree traversal of the form structure. This index uniquely identifies each input field.
+    
+      Example from sdxl-flux-refine workflow (24 total input fields):
+      - [0] Positive: Positive Prompt
+      - [1] Negative: Negative Prompt
+      - [2] integer: Output Width
+      - [3] integer: Output Height
+      - [4] sdxl_model_loader: SDXL Model
+      ...
+      - [23] float_math: Noise Ratio
+    
+      Key implementation details:
+      1. Only node-field elements get an input-index (not containers, dividers, or text)
+      2. Index is determined by tree traversal order starting from root
+      3. Container children are processed in their listed order
+      4. The input-index is essential for API calls where inputs may be provided as ordered arrays
+    
+      Python code to extract indices:
+      ```python
+      def traverse_form(elem_id, form_elements, input_fields):
+      elem = form_elements.get(elem_id)
+      if elem.get(&#x27;type&#x27;) == &#x27;container&#x27;:
+      for child_id in elem[&#x27;data&#x27;].get(&#x27;children&#x27;, []):
+      traverse_form(child_id, form_elements, input_fields)
+      elif elem.get(&#x27;type&#x27;) == &#x27;node-field&#x27;:
+      input_fields.append({&#x27;input_index&#x27;: len(input_fields), ...})
+      ```
+    
+      Updated documentation at: context/hints/invokeai-kb/howto-interpret-workflow-form-field.md
+    </content>
+    <tags>#其他</tags>
+  </item>
+  <item id="mem_1755287246642_qc2hbthqh" time="2025/08/16 03:47">
+    <content>
+      InvokeAI Model Resolution for Workflows - CRITICAL
+    
+      Model references in workflows have deployment-specific keys and hashes. Only the model NAME is consistent across deployments.
+    
+      API Endpoint: GET /api/v2/models/get_by_attrs
+      Parameters: name, type, base
+    
+      Example workflow model field:
+      ```json
+      {
+      &quot;key&quot;: &quot;cc644930-283a-464f-b48f-831e6add8ed5&quot;,  // DEPLOYMENT-SPECIFIC
+      &quot;hash&quot;: &quot;blake3:38aafa...&quot;,                     // MAY DIFFER
+      &quot;name&quot;: &quot;t5_bnb_int8_quantized_encoder&quot;,        // CONSISTENT
+      &quot;base&quot;: &quot;any&quot;,
+      &quot;type&quot;: &quot;t5_encoder&quot;
+      }
+      ```
+    
+      Resolution process:
+      1. Extract model name, type, base from workflow
+      2. Query local InvokeAI instance: /api/v2/models/get_by_attrs
+      3. Update workflow with local key and hash
+      4. Submit workflow with correct local references
+    
+      Python implementation:
+      ```python
+      def find_model_by_name(base_url, model_name, model_type, model_base):
+      response = requests.get(f&quot;{base_url}/api/v2/models/get_by_attrs&quot;,
+      params={&quot;name&quot;: model_name, &quot;type&quot;: model_type, &quot;base&quot;: model_base})
+      return response.json() if response.status_code == 200 else None
+      ```
+    
+      Common model types:
+      - t5_encoder: T5 text encoder for FLUX
+      - main: Primary diffusion models (flux, sdxl)
+      - vae: VAE models
+      - clip: CLIP text encoders
+    
+      Task 1.2 completed in: context/tasks/features/task-explore-workflow.md
+    </content>
+    <tags>#其他</tags>
+  </item>
 </memory>

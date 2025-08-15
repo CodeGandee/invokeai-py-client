@@ -38,22 +38,24 @@ we already have partial implementation of the workflow subsystem in `src\invokea
 
 here we describe the use cases of the workflow subsystem in `client-api`, before designing the API, we need to understand how users will use it.
 
+Below we use `data\workflows\sdxl-flux-refine.json` as an example workflow definition file, denote this as `example-workflow.json`, some useful info as to how to find things can be found in `context\tasks\features\task-explore-workflow.md`
+
 ### Use case 1: loading `example-workflow.json` and listing inputs
 
-**Scenario**: A developer wants to load a FLUX image-to-image workflow from a JSON file and discover what inputs can be configured before execution.
+**Scenario**: A developer wants to load a SDXL-FLUX workflow from a JSON file and discover what inputs can be configured before execution.
 
 **Code Example**:
 ```python
 from invokeai_py_client import InvokeAIClient
 from invokeai_py_client.models import WorkflowDefinition, InkWorkflowInput
-from typing import List, Dict
+from typing import List, Optional
 import json
 
 # Initialize the client
 client = InvokeAIClient.from_url("http://localhost:9090")
 
 # Step 1: Read workflow JSON and create WorkflowDefinition data model
-with open("data/workflows/flux-image-to-image.json", "r") as f:
+with open("data/workflows/sdxl-flux-refine.json", "r") as f:
     workflow_dict = json.load(f)
 
 workflow_def = WorkflowDefinition.from_dict(workflow_dict)
@@ -68,111 +70,148 @@ print(f"Version: {workflow.definition.version}")
 print(f"Author: {workflow.definition.author}")
 print()
 
-# List all configurable inputs (returns list of InkWorkflowInput data models)
+# List all configurable inputs (returns list ordered by input-index)
 inputs: List[InkWorkflowInput] = workflow.list_inputs()
 
 print(f"Total configurable inputs: {len(inputs)}")
 print("=" * 60)
 
-for input_info in inputs:
+# Inputs are accessed by index (0-based) based on form tree traversal order
+for idx, input_info in enumerate(inputs):
     # InkWorkflowInput has typed properties
-    print(f"\nInput: {input_info.user_name}")
-    print(f"  System Name: {input_info.system_name}")  # e.g., "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90.model"
-    print(f"  Type: {type(input_info.field).__name__}")  # e.g., InkModelIdentifierField
+    print(f"\n[{idx}] {input_info.label}")
+    print(f"  Node: {input_info.node_name} ({input_info.node_id})")
+    print(f"  Field: {input_info.field_name}")
+    print(f"  Type: {type(input_info.field).__name__}")  # e.g., InkStringField
     print(f"  Required: {input_info.required}")
     
     # Show current value if set
     if input_info.field.value is not None:
         print(f"  Current Value: {input_info.field.value}")
 
-# Get inputs by system-defined names (always unique, guaranteed to work)
-inputs_by_system: Dict[str, InkWorkflowInput] = workflow.get_inputs_by_system_name()
-# Returns dict keyed by system name:
-# {
-#     'f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90.model': InkWorkflowInput(...),
-#     '01f674f8-b3d1-4df1-acac-6cb8e0bfb63c.prompt': InkWorkflowInput(...),
-#     '2981a67c-480f-4237-9384-26b68dbf912b.image': InkWorkflowInput(...),
-#     ...
-# }
+# Access inputs by index - the primary way to get/set inputs
+positive_prompt: InkWorkflowInput = workflow.get_input(0)  # Index [0] is Positive Prompt
+negative_prompt: InkWorkflowInput = workflow.get_input(1)  # Index [1] is Negative Prompt
+width_input: InkWorkflowInput = workflow.get_input(2)      # Index [2] is Output Width
+height_input: InkWorkflowInput = workflow.get_input(3)     # Index [3] is Output Height
 
-# Get inputs by user-defined names (only works if names are unique)
-try:
-    inputs_by_user: Dict[str, InkWorkflowInput] = workflow.get_inputs_by_user_name()
-    # Returns dict keyed by user name:
-    # {
-    #     'model': InkWorkflowInput(...),
-    #     'prompt': InkWorkflowInput(...), 
-    #     'image': InkWorkflowInput(...),
-    #     ...
-    # }
-    print("\nUser-defined names are unique, can use either naming scheme")
-except ValueError as e:
-    print(f"\nWarning: {e}")
-    print("Must use system-defined names for this workflow")
+# Example: Print information about a specific input
+print(f"\nInput at index 0:")
+print(f"  Label: {positive_prompt.label}")  # "Positive Prompt"
+print(f"  Node: {positive_prompt.node_name}")  # "Positive" (from node's label field)
+print(f"  Field: {positive_prompt.field_name}")  # "value"
 
-# Check which inputs are missing required values
-missing = workflow.get_missing_required_inputs()
-if missing:
-    print(f"\nRequired inputs still needed: {', '.join(missing)}")
+# Get all inputs as an indexed list
+all_inputs: List[InkWorkflowInput] = workflow.get_all_inputs()
+# Returns ordered list where index matches input-index:
+# [
+#     InkWorkflowInput(...),  # [0] Positive Prompt
+#     InkWorkflowInput(...),  # [1] Negative Prompt
+#     InkWorkflowInput(...),  # [2] Output Width
+#     ...                      # up to [23] for this workflow
+# ]
+
+# Find input by searching (returns index, or None if not found)
+def find_input_index(workflow, node_name: str, field_name: str) -> Optional[int]:
+    """Helper to find input index by node/field names if needed."""
+    for idx, input_info in enumerate(workflow.list_inputs()):
+        if input_info.node_name == node_name and input_info.field_name == field_name:
+            return idx
+    return None
+
+# Example: Find the FLUX model input
+flux_model_idx = find_input_index(workflow, "flux_model_loader", "model")
+if flux_model_idx is not None:
+    flux_model_input = workflow.get_input(flux_model_idx)
+    print(f"\nFound FLUX model input at index {flux_model_idx}")
+
+# Check which required inputs are missing values (returns list of indices)
+missing_indices = workflow.get_missing_required_input_indices()
+if missing_indices:
+    print(f"\nRequired inputs still needed at indices: {missing_indices}")
+    for idx in missing_indices:
+        input_info = workflow.get_input(idx)
+        print(f"  [{idx}] {input_info.label}")
 ```
 
 **Expected Output**:
 ```
-Workflow: flux-image-to-image
-Description: A simple image-to-image workflow using a FLUX dev model.
-Version: 1.1.0
+Workflow: SDXL then FLUX
+Description: Multi-stage image generation workflow
+Version: 3.0.0
 Author: InvokeAI
 
-Total configurable inputs: 8
+Total configurable inputs: 24
 ============================================================
 
-Input: model
-  System Name: f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90.model
-  Type: InkModelIdentifierField
-  Required: True
-  Current Value: FLUX Dev (Quantized)
-
-Input: t5_encoder_model
-  System Name: f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90.t5_encoder_model
-  Type: InkT5EncoderField
-  Required: True
-
-Input: clip_embed_model
-  System Name: f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90.clip_embed_model
-  Type: InkCLIPEmbedField
-  Required: True
-
-Input: vae_model
-  System Name: f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90.vae_model
-  Type: InkVAEModelField
-  Required: True
-
-Input: prompt
-  System Name: 01f674f8-b3d1-4df1-acac-6cb8e0bfb63c.prompt
+[0] Positive Prompt
+  Node: Positive (0a167316-ba62-4218-9fcf-b3cff7963df8)
+  Field: value
   Type: InkStringField
   Required: True
 
-Input: image
-  System Name: 2981a67c-480f-4237-9384-26b68dbf912b.image
-  Type: InkImageField
+[1] Negative Prompt
+  Node: Negative (1711c26d-e362-48fa-8f02-3e3e1a6010d4)
+  Field: value
+  Type: InkStringField
   Required: True
 
-Input: num_steps
-  System Name: 9c773392-5647-4f2b-958e-9da1707b6e6a.num_steps
+[2] Output Width
+  Node: integer (8e860322-3d35-4013-ab38-29e41af698ed)
+  Field: value
   Type: InkIntegerField
   Required: False
-  Current Value: 20
+  Current Value: 1024
 
-Input: denoising_start
-  System Name: 9c773392-5647-4f2b-958e-9da1707b6e6a.denoising_start
+[3] Output Height
+  Node: integer (3e13ab2d-7bd2-4303-b6c5-2c58c51bf2bb)
+  Field: value
+  Type: InkIntegerField
+  Required: False
+  Current Value: 768
+
+[4] SDXL Model
+  Node: sdxl_model_loader (fc066a36-5d48-4780-8c2b-d76c70ae0807)
+  Field: model
+  Type: InkSDXLModelField
+  Required: True
+
+[5] Output Board
+  Node: save_image (4414d4b5-82c3-4513-8c3f-86d88c24aadc)
+  Field: board
+  Type: InkBoardField
+  Required: False
+
+...
+
+[23] Noise Ratio
+  Node: float_math (e6187b94-cd8a-4fa8-b020-c6c858dc43de)
+  Field: value
   Type: InkFloatField
   Required: False
-  Current Value: 0.7
+  Current Value: 0.8
 
-Warning: Multiple 'prompt' fields found in workflow (nodes: 01f674f8-b3d1-4df1-acac-6cb8e0bfb63c, e87ba3b6-c98f-4644-903a-e13c421f2add)
-Must use system-defined names for this workflow
+Input at index 0:
+  Label: Positive Prompt
+  Node: Positive            # From node's "label" field in JSON
+  Field: value
 
-Required inputs still needed: f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90.t5_encoder_model, f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90.clip_embed_model, f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90.vae_model, 01f674f8-b3d1-4df1-acac-6cb8e0bfb63c.prompt, 2981a67c-480f-4237-9384-26b68dbf912b.image
+Input at index 4:
+  Label: SDXL Model
+  Node: sdxl_model_loader   # Node's "label" was empty, so using "type" (InvokeAI default)
+  Field: model
+
+Found FLUX model input at index 11
+
+Required inputs still needed at indices: [0, 1, 4, 11, 12, 13, 14, 19]
+  [0] Positive Prompt
+  [1] Negative Prompt
+  [4] SDXL Model
+  [11] Flux Model
+  [12] T5 Encoder Model
+  [13] CLIP Embed Model
+  [14] VAE Model
+  [19] Flux Model
 ```
 
 **Key Design Points**:
@@ -180,26 +219,30 @@ Required inputs still needed: f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90.t5_encoder_mo
 1. **Data Model Architecture**: 
    - `WorkflowDefinition` - Pydantic model for workflow JSON structure
    - `InkWorkflowInput` - Typed data model containing:
-     - `user_name`: Simple field name (e.g., "prompt")
-     - `system_name`: Unique identifier (e.g., "nodeId.fieldName")
+     - `label`: User-facing field label (e.g., "Positive Prompt")
+     - `node_name`: Node's display name - uses node's "label" field if not empty, otherwise falls back to node's "type" (InvokeAI default)
+     - `node_id`: UUID of the workflow node
+     - `field_name`: Name of the field in the node (e.g., "value")
      - `field`: The actual typed field instance (`InkStringField`, `InkImageField`, etc.)
      - `required`: Boolean indicating if the input must be provided
 
-2. **Dual Naming System**:
-   - **System-defined names**: `{node_id}.{field_name}` - Always unique, guaranteed to work
-   - **User-defined names**: Simple field names - May collide across nodes
-   - Two separate accessor methods with clear behavior
+2. **Index-Based Access System**:
+   - **Input-index**: 0-based index from depth-first form tree traversal
+   - Primary access via `workflow.get_input(index)` method
+   - Stable ordering guaranteed by form structure
+   - Eliminates naming conflicts completely
 
 3. **Type Safety**: 
    - All methods return proper data models, not raw dicts
-   - `workflow.list_inputs()` returns `List[InkWorkflowInput]`
-   - `get_inputs_by_*` methods return `Dict[str, InkWorkflowInput]`
+   - `workflow.list_inputs()` returns ordered `List[InkWorkflowInput]`
+   - `workflow.get_input(idx)` returns `InkWorkflowInput` at that index
    - Each field is a typed instance (`InkStringField`, `InkImageField`, etc.)
 
-4. **Conflict Resolution**: 
-   - `get_inputs_by_user_name()` raises `ValueError` when names collide
-   - Clear error messages indicate which nodes have conflicts
-   - System names always work as fallback
+4. **Input Discovery**:
+   - Iterate through ordered list to find inputs by properties
+   - Helper functions can search by node/field names if needed
+   - Missing inputs tracked by indices for clear identification
+   - No ambiguity in input references
 
 ### Use case 2: setting inputs of the `example-workflow.json`
 
@@ -209,88 +252,152 @@ Required inputs still needed: f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90.t5_encoder_mo
 ```python
 # Continuing from Use Case 1, we have:
 # - client: InvokeAIClient instance
-# - workflow: Workflow instance with loaded flux-image-to-image definition
+# - workflow: Workflow instance with loaded sdxl-flux-refine definition
 
 # Note: All field classes (InkModelIdentifierField, InkStringField, etc.) are Pydantic models
 # with validate_assignment=True, providing automatic validation and type conversion
 
-# Get inputs by system-defined names (always works)
-inputs_by_system = workflow.get_inputs_by_system_name()
+# Set inputs by index - the primary way to configure workflow
+# Based on the form tree traversal order from Task 1.1
 
-# Set model fields - can pass dict, Pydantic validates and converts to InkModelIdentifierField
-inputs_by_system['f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90.model'].field.value = {
-    "key": "fe04e4c3-2287-4ba5-8c34-107d3da215ae",
-    "name": "FLUX Dev (Quantized)",
+# Set text prompts (indices 0 and 1)
+workflow.get_input(0).field.value = "A serene mountain landscape at sunset, photorealistic, high detail"
+workflow.get_input(1).field.value = "blurry, low quality, distorted"
+
+# Set dimensions (indices 2 and 3) - automatic type conversion
+workflow.get_input(2).field.value = "1024"  # String converted to int
+workflow.get_input(3).field.value = 768     # Int stays int
+
+# Set SDXL model (index 4) - can pass dict, Pydantic validates and converts
+workflow.get_input(4).field.value = {
+    "key": "sdxl-model-key-123",
+    "name": "SDXL 1.0",
+    "base": "sdxl",
+    "type": "main"
+}
+
+# Set output board for SDXL stage (index 5)
+workflow.get_input(5).field.value = "samples"  # Board name or ID
+
+# Set SDXL generation parameters (indices 6-8)
+workflow.get_input(6).field.value = "DPMSolverMultistep"  # scheduler
+workflow.get_input(7).field.value = 25                    # steps
+workflow.get_input(8).field.value = 7.5                   # cfg_scale
+
+# Set Flux models (indices 11-14)
+workflow.get_input(11).field.value = {
+    "key": "flux-model-key-456",
+    "name": "FLUX.1-schnell",
     "base": "flux",
     "type": "main"
 }
 
-inputs_by_system['f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90.t5_encoder_model'].field.value = {
-    "key": "t5-encoder-key-123",
+workflow.get_input(12).field.value = {
+    "key": "t5-encoder-key-789",
     "name": "T5 Encoder FLUX",
     "base": "flux",
     "type": "t5_encoder"
 }
 
-inputs_by_system['f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90.clip_embed_model'].field.value = {
-    "key": "clip-embed-key-456",
+workflow.get_input(13).field.value = {
+    "key": "clip-embed-key-012",
     "name": "CLIP-L Encoder",
     "base": "flux",
     "type": "clip_embed"
 }
 
-inputs_by_system['f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90.vae_model'].field.value = {
-    "key": "vae-model-key-789",
+workflow.get_input(14).field.value = {
+    "key": "vae-model-key-345",
     "name": "FLUX VAE",
     "base": "flux",
     "type": "vae"
 }
 
-# Set prompt - InkStringField accepts string directly
-inputs_by_system['01f674f8-b3d1-4df1-acac-6cb8e0bfb63c.prompt'].field.value = (
-    "A serene mountain landscape at sunset, photorealistic, high detail"
-)
+# Alternative: Set multiple inputs using a loop
+input_values = {
+    15: "flux_outputs",     # Output board for Flux stage
+    16: 0.7,                # Noise ratio
+    17: 20,                 # Num steps for Flux Domain Transfer
+    18: 1.0,                # Control weight
+    19: {                   # Another Flux model
+        "key": "flux-model-key-678",
+        "name": "FLUX.1-dev",
+        "base": "flux",
+        "type": "main"
+    },
+    20: "final_outputs",   # Output board for final stage
+    21: 15,                 # Num steps for Flux Refinement
+    22: 0.8,                # Control strength
+    23: 0.5                 # Final noise ratio
+}
 
-# Upload and set image input
-uploaded_image = client.board_repo.upload_image_by_file(
-    "input_images/mountain.jpg",
-    board_id=None  # Upload to uncategorized
-)
-# InkImageField can accept dict or just the image_name string - Pydantic handles conversion
-inputs_by_system['2981a67c-480f-4237-9384-26b68dbf912b.image'].field.value = uploaded_image.image_name
-
-# Set optional parameters - automatic type conversion
-inputs_by_system['9c773392-5647-4f2b-958e-9da1707b6e6a.num_steps'].field.value = "30"  # String converted to int
-inputs_by_system['9c773392-5647-4f2b-958e-9da1707b6e6a.denoising_start'].field.value = 0.65  # Float stays float
+for idx, value in input_values.items():
+    workflow.get_input(idx).field.value = value
 
 # Example of per-field validation error handling
 try:
-    # This will fail validation - num_steps must be positive integer
-    inputs_by_system['9c773392-5647-4f2b-958e-9da1707b6e6a.num_steps'].field.value = -5
+    # This will fail validation - steps must be positive integer
+    workflow.get_input(7).field.value = -5
 except ValueError as e:
     print(f"Field validation error: {e}")
     # Set valid value
-    inputs_by_system['9c773392-5647-4f2b-958e-9da1707b6e6a.num_steps'].field.value = 30
+    workflow.get_input(7).field.value = 25
+
+# Batch set with validation
+def set_inputs_safely(workflow, input_map):
+    """Helper to set multiple inputs with error handling."""
+    errors = []
+    for idx, value in input_map.items():
+        try:
+            input_field = workflow.get_input(idx)
+            input_field.field.value = value
+            print(f"✓ Set [{idx}] {input_field.label}")
+        except ValueError as e:
+            errors.append(f"[{idx}] {input_field.label}: {e}")
+        except IndexError:
+            errors.append(f"[{idx}]: Invalid index")
+    
+    if errors:
+        print("Errors setting inputs:")
+        for error in errors:
+            print(f"  ✗ {error}")
+    return len(errors) == 0
 
 # Validate all inputs together
 validation_errors = workflow.validate_inputs()
 if validation_errors:
     print("Validation errors found:")
-    for field_name, errors in validation_errors.items():
-        print(f"  {field_name}: {', '.join(errors)}")
+    for idx, errors in validation_errors.items():
+        input_info = workflow.get_input(idx)
+        print(f"  [{idx}] {input_info.label}: {', '.join(errors)}")
 else:
     print("All inputs are valid")
 
-# Check if all required inputs are set
-missing = workflow.get_missing_required_inputs()
-if missing:
-    print(f"Still missing required inputs: {', '.join(missing)}")
+# Check if all required inputs are set (returns list of indices)
+missing_indices = workflow.get_missing_required_input_indices()
+if missing_indices:
+    print(f"Still missing required inputs at indices: {missing_indices}")
+    for idx in missing_indices:
+        input_info = workflow.get_input(idx)
+        print(f"  [{idx}] {input_info.label}")
 else:
     print("All required inputs are set, workflow ready for submission")
 ```
 
 **Expected Output**:
 ```
+✓ Set [0] Positive Prompt
+✓ Set [1] Negative Prompt
+✓ Set [2] Output Width
+✓ Set [3] Output Height
+✓ Set [4] SDXL Model
+✓ Set [5] Output Board
+✓ Set [6] Scheduler
+✓ Set [7] Steps
+✓ Set [8] CFG Scale
+...
+✓ Set [23] Noise Ratio
+
 Field validation error: ensure this value is greater than 0
 All inputs are valid
 All required inputs are set, workflow ready for submission
@@ -298,30 +405,32 @@ All required inputs are set, workflow ready for submission
 
 **Key Design Points**:
 
-1. **Pydantic-Powered Field Models**:
+1. **Index-Based Setting**:
+   - Access inputs directly by index: `workflow.get_input(idx)`
+   - Indices are stable and based on form tree traversal order
+   - No naming conflicts or ambiguity
+   - Clear mapping from index to input field
+
+2. **Pydantic-Powered Field Models**:
    - All `Ink*Field` classes are Pydantic models with `validate_assignment=True`
    - Immediate validation when setting `.value` property
-   - Type conversion handles common cases (string "30" → int 30)
+   - Type conversion handles common cases (string "1024" → int 1024)
    - Per-field validation errors provide immediate feedback
 
-2. **Flexible Input Formats**:
-   - **Model fields**: Accept dict or `InkModelIdentifierField` instance
-   - **Image fields**: Accept string (image_name) or dict with image_name
+3. **Flexible Input Formats**:
+   - **Model fields**: Accept dict with key/name/base/type
+   - **Board fields**: Accept board name or ID string
    - **Primitive fields**: Automatic type coercion (strings to numbers when appropriate)
+   - **All fields**: Validated and converted via Pydantic models
 
-3. **Two-Level Validation**:
+4. **Two-Level Validation**:
    - **Per-field validation**: Immediate feedback via Pydantic when setting values
    - **Workflow-level validation**: `validate_inputs()` checks all inputs for inter-field dependencies
-   - Separation of concerns between field-level and workflow-level validation
-
-4. **Image Upload Integration**:
-   - Upload via `BoardRepository` returns `IvkImage` 
-   - Use `image_name` property for workflow reference
-   - Pydantic handles string-to-InkImageField conversion
+   - Validation errors reported by index for precise identification
 
 5. **Pre-submission Checks**:
-   - `validate_inputs()` returns dict of errors for comprehensive validation
-   - `get_missing_required_inputs()` ensures all required fields are set
+   - `validate_inputs()` returns dict keyed by index with validation errors
+   - `get_missing_required_input_indices()` returns list of indices for missing required fields
    - Clear workflow readiness status before submission
 
 ### Use case 3: submitting the workflow and tracking the job status
@@ -529,7 +638,7 @@ Total execution time: 18.234s
 
 ### Use case 4: retrieving outputs and cleaning up
 
-**Scenario**: After workflow execution completes (from Use Case 3), the developer needs to retrieve generated outputs, download images, and clean up temporary resources (uploaded inputs, intermediate files).
+**Scenario**: After workflow execution completes (from Use Case 3), the developer needs to retrieve generated outputs from output-nodes (those with board field exposed in form), optionally access debug-nodes outputs, and clean up temporary resources.
 
 **Code Example**:
 ```python
@@ -542,58 +651,142 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from invokeai_py_client.models import (
     WorkflowOutput, InkImageOutput, InkLatentsOutput, 
-    InkConditioningOutput, IvkImage
+    InkConditioningOutput, IvkImage, OutputNode, DebugNode
 )
 
-# Step 1: Get workflow outputs (all wrapped in data models)
+# Step 1: Get workflow outputs (distinguishes output-nodes vs debug-nodes)
 outputs: WorkflowOutput = workflow.get_outputs()
 
 print(f"✅ Workflow completed successfully!")
 print(f"   Session ID: {outputs.session_id}")
 print(f"   Batch ID: {outputs.batch_id}")
 print(f"   Execution time: {outputs.execution_time:.2f}s")
-print(f"   Total outputs: {len(outputs.all_outputs)}")
 
-# Step 2: Access generated images through typed properties
-image_outputs: List[InkImageOutput] = outputs.images
+# Step 2: Access outputs from TRUE OUTPUT-NODES (user-configurable boards)
+# Based on Task 1.3: Only nodes with board field exposed in form are output-nodes
+# For SDXL-FLUX workflow: indices [5], [15], [20]
+user_outputs: List[InkImageOutput] = outputs.get_user_outputs()
 
-print(f"\n🖼️ Generated {len(image_outputs)} images:")
-for img in image_outputs:
-    # InkImageOutput is a Pydantic model with typed properties
-    print(f"   - {img.image_name} ({img.width}x{img.height})")
-    print(f"     Board: {img.board_id}")
-    print(f"     Node: {img.node_id}")
+print(f"\n🎯 User-Facing Outputs (from output-nodes):")
+print(f"   Total stages: {len(user_outputs)}")
 
-# Step 3: Download images to local directory
+for idx, output in enumerate(user_outputs):
+    # Each output corresponds to an output-node with board field at specific index
+    print(f"\n   Stage {idx + 1}: {output.stage_name}")
+    print(f"   - Image: {output.image_name} ({output.width}x{output.height})")
+    print(f"   - Board: {output.board_id} (configured at input index [{output.input_index}])")
+    print(f"   - Node Type: {output.node_type}")  # e.g., save_image
+    print(f"   - Node ID: {output.node_id}")
+
+# Step 3: Optionally access DEBUG-NODES outputs (not user-configurable)
+# Based on Task 1.3: Nodes with board capability but NOT exposed in form
+# For SDXL-FLUX: l2i and save_image nodes for internal processing
+debug_outputs: List[InkImageOutput] = outputs.get_debug_outputs()
+
+if debug_outputs:
+    print(f"\n🔧 Debug/Internal Outputs (from debug-nodes):")
+    for debug in debug_outputs:
+        print(f"   - {debug.image_name} from {debug.node_type}({debug.node_id})")
+        print(f"     Fixed board: {debug.board_id}")
+
+# Step 4: Retrieve outputs - Three different approaches
+
+# Approach 1: Load directly to memory as PIL Image (for immediate processing)
+from PIL import Image
+import io
+
+print("\n🖼️ Loading images to memory for processing:")
+for idx, output in enumerate(user_outputs):
+    # Get as PIL Image object - decoded and ready for processing
+    pil_image: Image.Image = workflow.get_image_as_pil(output)
+    print(f"   Stage {idx + 1}: {output.stage_name}")
+    print(f"   - Size: {pil_image.size}")
+    print(f"   - Mode: {pil_image.mode}")
+    print(f"   - Format: {pil_image.format}")
+    
+    # Now you can process the image in memory
+    # pil_image.thumbnail((256, 256))  # Create thumbnail
+    # pil_image.filter(ImageFilter.BLUR)  # Apply filter
+    # analysis = analyze_image(pil_image)  # Custom analysis
+    
+    # Optional: Save processed image
+    # pil_image.save(f"processed_{output.image_name}")
+
+# Approach 2: Direct download to disk WITHOUT decoding (most efficient for storage)
 download_dir = Path("./outputs") / outputs.batch_id
 
-# Simple download all images with default settings
-downloaded_paths = workflow.download_outputs(
-    output_dir=download_dir,
-    include_metadata=True  # Also saves generation parameters
-)
-
-print(f"\n📥 Downloaded {len(downloaded_paths)} files to {download_dir}")
-for path in downloaded_paths:
-    print(f"   - {path}")
-
-# Alternative: Download with more control
-for img_output in image_outputs:
-    # Download individual image with custom options
-    local_path = workflow.download_image(
-        image_output=img_output,
-        output_dir=download_dir,
-        format="png",  # or "jpeg", "webp"
-        quality=95,    # For lossy formats
-        include_metadata=True
+print("\n💾 Direct download to disk (no decoding):")
+for idx, output in enumerate(user_outputs):
+    # Download raw bytes directly to file - no decode/re-encode overhead
+    stage_dir = download_dir / f"stage_{idx + 1}_{output.stage_name}"
+    local_path = workflow.download_image_raw(
+        image_output=output,
+        output_dir=stage_dir,
+        preserve_format=True  # Keep original format from server
     )
-    print(f"   Downloaded: {local_path}")
-    
-    # Or get image as bytes for further processing
-    image_bytes = workflow.get_image_bytes(img_output)
-    # Process with PIL, save to cloud storage, etc.
+    print(f"   Stage {idx + 1} saved to: {local_path}")
+    # This is fastest for batch downloads - no CPU overhead
 
-# Step 4: Access other output types (latents, conditioning, etc.)
+# Approach 3: Get raw bytes for flexible handling
+print("\n📦 Getting raw bytes for custom handling:")
+for idx, output in enumerate(user_outputs):
+    # Get raw image bytes - you decide what to do with them
+    image_bytes: bytes = workflow.get_image_bytes(output)
+    print(f"   Stage {idx + 1}: {len(image_bytes)} bytes")
+    
+    # Examples of what you can do with raw bytes:
+    # - Upload to S3/cloud storage without temp files
+    # - Stream to another service
+    # - Store in database BLOB
+    # - Custom image processing with other libraries
+    
+    # Example: Load to PIL if needed
+    # pil_image = Image.open(io.BytesIO(image_bytes))
+    
+    # Example: Direct save without processing
+    # with open(f"raw_{output.image_name}", "wb") as f:
+    #     f.write(image_bytes)
+
+# Optional: Also handle debug outputs if needed
+if workflow.has_debug_outputs():
+    debug_outputs = outputs.get_debug_outputs()
+    for debug in debug_outputs:
+        # Debug outputs can also be retrieved as PIL or bytes
+        debug_pil = workflow.get_image_as_pil(debug)
+        # Or download raw
+        debug_path = workflow.download_image_raw(
+            debug, 
+            output_dir=download_dir / "debug",
+            preserve_format=True
+        )
+
+# Comparison of retrieval methods:
+# 
+# | Method               | Use Case                        | Performance | Memory Usage |
+# |---------------------|----------------------------------|-------------|--------------|
+# | get_image_as_pil()  | Image processing, analysis      | Slower      | High         |
+# | download_image_raw()| Archive, storage                | Fastest     | Low          |
+# | get_image_bytes()   | Cloud upload, streaming         | Fast        | Medium       |
+#
+# For real-time processing, use get_image_as_pil()
+# For archival/storage, use download_image_raw() 
+# For cloud storage, use get_image_bytes() to avoid temp files
+
+# Example: User-implemented batch download with progress
+def download_all_outputs(workflow, output_dir: Path):
+    """Example of user-implemented batch download."""
+    outputs = workflow.get_outputs()
+    user_outputs = outputs.get_user_outputs()
+    
+    for i, output in enumerate(user_outputs, 1):
+        print(f"Downloading {i}/{len(user_outputs)}: {output.image_name}")
+        path = workflow.download_image_raw(output, output_dir, preserve_format=True)
+        print(f"  → {path}")
+    
+    return len(user_outputs)
+
+# Step 5: Access other output types (latents, conditioning, etc.)
+# These may come from both output-nodes and debug-nodes
 latents_outputs: List[InkLatentsOutput] = outputs.latents
 conditioning_outputs: List[InkConditioningOutput] = outputs.conditioning
 
@@ -610,7 +803,7 @@ if conditioning_outputs:
         print(f"   - {cond.conditioning_name}")
         print(f"     Node: {cond.node_id}")
 
-# Step 5: Clean up uploaded input assets
+# Step 6: Clean up uploaded input assets
 print("\n🧹 Cleaning up temporary resources...")
 
 # Get list of assets that were uploaded for this workflow
@@ -625,7 +818,7 @@ if cleanup_result.failed_deletions:
     for asset_name, error in cleanup_result.failed_deletions.items():
         print(f"      - {asset_name}: {error}")
 
-# Step 6: Optional - Clean up outputs after download
+# Step 7: Optional - Clean up outputs after download
 if workflow.auto_cleanup_outputs:
     # This is configured when creating the workflow
     output_cleanup = workflow.cleanup_outputs(
@@ -634,65 +827,34 @@ if workflow.auto_cleanup_outputs:
     )
     print(f"   ✅ Cleaned {output_cleanup.deleted_count} output images")
 
-# Step 7: Clean up completed queue items
+# Step 8: Clean up completed queue items
 queue_cleanup = workflow.cleanup_queue_items()
 print(f"   ✅ Pruned {queue_cleanup.pruned_count} completed queue items")
-
-# Alternative: Batch operations for multiple workflows
-def process_workflow_batch(workflows: List[Workflow]):
-    """Process outputs from multiple workflows efficiently."""
-    
-    # Download all outputs from all workflows
-    batch_results = client.workflow_repo.download_batch_outputs(
-        workflows=workflows,
-        output_dir=Path("./batch_outputs"),
-        organize_by_workflow=True  # Creates subdirs per workflow
-    )
-    
-    print(f"📦 Batch download complete:")
-    print(f"   Total workflows: {batch_results.workflow_count}")
-    print(f"   Total images: {batch_results.total_images}")
-    print(f"   Total size: {batch_results.total_size_mb:.2f} MB")
-    
-    # Cleanup all workflows in batch
-    batch_cleanup = client.workflow_repo.cleanup_batch(
-        workflows=workflows,
-        cleanup_inputs=True,
-        cleanup_outputs=False,  # Keep outputs
-        cleanup_queue=True
-    )
-    
-    print(f"🧹 Batch cleanup complete:")
-    print(f"   Inputs deleted: {batch_cleanup.inputs_deleted}")
-    print(f"   Queue items pruned: {batch_cleanup.queue_items_pruned}")
-
-# Advanced: Stream outputs as they're generated (async only)
-async def stream_outputs_example():
-    """Example of streaming outputs as they're generated."""
-    
-    # Submit with output streaming enabled
-    async for output in workflow.stream_outputs():
-        if isinstance(output, InkImageOutput):
-            print(f"🖼️ New image generated: {output.image_name}")
-            # Download immediately
-            path = await workflow.download_image_async(output)
-            print(f"   Downloaded to: {path}")
-        elif isinstance(output, InkLatentsOutput):
-            print(f"📦 Latents generated: {output.latents_name}")
-    
-    print("✅ All outputs streamed and processed")
 
 # Usage example with error handling
 try:
     # Get outputs - raises if workflow not completed
     outputs = workflow.get_outputs()
     
-    # Download with automatic retry on network errors
-    downloaded = workflow.download_outputs(
-        output_dir=Path("./outputs"),
-        max_retries=3,
-        retry_delay=1.0
-    )
+    # Choose retrieval method based on needs
+    for output in outputs.get_user_outputs():
+        try:
+            # For processing: Get as PIL
+            pil_img = workflow.get_image_as_pil(output)
+            # process_image(pil_img)
+        except ImageDecodeError as e:
+            print(f"Failed to decode image: {e}")
+            # Fall back to raw bytes
+            raw_bytes = workflow.get_image_bytes(output)
+    
+    # For storage: Iterate and download without decoding
+    for output in outputs.get_user_outputs():
+        path = workflow.download_image_raw(
+            output,
+            output_dir=Path("./outputs"),
+            preserve_format=True
+        )
+        print(f"Saved: {path}")
     
     # Cleanup with confirmation
     if workflow.has_uploaded_assets():
@@ -715,25 +877,65 @@ except CleanupError as e:
    Session ID: session_456def
    Batch ID: batch_def456
    Execution time: 18.23s
-   Total outputs: 3
 
-🖼️ Generated 1 images:
-   - abc123_mountain_landscape.png (1024x768)
-     Board: samples
-     Node: save_image_node
+🎯 User-Facing Outputs (from output-nodes):
+   Total stages: 3
 
-📥 Downloaded 2 files to outputs/batch_def456
-   - outputs/batch_def456/abc123_mountain_landscape.png
-   - outputs/batch_def456/abc123_mountain_landscape.png.json
+   Stage 1: SDXL Generation
+   - Image: sdxl_output_001.png (1024x768)
+   - Board: samples (configured at input index [5])
+   - Node Type: save_image
+   - Node ID: 4414d4b5-82c3-4513-8c3f-86d88c24aadc
 
-📦 Found 1 latent outputs:
-   - latents_xyz789
-     Shape: [1, 4, 128, 128]
-     Node: denoise_latents_node
+   Stage 2: Flux Domain Transfer
+   - Image: flux_transfer_002.png (1024x768)
+   - Board: flux_outputs (configured at input index [15])
+   - Node Type: save_image
+   - Node ID: 67e997b2-2d56-43f4-8d2e-886c04e18d9f
 
-🎨 Found 1 conditioning outputs:
-   - conditioning_abc456
-     Node: flux_text_encoder_node
+   Stage 3: Flux Refinement
+   - Image: flux_refined_003.png (1024x768)
+   - Board: final_outputs (configured at input index [20])
+   - Node Type: save_image
+   - Node ID: abc466fe-12eb-48a5-87d8-488c8bda180f
+
+🔧 Debug/Internal Outputs (from debug-nodes):
+   - latents_intermediate.png from l2i(cf3922d2-e1bc-40cd-8fcd-2a93708d52c2)
+     Fixed board: __internal__
+   - hed_edges.png from save_image(bb95a42f-3f83-4a6f-8111-745fc1c653fa)
+     Fixed board: __debug__
+
+🖼️ Loading images to memory for processing:
+   Stage 1: SDXL Generation
+   - Size: (1024, 768)
+   - Mode: RGB
+   - Format: PNG
+   Stage 2: Flux Domain Transfer
+   - Size: (1024, 768)
+   - Mode: RGB
+   - Format: PNG
+   Stage 3: Flux Refinement
+   - Size: (1024, 768)
+   - Mode: RGB
+   - Format: PNG
+
+💾 Direct download to disk (no decoding):
+   Stage 1 saved to: outputs/batch_def456/stage_1_SDXL Generation/sdxl_output_001.png
+   Stage 2 saved to: outputs/batch_def456/stage_2_Flux Domain Transfer/flux_transfer_002.png
+   Stage 3 saved to: outputs/batch_def456/stage_3_Flux Refinement/flux_refined_003.png
+
+📦 Getting raw bytes for custom handling:
+   Stage 1: 2457600 bytes
+   Stage 2: 2654208 bytes
+   Stage 3: 2789376 bytes
+
+📦 Found 2 latent outputs:
+   - latents_sdxl_stage
+     Shape: [1, 4, 128, 96]
+     Node: denoise_latents_sdxl
+   - latents_flux_stage
+     Shape: [1, 16, 128, 128]
+     Node: flux_denoise_latents
 
 🧹 Cleaning up temporary resources...
    Found 2 uploaded assets to clean
@@ -743,46 +945,46 @@ except CleanupError as e:
 
 **Key Design Points**:
 
-1. **Pythonic Output Access**:
+1. **Output-Nodes vs Debug-Nodes Distinction** (from Task 1.3):
+   - **Output-nodes**: Nodes with WithBoard mixin AND board field exposed in form
+   - **Debug-nodes**: Nodes with WithBoard mixin but NOT exposed in form
+   - `outputs.get_user_outputs()` - Returns only user-configurable outputs (from output-nodes)
+   - `outputs.get_debug_outputs()` - Returns internal/debug outputs (from debug-nodes)
+   - Each output knows its input-index for board configuration (e.g., [5], [15], [20])
+
+2. **Multi-Stage Output Management**:
+   - Workflow outputs organized by stages (SDXL, Flux Domain Transfer, Flux Refinement)
+   - Each stage corresponds to an output-node with configurable board
+   - Stage outputs can be downloaded individually or as a batch
+   - Debug outputs kept separate from user-facing outputs
+
+3. **Pythonic Output Access**:
    - `workflow.get_outputs()` returns `WorkflowOutput` data model
-   - Typed properties: `outputs.images`, `outputs.latents`, `outputs.conditioning`
+   - Separates user outputs from debug outputs automatically
    - All outputs wrapped in Pydantic models (`InkImageOutput`, `InkLatentsOutput`, etc.)
-   - No raw dict manipulation or API knowledge required
+   - Output metadata includes node type, stage name, and input-index
 
-2. **Simplified Download API**:
-   - `workflow.download_outputs()` - Download all outputs with one call
-   - `workflow.download_image()` - Download individual image with options
-   - `workflow.get_image_bytes()` - Get raw bytes for processing
-   - Automatic metadata saving alongside images
-   - Built-in retry logic for network errors
+4. **Three Image Retrieval Approaches**:
+   - **PIL Image to Memory**: `workflow.get_image_as_pil()` - Returns PIL Image object for immediate processing
+   - **Direct Download (No Decoding)**: `workflow.download_image_raw()` - Streams raw bytes to disk, most efficient for storage
+   - **Raw Bytes**: `workflow.get_image_bytes()` - Returns bytes for flexible handling (cloud upload, streaming, etc.)
+   - Choice depends on use case: processing vs storage vs streaming
+   - Users implement their own batch logic using these primitives
 
-3. **Managed Cleanup**:
+5. **Managed Cleanup**:
    - `workflow.cleanup_inputs()` - Delete uploaded assets
-   - `workflow.cleanup_outputs()` - Delete generated outputs
+   - `workflow.cleanup_outputs()` - Delete generated outputs (both user and debug)
    - `workflow.cleanup_queue_items()` - Prune completed queue items
    - Returns structured `CleanupResult` with success/failure details
-   - Tracks assets automatically during upload for cleanup
 
-4. **Batch Operations**:
-   - `workflow_repo.download_batch_outputs()` - Process multiple workflows
-   - `workflow_repo.cleanup_batch()` - Clean multiple workflows at once
-   - Organized directory structure for batch downloads
-   - Efficient handling of large batches
-
-5. **Type Safety**:
+6. **Type Safety**:
    - All outputs are typed Pydantic models
-   - `InkImageOutput`, `InkLatentsOutput`, `InkConditioningOutput` field types
-   - `WorkflowOutput` container with typed accessors
-   - `CleanupResult`, `BatchResult` for operation results
+   - `InkImageOutput` includes `input_index`, `stage_name`, `node_type` properties
+   - `WorkflowOutput` container with typed accessors for user vs debug outputs
+   - `OutputNode` and `DebugNode` models for clear distinction
 
-6. **Error Handling**:
-   - Custom exceptions: `WorkflowNotCompletedError`, `DownloadError`, `CleanupError`
-   - Partial failure handling with detailed error reporting
-   - Automatic retry with configurable parameters
-   - Graceful degradation on cleanup failures
-
-7. **Advanced Features**:
-   - `workflow.stream_outputs()` - Async streaming as outputs are generated
-   - `workflow.has_uploaded_assets()` - Check before cleanup
-   - `workflow.auto_cleanup_outputs` - Configuration option
-   - Support for different image formats and quality settings
+7. **Node Type Awareness**:
+   - `workflow.has_debug_outputs()` - Check if debug outputs exist
+   - Support for any node type with WithBoard mixin (save_image, l2i, etc.)
+   - Board configuration tracking via input indices
+   - Clear distinction between user-facing and internal outputs
