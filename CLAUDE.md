@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Python client library for interacting with InvokeAI APIs. The project provides a Pythonic interface over selected InvokeAI capabilities, focusing on common tasks like workflow execution, asset management, and job tracking.
 
-**Current Status**: Repository pattern implementation complete (Task 3.1-3.7), workflow subsystem partially implemented, field types stubbed but not implemented.
+**Current Status**: Repository pattern implementation complete for both boards and workflows. Board subsystem refactored with BoardHandle pattern. Workflow subsystem partially implemented, field types stubbed but not implemented.
 
 ## Development Commands
 
@@ -52,13 +52,24 @@ python -m mypy src/               # Type checking
 ### Repository Pattern Architecture
 The client uses a Repository pattern to separate concerns:
 - **InvokeAIClient**: Main client class, manages connection and high-level operations
-- **BoardRepository**: Handles all board and image management operations
-- **WorkflowRepository** (planned): Will manage workflow definitions and execution
+- **BoardRepository**: Manages board lifecycle and creates BoardHandle instances
+- **BoardHandle**: Represents running state of a board, handles image operations
+- **WorkflowRepository**: Manages workflow lifecycle and creates WorkflowHandle instances
+- **WorkflowHandle**: Represents running state of a workflow, handles execution
 
 Example usage flow:
 ```python
 client = InvokeAIClient("localhost", 9090)
-boards = client.board_repo.list_boards()  # Repository pattern access
+
+# Board operations through handle
+board_handle = client.board_repo.create_board("My Art")
+board_handle.upload_image("photo.png")
+images = board_handle.list_images()
+
+# Workflow operations through handle
+workflow = client.create_workflow(workflow_def)
+workflow.get_input(0).field.value = "prompt"
+job = workflow.submit_sync()
 ```
 
 ### Workflow Subsystem Design

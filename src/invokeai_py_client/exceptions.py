@@ -5,20 +5,20 @@ This module defines a hierarchy of exceptions for error handling
 in the InvokeAI client library.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 
 class InvokeAIError(Exception):
     """
     Base exception for all InvokeAI client errors.
-    
+
     Parameters
     ----------
     message : str
         Error message.
     details : Dict[str, Any], optional
         Additional error details.
-    
+
     Attributes
     ----------
     message : str
@@ -26,12 +26,8 @@ class InvokeAIError(Exception):
     details : Dict[str, Any]
         Additional context about the error.
     """
-    
-    def __init__(
-        self,
-        message: str,
-        details: Optional[Dict[str, Any]] = None
-    ) -> None:
+
+    def __init__(self, message: str, details: Optional[dict[str, Any]] = None) -> None:
         """Initialize the exception."""
         raise NotImplementedError
 
@@ -39,7 +35,7 @@ class InvokeAIError(Exception):
 class ConnectionError(InvokeAIError):
     """
     Raised when connection to InvokeAI server fails.
-    
+
     Parameters
     ----------
     message : str
@@ -50,7 +46,7 @@ class ConnectionError(InvokeAIError):
         Server port.
     details : Dict[str, Any], optional
         Additional error details.
-    
+
     Examples
     --------
     >>> raise ConnectionError(
@@ -59,13 +55,13 @@ class ConnectionError(InvokeAIError):
     ...     port=9090
     ... )
     """
-    
+
     def __init__(
         self,
         message: str,
         host: Optional[str] = None,
         port: Optional[int] = None,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         """Initialize the connection error."""
         raise NotImplementedError
@@ -74,23 +70,23 @@ class ConnectionError(InvokeAIError):
 class AuthenticationError(InvokeAIError):
     """
     Raised when authentication with the server fails.
-    
+
     Parameters
     ----------
     message : str
         Error message.
     details : Dict[str, Any], optional
         Additional error details.
-    
+
     Examples
     --------
     >>> raise AuthenticationError("Invalid API key provided")
     """
-    
+
     def __init__(
         self,
         message: str = "Authentication failed",
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         """Initialize the authentication error."""
         raise NotImplementedError
@@ -99,7 +95,7 @@ class AuthenticationError(InvokeAIError):
 class APIError(InvokeAIError):
     """
     Raised when the InvokeAI API returns an error.
-    
+
     Parameters
     ----------
     message : str
@@ -110,14 +106,14 @@ class APIError(InvokeAIError):
         Raw response body.
     details : Dict[str, Any], optional
         Additional error details.
-    
+
     Attributes
     ----------
     status_code : int
         The HTTP status code from the API.
     response_body : Any
         The raw response body.
-    
+
     Examples
     --------
     >>> raise APIError(
@@ -126,13 +122,13 @@ class APIError(InvokeAIError):
     ...     response_body={"error": "Board does not exist"}
     ... )
     """
-    
+
     def __init__(
         self,
         message: str,
         status_code: Optional[int] = None,
         response_body: Optional[Any] = None,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         """Initialize the API error."""
         raise NotImplementedError
@@ -141,7 +137,7 @@ class APIError(InvokeAIError):
 class ValidationError(InvokeAIError):
     """
     Raised when input validation fails.
-    
+
     Parameters
     ----------
     message : str
@@ -154,7 +150,7 @@ class ValidationError(InvokeAIError):
         Validation constraints that were violated.
     details : Dict[str, Any], optional
         Additional error details.
-    
+
     Attributes
     ----------
     field_name : str
@@ -163,7 +159,7 @@ class ValidationError(InvokeAIError):
         The value that was invalid.
     constraints : Dict[str, Any]
         The constraints that were violated.
-    
+
     Examples
     --------
     >>> raise ValidationError(
@@ -173,14 +169,14 @@ class ValidationError(InvokeAIError):
     ...     constraints={"minimum": 64, "maximum": 2048}
     ... )
     """
-    
+
     def __init__(
         self,
         message: str,
         field_name: Optional[str] = None,
         field_value: Optional[Any] = None,
-        constraints: Optional[Dict[str, Any]] = None,
-        details: Optional[Dict[str, Any]] = None
+        constraints: Optional[dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         """Initialize the validation error."""
         raise NotImplementedError
@@ -189,7 +185,7 @@ class ValidationError(InvokeAIError):
 class WorkflowError(InvokeAIError):
     """
     Raised when workflow operations fail.
-    
+
     Parameters
     ----------
     message : str
@@ -200,14 +196,14 @@ class WorkflowError(InvokeAIError):
         Workflow name.
     details : Dict[str, Any], optional
         Additional error details.
-    
+
     Attributes
     ----------
     workflow_id : str
         The workflow that caused the error.
     workflow_name : str
         The workflow display name.
-    
+
     Examples
     --------
     >>> raise WorkflowError(
@@ -216,13 +212,13 @@ class WorkflowError(InvokeAIError):
     ...     details={"missing_inputs": ["prompt", "seed"]}
     ... )
     """
-    
+
     def __init__(
         self,
         message: str,
         workflow_id: Optional[str] = None,
         workflow_name: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         """Initialize the workflow error."""
         raise NotImplementedError
@@ -231,7 +227,7 @@ class WorkflowError(InvokeAIError):
 class JobError(InvokeAIError):
     """
     Raised when job execution fails.
-    
+
     Parameters
     ----------
     message : str
@@ -244,7 +240,7 @@ class JobError(InvokeAIError):
         Detailed error from the job.
     details : Dict[str, Any], optional
         Additional error details.
-    
+
     Attributes
     ----------
     job_id : str
@@ -253,7 +249,7 @@ class JobError(InvokeAIError):
         The job status.
     error_details : str
         Detailed error message from the server.
-    
+
     Examples
     --------
     >>> raise JobError(
@@ -263,14 +259,14 @@ class JobError(InvokeAIError):
     ...     error_details="Out of memory during generation"
     ... )
     """
-    
+
     def __init__(
         self,
         message: str,
         job_id: Optional[str] = None,
         status: Optional[str] = None,
         error_details: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         """Initialize the job error."""
         raise NotImplementedError
@@ -279,7 +275,7 @@ class JobError(InvokeAIError):
 class ResourceNotFoundError(APIError):
     """
     Raised when a requested resource doesn't exist.
-    
+
     Parameters
     ----------
     resource_type : str
@@ -290,14 +286,14 @@ class ResourceNotFoundError(APIError):
         Error message.
     details : Dict[str, Any], optional
         Additional error details.
-    
+
     Attributes
     ----------
     resource_type : str
         The type of resource not found.
     resource_id : str
         The identifier of the missing resource.
-    
+
     Examples
     --------
     >>> raise ResourceNotFoundError(
@@ -305,13 +301,13 @@ class ResourceNotFoundError(APIError):
     ...     resource_id="abc-123"
     ... )
     """
-    
+
     def __init__(
         self,
         resource_type: str,
         resource_id: str,
         message: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         """Initialize the resource not found error."""
         raise NotImplementedError
@@ -320,7 +316,7 @@ class ResourceNotFoundError(APIError):
 class TimeoutError(InvokeAIError):
     """
     Raised when an operation times out.
-    
+
     Parameters
     ----------
     message : str
@@ -331,14 +327,14 @@ class TimeoutError(InvokeAIError):
         Timeout duration in seconds.
     details : Dict[str, Any], optional
         Additional error details.
-    
+
     Attributes
     ----------
     operation : str
         The operation that timed out.
     timeout : float
         The timeout duration.
-    
+
     Examples
     --------
     >>> raise TimeoutError(
@@ -347,13 +343,13 @@ class TimeoutError(InvokeAIError):
     ...     timeout=60.0
     ... )
     """
-    
+
     def __init__(
         self,
         message: str,
         operation: Optional[str] = None,
         timeout: Optional[float] = None,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         """Initialize the timeout error."""
         raise NotImplementedError
@@ -362,7 +358,7 @@ class TimeoutError(InvokeAIError):
 class FileError(InvokeAIError):
     """
     Raised when file operations fail.
-    
+
     Parameters
     ----------
     message : str
@@ -373,14 +369,14 @@ class FileError(InvokeAIError):
         The file operation that failed.
     details : Dict[str, Any], optional
         Additional error details.
-    
+
     Attributes
     ----------
     file_path : str
         The file that caused the error.
     operation : str
         The operation that failed (upload, download, read, write).
-    
+
     Examples
     --------
     >>> raise FileError(
@@ -389,13 +385,13 @@ class FileError(InvokeAIError):
     ...     operation="upload"
     ... )
     """
-    
+
     def __init__(
         self,
         message: str,
         file_path: Optional[str] = None,
         operation: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         """Initialize the file error."""
         raise NotImplementedError
@@ -404,7 +400,7 @@ class FileError(InvokeAIError):
 class ConfigurationError(InvokeAIError):
     """
     Raised when client configuration is invalid.
-    
+
     Parameters
     ----------
     message : str
@@ -415,14 +411,14 @@ class ConfigurationError(InvokeAIError):
         The invalid configuration value.
     details : Dict[str, Any], optional
         Additional error details.
-    
+
     Attributes
     ----------
     config_key : str
         The configuration parameter.
     config_value : Any
         The invalid value.
-    
+
     Examples
     --------
     >>> raise ConfigurationError(
@@ -431,13 +427,13 @@ class ConfigurationError(InvokeAIError):
     ...     config_value=-1
     ... )
     """
-    
+
     def __init__(
         self,
         message: str,
         config_key: Optional[str] = None,
         config_value: Optional[Any] = None,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         """Initialize the configuration error."""
         raise NotImplementedError

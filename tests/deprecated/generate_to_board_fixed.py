@@ -3,54 +3,59 @@ Generate images to a specific board in InvokeAI - FIXED VERSION
 Using the correct generation parameters that produce valid images
 """
 
-import requests
-import json
-import time
 import random
-from pathlib import Path
+import time
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import requests
 
 # Creative prompts for generation
 PROMPTS = [
     {
         "prompt": "a majestic phoenix rising from crystal flames, ethereal and magical, fantasy art masterpiece",
         "style": "fantasy digital art, highly detailed, volumetric lighting",
-        "name": "phoenix_rising"
+        "name": "phoenix_rising",
     },
     {
         "prompt": "ancient library in the clouds, floating books, golden sunbeams, magical atmosphere",
         "style": "studio ghibli style, dreamlike, whimsical",
-        "name": "cloud_library"
+        "name": "cloud_library",
     },
     {
         "prompt": "bioluminescent forest at night, glowing mushrooms and fireflies, mystical path",
         "style": "fantasy photography, cinematic, atmospheric",
-        "name": "glowing_forest"
+        "name": "glowing_forest",
     },
     {
         "prompt": "steampunk airship above victorian london, brass and copper details, sunset sky",
         "style": "steampunk art, detailed mechanical design, vintage",
-        "name": "steampunk_airship"
+        "name": "steampunk_airship",
     },
     {
         "prompt": "zen garden on mars, red sand patterns, earth visible in sky, futuristic tranquility",
         "style": "science fiction art, minimalist, surreal",
-        "name": "mars_garden"
-    }
+        "name": "mars_garden",
+    },
 ]
 
+
 class BoardImageGenerator:
-    def __init__(self, base_url: str = "http://127.0.0.1:9090", board_name: str = "auto-test-board"):
+    def __init__(
+        self,
+        base_url: str = "http://127.0.0.1:9090",
+        board_name: str = "auto-test-board",
+    ):
         self.base_url = base_url
         self.board_name = board_name
         self.board_id = None
         self.session = requests.Session()
         self.generated_images = []
-        
+
         # Ensure tmp directory exists
         Path("./tmp").mkdir(exist_ok=True)
-    
+
     def check_api(self) -> bool:
         """Check if API is running"""
         try:
@@ -62,92 +67,97 @@ class BoardImageGenerator:
         except Exception as e:
             print(f"[FAIL] API not available: {e}")
             return False
-    
+
     def get_or_create_board(self) -> str:
         """Get existing board or create new one"""
         # List existing boards
         response = self.session.get(f"{self.base_url}/api/v1/boards/")
         if response.status_code == 200:
-            boards = response.json().get('items', [])
+            boards = response.json().get("items", [])
             for board in boards:
-                if board.get('board_name') == self.board_name:
-                    self.board_id = board['board_id']
-                    print(f"[OK] Found existing board: {self.board_name} (id: {self.board_id})")
+                if board.get("board_name") == self.board_name:
+                    self.board_id = board["board_id"]
+                    print(
+                        f"[OK] Found existing board: {self.board_name} (id: {self.board_id})"
+                    )
                     print(f"     Current image count: {board.get('image_count', 0)}")
                     return self.board_id
-        
+
         # Create new board if not found
         response = self.session.post(
             f"{self.base_url}/api/v1/boards/",
-            params={
-                'board_name': self.board_name,
-                'is_private': False
-            }
+            params={"board_name": self.board_name, "is_private": False},
         )
-        
+
         if response.status_code in [200, 201]:
             board_data = response.json()
-            self.board_id = board_data['board_id']
+            self.board_id = board_data["board_id"]
             print(f"[OK] Created new board: {self.board_name} (id: {self.board_id})")
             return self.board_id
         else:
             print(f"[FAIL] Could not create board: {response.status_code}")
             return None
-    
-    def get_sdxl_model(self, model_index: int = None, model_name: str = None) -> Optional[Dict[str, Any]]:
+
+    def get_sdxl_model(
+        self, model_index: int = None, model_name: str = None
+    ) -> Optional[Dict[str, Any]]:
         """Get SDXL model by index or name, or a default one"""
         response = self.session.get(f"{self.base_url}/api/v2/models/")
         if response.status_code == 200:
-            models = response.json()['models']
+            models = response.json()["models"]
             sdxl_models = []
-            
+
             for model in models:
-                if model['type'] == 'main' and model['base'] == 'sdxl':
-                    sdxl_models.append({
-                        'name': model['name'],
-                        'key': model['key'],
-                        'hash': model.get('hash', 'random_hash'),
-                        'base': model['base'],
-                        'type': model['type']
-                    })
-            
+                if model["type"] == "main" and model["base"] == "sdxl":
+                    sdxl_models.append(
+                        {
+                            "name": model["name"],
+                            "key": model["key"],
+                            "hash": model.get("hash", "random_hash"),
+                            "base": model["base"],
+                            "type": model["type"],
+                        }
+                    )
+
             if not sdxl_models:
                 return None
-            
+
             # Try to find specific model
             if model_name:
                 for model in sdxl_models:
-                    if model_name.lower() in model['name'].lower():
+                    if model_name.lower() in model["name"].lower():
                         return model
-            
+
             # Use index if provided
             if model_index is not None and 0 <= model_index < len(sdxl_models):
                 return sdxl_models[model_index]
-            
+
             # Try to use a different model than JuggernautXL_version5
             # Prefer cyberrealisticXL or xxmix9realistic
-            preferred_models = ['cyberrealisticXL', 'xxmix9realistic', 'NightVision']
+            preferred_models = ["cyberrealisticXL", "xxmix9realistic", "NightVision"]
             for pref in preferred_models:
                 for model in sdxl_models:
-                    if pref.lower() in model['name'].lower():
+                    if pref.lower() in model["name"].lower():
                         return model
-            
+
             # Return first available if no preferred found
             return sdxl_models[0]
         return None
-    
-    def create_sdxl_graph_with_board(self, prompt: str, style: str, seed: int = None) -> Dict[str, Any]:
+
+    def create_sdxl_graph_with_board(
+        self, prompt: str, style: str, seed: int = None
+    ) -> Dict[str, Any]:
         """Create SDXL text-to-image graph with board assignment - FIXED VERSION"""
         if seed is None:
             seed = random.randint(1, 999999)
-        
+
         model = self.get_sdxl_model()
         if not model:
             raise Exception("No SDXL model available")
-        
+
         # Combine prompt and style for better results
         full_prompt = f"{prompt}, {style}" if style else prompt
-        
+
         return {
             "id": f"board_gen_{seed}",
             "nodes": {
@@ -155,24 +165,24 @@ class BoardImageGenerator:
                     "id": "model",
                     "type": "sdxl_model_loader",
                     "model": {
-                        "key": model['key'],
-                        "hash": model['hash'],
-                        "name": model['name'],
-                        "base": model['base'],
-                        "type": model['type']
-                    }
+                        "key": model["key"],
+                        "hash": model["hash"],
+                        "name": model["name"],
+                        "base": model["base"],
+                        "type": model["type"],
+                    },
                 },
                 "pos_prompt": {
                     "id": "pos_prompt",
                     "type": "sdxl_compel_prompt",
                     "prompt": full_prompt,
-                    "style": "photographic"  # Use a consistent style
+                    "style": "photographic",  # Use a consistent style
                 },
                 "neg_prompt": {
                     "id": "neg_prompt",
                     "type": "sdxl_compel_prompt",
                     "prompt": "ugly, blurry, low quality, distorted, disfigured, bad anatomy, watermark, text",
-                    "style": ""  # Empty style for negative prompt
+                    "style": "",  # Empty style for negative prompt
                 },
                 "noise": {
                     "id": "noise",
@@ -180,7 +190,7 @@ class BoardImageGenerator:
                     "width": 1024,
                     "height": 1024,
                     "seed": seed,
-                    "use_cpu": True
+                    "use_cpu": True,
                 },
                 "denoise": {
                     "id": "denoise",
@@ -189,67 +199,91 @@ class BoardImageGenerator:
                     "cfg_scale": 7.5,
                     "scheduler": "euler_a",
                     "denoising_start": 0,
-                    "denoising_end": 1
+                    "denoising_end": 1,
                 },
                 "l2i": {
                     "id": "l2i",
                     "type": "l2i",
                     "fp32": False,
-                    "board": {
-                        "board_id": self.board_id
-                    }
-                }
+                    "board": {"board_id": self.board_id},
+                },
             },
             "edges": [
-                {"source": {"node_id": "model", "field": "unet"},
-                 "destination": {"node_id": "denoise", "field": "unet"}},
-                {"source": {"node_id": "model", "field": "vae"},
-                 "destination": {"node_id": "l2i", "field": "vae"}},
-                {"source": {"node_id": "model", "field": "clip"},
-                 "destination": {"node_id": "pos_prompt", "field": "clip"}},
-                {"source": {"node_id": "model", "field": "clip2"},
-                 "destination": {"node_id": "pos_prompt", "field": "clip2"}},
-                {"source": {"node_id": "model", "field": "clip"},
-                 "destination": {"node_id": "neg_prompt", "field": "clip"}},
-                {"source": {"node_id": "model", "field": "clip2"},
-                 "destination": {"node_id": "neg_prompt", "field": "clip2"}},
-                {"source": {"node_id": "pos_prompt", "field": "conditioning"},
-                 "destination": {"node_id": "denoise", "field": "positive_conditioning"}},
-                {"source": {"node_id": "neg_prompt", "field": "conditioning"},
-                 "destination": {"node_id": "denoise", "field": "negative_conditioning"}},
-                {"source": {"node_id": "noise", "field": "noise"},
-                 "destination": {"node_id": "denoise", "field": "noise"}},
-                {"source": {"node_id": "denoise", "field": "latents"},
-                 "destination": {"node_id": "l2i", "field": "latents"}}
-            ]
+                {
+                    "source": {"node_id": "model", "field": "unet"},
+                    "destination": {"node_id": "denoise", "field": "unet"},
+                },
+                {
+                    "source": {"node_id": "model", "field": "vae"},
+                    "destination": {"node_id": "l2i", "field": "vae"},
+                },
+                {
+                    "source": {"node_id": "model", "field": "clip"},
+                    "destination": {"node_id": "pos_prompt", "field": "clip"},
+                },
+                {
+                    "source": {"node_id": "model", "field": "clip2"},
+                    "destination": {"node_id": "pos_prompt", "field": "clip2"},
+                },
+                {
+                    "source": {"node_id": "model", "field": "clip"},
+                    "destination": {"node_id": "neg_prompt", "field": "clip"},
+                },
+                {
+                    "source": {"node_id": "model", "field": "clip2"},
+                    "destination": {"node_id": "neg_prompt", "field": "clip2"},
+                },
+                {
+                    "source": {"node_id": "pos_prompt", "field": "conditioning"},
+                    "destination": {
+                        "node_id": "denoise",
+                        "field": "positive_conditioning",
+                    },
+                },
+                {
+                    "source": {"node_id": "neg_prompt", "field": "conditioning"},
+                    "destination": {
+                        "node_id": "denoise",
+                        "field": "negative_conditioning",
+                    },
+                },
+                {
+                    "source": {"node_id": "noise", "field": "noise"},
+                    "destination": {"node_id": "denoise", "field": "noise"},
+                },
+                {
+                    "source": {"node_id": "denoise", "field": "latents"},
+                    "destination": {"node_id": "l2i", "field": "latents"},
+                },
+            ],
         }
-    
+
     def enqueue_generation(self, prompt_info: Dict[str, str]) -> str:
         """Enqueue a single image generation to the board"""
         graph = self.create_sdxl_graph_with_board(
-            prompt_info['prompt'],
-            prompt_info['style']
+            prompt_info["prompt"], prompt_info["style"]
         )
-        
+
         batch_data = {
             "batch": {
                 "batch_id": f"board_{prompt_info['name']}_{int(time.time())}",
                 "graph": graph,
-                "runs": 1
+                "runs": 1,
             }
         }
-        
+
         response = self.session.post(
-            f"{self.base_url}/api/v1/queue/default/enqueue_batch",
-            json=batch_data
+            f"{self.base_url}/api/v1/queue/default/enqueue_batch", json=batch_data
         )
-        
+
         if response.status_code in [200, 201]:
             result = response.json()
-            batch_id = result.get('batch', {}).get('batch_id')
+            batch_id = result.get("batch", {}).get("batch_id")
             return batch_id
         else:
-            print(f"[FAIL] Enqueue failed for {prompt_info['name']}: {response.status_code}")
+            print(
+                f"[FAIL] Enqueue failed for {prompt_info['name']}: {response.status_code}"
+            )
             if response.content:
                 try:
                     error = response.json()
@@ -257,31 +291,33 @@ class BoardImageGenerator:
                 except:
                     print(f"       Error: {response.text}")
             return None
-    
+
     def wait_for_completion(self, timeout: int = 300) -> bool:
         """Wait for all generations to complete with longer timeout"""
         start_time = time.time()
-        
+
         while time.time() - start_time < timeout:
             response = self.session.get(f"{self.base_url}/api/v1/queue/default/status")
             if response.status_code == 200:
                 status = response.json()
-                queue = status['queue']
-                
-                if queue['in_progress'] == 0 and queue['pending'] == 0:
+                queue = status["queue"]
+
+                if queue["in_progress"] == 0 and queue["pending"] == 0:
                     return True
-                
-                print(f"  Queue: Pending={queue['pending']}, Processing={queue['in_progress']}")
+
+                print(
+                    f"  Queue: Pending={queue['pending']}, Processing={queue['in_progress']}"
+                )
                 time.sleep(3)
-        
+
         return False
-    
+
     def get_board_images(self) -> List[str]:
         """Get all image names from the board"""
         response = self.session.get(
             f"{self.base_url}/api/v1/boards/{self.board_id}/image_names"
         )
-        
+
         if response.status_code == 200:
             image_names = response.json()
             print(f"[OK] Found {len(image_names)} images in board {self.board_name}")
@@ -289,114 +325,118 @@ class BoardImageGenerator:
         else:
             print(f"[FAIL] Could not get board images: {response.status_code}")
             return []
-    
+
     def download_board_images(self, limit: int = None) -> List[str]:
         """Download images from the specific board"""
         downloaded = []
-        
+
         # Get image names from board
         image_names = self.get_board_images()
-        
+
         if not image_names:
             print("[WARN] No images found in board")
             return downloaded
-        
+
         # Sort by most recent (assuming they're in order)
         if limit:
             image_names = image_names[-limit:]  # Get last N images
-        
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
+
         for i, image_name in enumerate(image_names):
-            output_path = f"./tmp/board_{self.board_name}_{timestamp}_{i+1}_{image_name}"
-            
+            output_path = (
+                f"./tmp/board_{self.board_name}_{timestamp}_{i + 1}_{image_name}"
+            )
+
             img_response = self.session.get(
                 f"{self.base_url}/api/v1/images/i/{image_name}/full"
             )
-            
+
             if img_response.status_code == 200:
-                with open(output_path, 'wb') as f:
+                with open(output_path, "wb") as f:
                     f.write(img_response.content)
-                
+
                 # Check file size
                 file_size = Path(output_path).stat().st_size
                 if file_size < 50000:
-                    print(f"[WARN] Downloaded but small file ({file_size} bytes): {output_path}")
+                    print(
+                        f"[WARN] Downloaded but small file ({file_size} bytes): {output_path}"
+                    )
                 else:
                     downloaded.append(output_path)
                     print(f"[OK] Downloaded ({file_size:,} bytes): {output_path}")
             else:
                 print(f"[FAIL] Could not download {image_name}")
-        
+
         return downloaded
-    
+
     def generate_batch(self):
         """Main batch generation process"""
         print("=" * 70)
         print("BOARD-SPECIFIC IMAGE GENERATION (FIXED)")
         print(f"Target Board: {self.board_name}")
         print("=" * 70)
-        
+
         # Check API
         if not self.check_api():
             return
-        
+
         # Get or create board
         print("\nBOARD SETUP:")
         print("-" * 70)
         if not self.get_or_create_board():
             print("[FAIL] Could not setup board")
             return
-        
+
         # Check model
         model = self.get_sdxl_model()
         if not model:
             print("[FAIL] No SDXL model available")
             return
-        
+
         print(f"\n[OK] Using model: {model['name']}")
-        
+
         # Enqueue all generations
         print("\nENQUEUING GENERATIONS:")
         print("-" * 70)
         batch_ids = []
-        
+
         for i, prompt_info in enumerate(PROMPTS, 1):
             print(f"\n{i}. {prompt_info['name'].upper()}")
             print(f"   Prompt: {prompt_info['prompt'][:70]}...")
-            
+
             batch_id = self.enqueue_generation(prompt_info)
             if batch_id:
                 batch_ids.append(batch_id)
                 print(f"   [OK] Enqueued: {batch_id}")
             else:
-                print(f"   [FAIL] Failed to enqueue")
-        
+                print("   [FAIL] Failed to enqueue")
+
         if not batch_ids:
             print("\n[FAIL] No batches were enqueued")
             return
-        
+
         # Wait for completion with longer timeout
         print("\n" + "=" * 70)
         print("PROCESSING...")
         print("-" * 70)
         print("Waiting for generations to complete (this may take a few minutes)...")
-        
+
         if self.wait_for_completion(timeout=300):
             print("[OK] All generations completed!")
         else:
             print("[WARN] Timeout - some may not be complete")
-        
+
         # Wait a bit for images to be saved
         time.sleep(3)
-        
+
         # Download from board
         print("\n" + "=" * 70)
         print(f"DOWNLOADING FROM BOARD: {self.board_name}")
         print("-" * 70)
-        
+
         downloaded = self.download_board_images(limit=len(batch_ids))
-        
+
         # Summary
         print("\n" + "=" * 70)
         print("GENERATION SUMMARY")
@@ -405,43 +445,45 @@ class BoardImageGenerator:
         print(f"Prompts used: {len(PROMPTS)}")
         print(f"Successfully enqueued: {len(batch_ids)}")
         print(f"Valid images downloaded: {len(downloaded)}")
-        
+
         print("\nPrompts generated:")
         for i, prompt_info in enumerate(PROMPTS, 1):
             print(f"  {i}. {prompt_info['name']}")
-        
+
         if downloaded:
             print("\nDownloaded files:")
             for file in downloaded:
                 file_size = Path(file).stat().st_size
                 print(f"  - {Path(file).name} ({file_size:,} bytes)")
-        
+
         print("\n" + "=" * 70)
-        print(f"Complete! {len(downloaded)} valid images saved to ./tmp from board '{self.board_name}'")
+        print(
+            f"Complete! {len(downloaded)} valid images saved to ./tmp from board '{self.board_name}'"
+        )
         print("=" * 70)
 
 
 def main():
     import sys
-    
+
     # Try different models
-    # Model index from the list: 
+    # Model index from the list:
     # 0: JuggernautXL_version5
     # 1: NightVision XL
     # 2: cyberrealisticXL_v5
     # 3: juggernautXL_v9Rundiffusionphoto2
     # 8: xxmix9realisticsdxl_v10
-    
+
     model_index = 2  # Try cyberrealisticXL_v5 instead of JuggernautXL
     if len(sys.argv) > 1:
         model_index = int(sys.argv[1])
-    
+
     generator = BoardImageGenerator(board_name="auto-test-board-fixed")
-    
+
     # Modify to use specific model
     original_get_model = generator.get_sdxl_model
     generator.get_sdxl_model = lambda: original_get_model(model_index=model_index)
-    
+
     generator.generate_batch()
 
 

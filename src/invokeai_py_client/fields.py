@@ -8,20 +8,25 @@ handling validation, type conversion, and data management.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    TypeVar,
+    Union,
+)
 
 if TYPE_CHECKING:
     from invokeai_py_client.client import InvokeAIClient
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class Field(ABC, Generic[T]):
     """
     Abstract base class for all InvokeAI field types.
-    
+
     Parameters
     ----------
     value : T, optional
@@ -30,7 +35,7 @@ class Field(ABC, Generic[T]):
         The field name in the workflow.
     description : str, optional
         Human-readable description of the field.
-    
+
     Attributes
     ----------
     value : T
@@ -40,83 +45,83 @@ class Field(ABC, Generic[T]):
     metadata : Dict[str, Any]
         Additional field metadata.
     """
-    
+
     def __init__(
         self,
-        value: Optional[T] = None,
-        name: Optional[str] = None,
-        description: Optional[str] = None
+        value: T | None = None,
+        name: str | None = None,
+        description: str | None = None,
     ) -> None:
         """Initialize the field."""
         raise NotImplementedError
-    
+
     @abstractmethod
     def validate(self) -> bool:
         """
         Validate the current field value.
-        
+
         Returns
         -------
         bool
             True if the value is valid, False otherwise.
-        
+
         Raises
         ------
         ValueError
             If validation fails with details about the error.
         """
         raise NotImplementedError
-    
+
     @abstractmethod
-    def to_api_format(self) -> Dict[str, Any]:
+    def to_api_format(self) -> dict[str, Any]:
         """
         Convert the field to InvokeAI API format.
-        
+
         Returns
         -------
         Dict[str, Any]
             The field in API-compatible format.
         """
         raise NotImplementedError
-    
+
     @classmethod
     @abstractmethod
-    def from_api_format(cls, data: Dict[str, Any]) -> Field[T]:
+    def from_api_format(cls, data: dict[str, Any]) -> Field[T]:
         """
         Create a field instance from API response data.
-        
+
         Parameters
         ----------
         data : Dict[str, Any]
             The API response data.
-        
+
         Returns
         -------
         Field[T]
             A new field instance with the parsed value.
         """
         raise NotImplementedError
-    
+
     def set_value(self, value: T) -> None:
         """
         Set the field value with validation.
-        
+
         Parameters
         ----------
         value : T
             The new value to set.
-        
+
         Raises
         ------
         ValueError
             If the value fails validation.
         """
         raise NotImplementedError
-    
-    def get_value(self) -> Optional[T]:
+
+    def get_value(self) -> T | None:
         """
         Get the current field value.
-        
+
         Returns
         -------
         Optional[T]
@@ -128,7 +133,7 @@ class Field(ABC, Generic[T]):
 class IntegerField(Field[int]):
     """
     Integer field type with optional constraints.
-    
+
     Parameters
     ----------
     value : int, optional
@@ -143,36 +148,36 @@ class IntegerField(Field[int]):
         Field identifier.
     description : str, optional
         Field description.
-    
+
     Examples
     --------
     >>> field = IntegerField(value=512, minimum=64, maximum=2048, multiple_of=8)
     >>> field.validate()
     True
     """
-    
+
     def __init__(
         self,
-        value: Optional[int] = None,
-        minimum: Optional[int] = None,
-        maximum: Optional[int] = None,
-        multiple_of: Optional[int] = None,
-        name: Optional[str] = None,
-        description: Optional[str] = None
+        value: int | None = None,
+        minimum: int | None = None,
+        maximum: int | None = None,
+        multiple_of: int | None = None,
+        name: str | None = None,
+        description: str | None = None,
     ) -> None:
         """Initialize the integer field."""
         raise NotImplementedError
-    
+
     def validate(self) -> bool:
         """Validate integer constraints."""
         raise NotImplementedError
-    
-    def to_api_format(self) -> Dict[str, Any]:
+
+    def to_api_format(self) -> dict[str, Any]:
         """Convert to API format."""
         raise NotImplementedError
-    
+
     @classmethod
-    def from_api_format(cls, data: Dict[str, Any]) -> IntegerField:
+    def from_api_format(cls, data: dict[str, Any]) -> IntegerField:
         """Create from API data."""
         raise NotImplementedError
 
@@ -180,7 +185,7 @@ class IntegerField(Field[int]):
 class FloatField(Field[float]):
     """
     Float field type with optional constraints.
-    
+
     Parameters
     ----------
     value : float, optional
@@ -193,35 +198,35 @@ class FloatField(Field[float]):
         Field identifier.
     description : str, optional
         Field description.
-    
+
     Examples
     --------
     >>> field = FloatField(value=7.5, minimum=0.0, maximum=10.0)
     >>> field.validate()
     True
     """
-    
+
     def __init__(
         self,
-        value: Optional[float] = None,
-        minimum: Optional[float] = None,
-        maximum: Optional[float] = None,
-        name: Optional[str] = None,
-        description: Optional[str] = None
+        value: float | None = None,
+        minimum: float | None = None,
+        maximum: float | None = None,
+        name: str | None = None,
+        description: str | None = None,
     ) -> None:
         """Initialize the float field."""
         raise NotImplementedError
-    
+
     def validate(self) -> bool:
         """Validate float constraints."""
         raise NotImplementedError
-    
-    def to_api_format(self) -> Dict[str, Any]:
+
+    def to_api_format(self) -> dict[str, Any]:
         """Convert to API format."""
         raise NotImplementedError
-    
+
     @classmethod
-    def from_api_format(cls, data: Dict[str, Any]) -> FloatField:
+    def from_api_format(cls, data: dict[str, Any]) -> FloatField:
         """Create from API data."""
         raise NotImplementedError
 
@@ -229,7 +234,7 @@ class FloatField(Field[float]):
 class StringField(Field[str]):
     """
     String field type with optional constraints.
-    
+
     Parameters
     ----------
     value : str, optional
@@ -244,36 +249,36 @@ class StringField(Field[str]):
         Field identifier.
     description : str, optional
         Field description.
-    
+
     Examples
     --------
     >>> field = StringField(value="prompt text", min_length=1, max_length=1000)
     >>> field.validate()
     True
     """
-    
+
     def __init__(
         self,
-        value: Optional[str] = None,
-        min_length: Optional[int] = None,
-        max_length: Optional[int] = None,
-        pattern: Optional[str] = None,
-        name: Optional[str] = None,
-        description: Optional[str] = None
+        value: str | None = None,
+        min_length: int | None = None,
+        max_length: int | None = None,
+        pattern: str | None = None,
+        name: str | None = None,
+        description: str | None = None,
     ) -> None:
         """Initialize the string field."""
         raise NotImplementedError
-    
+
     def validate(self) -> bool:
         """Validate string constraints."""
         raise NotImplementedError
-    
-    def to_api_format(self) -> Dict[str, Any]:
+
+    def to_api_format(self) -> dict[str, Any]:
         """Convert to API format."""
         raise NotImplementedError
-    
+
     @classmethod
-    def from_api_format(cls, data: Dict[str, Any]) -> StringField:
+    def from_api_format(cls, data: dict[str, Any]) -> StringField:
         """Create from API data."""
         raise NotImplementedError
 
@@ -281,7 +286,7 @@ class StringField(Field[str]):
 class BooleanField(Field[bool]):
     """
     Boolean field type.
-    
+
     Parameters
     ----------
     value : bool, optional
@@ -290,33 +295,33 @@ class BooleanField(Field[bool]):
         Field identifier.
     description : str, optional
         Field description.
-    
+
     Examples
     --------
     >>> field = BooleanField(value=True, name="enable_hires")
     >>> field.get_value()
     True
     """
-    
+
     def __init__(
         self,
-        value: Optional[bool] = None,
-        name: Optional[str] = None,
-        description: Optional[str] = None
+        value: bool | None = None,
+        name: str | None = None,
+        description: str | None = None,
     ) -> None:
         """Initialize the boolean field."""
         raise NotImplementedError
-    
+
     def validate(self) -> bool:
         """Validate boolean value."""
         raise NotImplementedError
-    
-    def to_api_format(self) -> Dict[str, Any]:
+
+    def to_api_format(self) -> dict[str, Any]:
         """Convert to API format."""
         raise NotImplementedError
-    
+
     @classmethod
-    def from_api_format(cls, data: Dict[str, Any]) -> BooleanField:
+    def from_api_format(cls, data: dict[str, Any]) -> BooleanField:
         """Create from API data."""
         raise NotImplementedError
 
@@ -324,10 +329,10 @@ class BooleanField(Field[bool]):
 class ImageField(Field[Union[str, Path]]):
     """
     Image field for handling image references and uploads.
-    
+
     This field handles both local image paths (for upload) and
     server-side image names (for references).
-    
+
     Parameters
     ----------
     value : Union[str, Path], optional
@@ -338,14 +343,14 @@ class ImageField(Field[Union[str, Path]]):
         Field identifier.
     description : str, optional
         Field description.
-    
+
     Attributes
     ----------
     image_name : str
         Server-side image identifier after upload.
     local_path : Path
         Local file path before upload.
-    
+
     Examples
     --------
     >>> field = ImageField(value="input.png")
@@ -353,44 +358,44 @@ class ImageField(Field[Union[str, Path]]):
     >>> print(field.image_name)
     "a1b2c3d4-e5f6-7890-abcd-ef1234567890.png"
     """
-    
+
     def __init__(
         self,
-        value: Optional[Union[str, Path]] = None,
+        value: str | Path | None = None,
         is_uploaded: bool = False,
-        name: Optional[str] = None,
-        description: Optional[str] = None
+        name: str | None = None,
+        description: str | None = None,
     ) -> None:
         """Initialize the image field."""
         raise NotImplementedError
-    
+
     def validate(self) -> bool:
         """Validate image path or name."""
         raise NotImplementedError
-    
-    def to_api_format(self) -> Dict[str, Any]:
+
+    def to_api_format(self) -> dict[str, Any]:
         """Convert to API format with image_name."""
         raise NotImplementedError
-    
+
     @classmethod
-    def from_api_format(cls, data: Dict[str, Any]) -> ImageField:
+    def from_api_format(cls, data: dict[str, Any]) -> ImageField:
         """Create from API data."""
         raise NotImplementedError
-    
+
     async def upload(self, client: InvokeAIClient) -> str:
         """
         Upload the local image to the server.
-        
+
         Parameters
         ----------
         client : InvokeAIClient
             The client instance for uploading.
-        
+
         Returns
         -------
         str
             The server-side image name.
-        
+
         Raises
         ------
         FileNotFoundError
@@ -399,18 +404,20 @@ class ImageField(Field[Union[str, Path]]):
             If upload fails.
         """
         raise NotImplementedError
-    
-    async def download(self, client: InvokeAIClient, output_path: Optional[Path] = None) -> Path:
+
+    async def download(
+        self, client: InvokeAIClient, output_path: Path | None = None
+    ) -> Path:
         """
         Download the image from the server.
-        
+
         Parameters
         ----------
         client : InvokeAIClient
             The client instance for downloading.
         output_path : Path, optional
             Where to save the image.
-        
+
         Returns
         -------
         Path
@@ -422,7 +429,7 @@ class ImageField(Field[Union[str, Path]]):
 class LatentsField(Field[str]):
     """
     Latents field for latent space representations.
-    
+
     Parameters
     ----------
     value : str, optional
@@ -432,34 +439,34 @@ class LatentsField(Field[str]):
     description : str, optional
         Field description.
     """
-    
+
     def __init__(
         self,
-        value: Optional[str] = None,
-        name: Optional[str] = None,
-        description: Optional[str] = None
+        value: str | None = None,
+        name: str | None = None,
+        description: str | None = None,
     ) -> None:
         """Initialize the latents field."""
         raise NotImplementedError
-    
+
     def validate(self) -> bool:
         """Validate latents identifier."""
         raise NotImplementedError
-    
-    def to_api_format(self) -> Dict[str, Any]:
+
+    def to_api_format(self) -> dict[str, Any]:
         """Convert to API format."""
         raise NotImplementedError
-    
+
     @classmethod
-    def from_api_format(cls, data: Dict[str, Any]) -> LatentsField:
+    def from_api_format(cls, data: dict[str, Any]) -> LatentsField:
         """Create from API data."""
         raise NotImplementedError
 
 
-class ModelField(Field[Dict[str, str]]):
+class ModelField(Field[dict[str, str]]):
     """
     DnnModel reference field.
-    
+
     Parameters
     ----------
     model_key : str, optional
@@ -474,7 +481,7 @@ class ModelField(Field[Dict[str, str]]):
         Field identifier.
     description : str, optional
         Field description.
-    
+
     Examples
     --------
     >>> field = ModelField(
@@ -483,29 +490,29 @@ class ModelField(Field[Dict[str, str]]):
     ...     model_type="main"
     ... )
     """
-    
+
     def __init__(
         self,
-        model_key: Optional[str] = None,
-        model_name: Optional[str] = None,
-        base_model: Optional[str] = None,
-        model_type: Optional[str] = None,
-        name: Optional[str] = None,
-        description: Optional[str] = None
+        model_key: str | None = None,
+        model_name: str | None = None,
+        base_model: str | None = None,
+        model_type: str | None = None,
+        name: str | None = None,
+        description: str | None = None,
     ) -> None:
         """Initialize the model field."""
         raise NotImplementedError
-    
+
     def validate(self) -> bool:
         """Validate model reference."""
         raise NotImplementedError
-    
-    def to_api_format(self) -> Dict[str, Any]:
+
+    def to_api_format(self) -> dict[str, Any]:
         """Convert to API format."""
         raise NotImplementedError
-    
+
     @classmethod
-    def from_api_format(cls, data: Dict[str, Any]) -> ModelField:
+    def from_api_format(cls, data: dict[str, Any]) -> ModelField:
         """Create from API data."""
         raise NotImplementedError
 
@@ -513,7 +520,7 @@ class ModelField(Field[Dict[str, str]]):
 class EnumField(Field[str]):
     """
     Enum field with predefined choices.
-    
+
     Parameters
     ----------
     value : str, optional
@@ -524,7 +531,7 @@ class EnumField(Field[str]):
         Field identifier.
     description : str, optional
         Field description.
-    
+
     Examples
     --------
     >>> field = EnumField(
@@ -532,27 +539,27 @@ class EnumField(Field[str]):
     ...     choices=["euler", "euler_a", "dpm++", "ddim"]
     ... )
     """
-    
+
     def __init__(
         self,
-        value: Optional[str] = None,
-        choices: Optional[List[str]] = None,
-        name: Optional[str] = None,
-        description: Optional[str] = None
+        value: str | None = None,
+        choices: list[str] | None = None,
+        name: str | None = None,
+        description: str | None = None,
     ) -> None:
         """Initialize the enum field."""
         raise NotImplementedError
-    
+
     def validate(self) -> bool:
         """Validate value is in choices."""
         raise NotImplementedError
-    
-    def to_api_format(self) -> Dict[str, Any]:
+
+    def to_api_format(self) -> dict[str, Any]:
         """Convert to API format."""
         raise NotImplementedError
-    
+
     @classmethod
-    def from_api_format(cls, data: Dict[str, Any]) -> EnumField:
+    def from_api_format(cls, data: dict[str, Any]) -> EnumField:
         """Create from API data."""
         raise NotImplementedError
 
@@ -560,7 +567,7 @@ class EnumField(Field[str]):
 class ColorField(Field[str]):
     """
     Color field for RGBA color values.
-    
+
     Parameters
     ----------
     value : str, optional
@@ -569,40 +576,40 @@ class ColorField(Field[str]):
         Field identifier.
     description : str, optional
         Field description.
-    
+
     Examples
     --------
     >>> field = ColorField(value="#FF5733")
     >>> field.to_rgba()
     (255, 87, 51, 255)
     """
-    
+
     def __init__(
         self,
-        value: Optional[str] = None,
-        name: Optional[str] = None,
-        description: Optional[str] = None
+        value: str | None = None,
+        name: str | None = None,
+        description: str | None = None,
     ) -> None:
         """Initialize the color field."""
         raise NotImplementedError
-    
+
     def validate(self) -> bool:
         """Validate color format."""
         raise NotImplementedError
-    
-    def to_api_format(self) -> Dict[str, Any]:
+
+    def to_api_format(self) -> dict[str, Any]:
         """Convert to API format."""
         raise NotImplementedError
-    
+
     @classmethod
-    def from_api_format(cls, data: Dict[str, Any]) -> ColorField:
+    def from_api_format(cls, data: dict[str, Any]) -> ColorField:
         """Create from API data."""
         raise NotImplementedError
-    
-    def to_rgba(self) -> Tuple[int, int, int, int]:
+
+    def to_rgba(self) -> tuple[int, int, int, int]:
         """
         Convert to RGBA tuple.
-        
+
         Returns
         -------
         Tuple[int, int, int, int]
@@ -611,10 +618,10 @@ class ColorField(Field[str]):
         raise NotImplementedError
 
 
-class ConditioningField(Field[Dict[str, Any]]):
+class ConditioningField(Field[dict[str, Any]]):
     """
     Conditioning field for prompt embeddings.
-    
+
     Parameters
     ----------
     value : Dict[str, Any], optional
@@ -624,34 +631,34 @@ class ConditioningField(Field[Dict[str, Any]]):
     description : str, optional
         Field description.
     """
-    
+
     def __init__(
         self,
-        value: Optional[Dict[str, Any]] = None,
-        name: Optional[str] = None,
-        description: Optional[str] = None
+        value: dict[str, Any] | None = None,
+        name: str | None = None,
+        description: str | None = None,
     ) -> None:
         """Initialize the conditioning field."""
         raise NotImplementedError
-    
+
     def validate(self) -> bool:
         """Validate conditioning structure."""
         raise NotImplementedError
-    
-    def to_api_format(self) -> Dict[str, Any]:
+
+    def to_api_format(self) -> dict[str, Any]:
         """Convert to API format."""
         raise NotImplementedError
-    
+
     @classmethod
-    def from_api_format(cls, data: Dict[str, Any]) -> ConditioningField:
+    def from_api_format(cls, data: dict[str, Any]) -> ConditioningField:
         """Create from API data."""
         raise NotImplementedError
 
 
-class CollectionField(Field[List[T]], Generic[T]):
+class CollectionField(Field[list[T]], Generic[T]):
     """
     Collection field for lists of values.
-    
+
     Parameters
     ----------
     value : List[T], optional
@@ -666,7 +673,7 @@ class CollectionField(Field[List[T]], Generic[T]):
         Field identifier.
     description : str, optional
         Field description.
-    
+
     Examples
     --------
     >>> field = CollectionField(
@@ -676,41 +683,41 @@ class CollectionField(Field[List[T]], Generic[T]):
     ...     max_length=10
     ... )
     """
-    
+
     def __init__(
         self,
-        value: Optional[List[T]] = None,
-        item_type: Optional[Type[T]] = None,
-        min_length: Optional[int] = None,
-        max_length: Optional[int] = None,
-        name: Optional[str] = None,
-        description: Optional[str] = None
+        value: list[T] | None = None,
+        item_type: type[T] | None = None,
+        min_length: int | None = None,
+        max_length: int | None = None,
+        name: str | None = None,
+        description: str | None = None,
     ) -> None:
         """Initialize the collection field."""
         raise NotImplementedError
-    
+
     def validate(self) -> bool:
         """Validate collection constraints."""
         raise NotImplementedError
-    
-    def to_api_format(self) -> Dict[str, Any]:
+
+    def to_api_format(self) -> dict[str, Any]:
         """Convert to API format."""
         raise NotImplementedError
-    
+
     @classmethod
-    def from_api_format(cls, data: Dict[str, Any]) -> CollectionField[T]:
+    def from_api_format(cls, data: dict[str, Any]) -> CollectionField[T]:
         """Create from API data."""
         raise NotImplementedError
-    
+
     def append(self, item: T) -> None:
         """
         Add an item to the collection.
-        
+
         Parameters
         ----------
         item : T
             The item to add.
-        
+
         Raises
         ------
         ValueError
@@ -719,16 +726,16 @@ class CollectionField(Field[List[T]], Generic[T]):
             If item type doesn't match.
         """
         raise NotImplementedError
-    
+
     def remove(self, item: T) -> None:
         """
         Remove an item from the collection.
-        
+
         Parameters
         ----------
         item : T
             The item to remove.
-        
+
         Raises
         ------
         ValueError

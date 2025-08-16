@@ -10,20 +10,20 @@ Examples
 Basic usage:
 
 >>> from invokeai_py_client import InvokeAIClient
->>> 
+>>>
 >>> # Connect to InvokeAI instance
 >>> client = InvokeAIClient("localhost", 9090)
->>> 
+>>>
 >>> # Load and configure a workflow
 >>> workflow = client.create_workflow("text2img.json")
 >>> workflow.set_input("prompt", "A beautiful landscape")
 >>> workflow.set_input("width", 1024)
 >>> workflow.set_input("height", 768)
->>> 
+>>>
 >>> # Submit and wait for results
 >>> job = workflow.submit_sync()
 >>> results = workflow.wait_for_completion_sync()
->>> 
+>>>
 >>> # Download generated image
 >>> image = results["output_image"]
 >>> image_bytes = client.board_repo.download_image(image.get_value())
@@ -44,12 +44,6 @@ __author__ = "InvokeAI Python Client Contributors"
 # Core client
 from invokeai_py_client.client import InvokeAIClient
 
-# Repositories
-from invokeai_py_client.repositories import BoardRepository
-
-# Workflow management
-from invokeai_py_client.workflow import Workflow
-
 # Field types - TODO: Implement these modules
 # from invokeai_py_client.fields import (
 #     Field,
@@ -65,18 +59,26 @@ from invokeai_py_client.workflow import Workflow
 #     ConditioningField,
 #     CollectionField,
 # )
-
 # Data models
 from invokeai_py_client.models import (
+    BaseModelEnum,
     Board,
+    ImageCategory,
+    IvkDnnModel,
     IvkImage,
     IvkJob,
-    WorkflowDefinition,
-    IvkDnnModel,
-    SessionEvent,
     JobStatus,
-    ImageCategory,
-    BaseModelEnum,
+    SessionEvent,
+)
+
+# Repositories
+from invokeai_py_client.repositories import BoardRepository
+
+# Workflow management
+from invokeai_py_client.workflow import (
+    WorkflowDefinition,
+    WorkflowHandle,
+    WorkflowRepository,
 )
 
 # Exceptions - TODO: Implement these modules
@@ -105,17 +107,17 @@ from invokeai_py_client.models import (
 __all__ = [
     # Version
     "__version__",
-    
     # Core
     "InvokeAIClient",
     "BoardRepository",
-    "Workflow",
-    
+    # Workflow
+    "WorkflowDefinition",
+    "WorkflowHandle",
+    "WorkflowRepository",
     # Models
     "Board",
     "IvkImage",
     "IvkJob",
-    "WorkflowDefinition",
     "IvkDnnModel",
     "SessionEvent",
     "JobStatus",

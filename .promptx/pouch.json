@@ -1,10 +1,10 @@
 {
-  "currentState": "memory_saved",
+  "currentState": "role_activated_with_memory",
   "stateHistory": [
     {
       "from": "initial",
       "command": "init",
-      "timestamp": "2025-08-15T18:58:50.708Z",
+      "timestamp": "2025-08-16T16:36:33.359Z",
       "args": [
         {
           "workingDirectory": "D:\\code\\invokeai-py-client"
@@ -14,61 +14,17 @@
     {
       "from": "initialized",
       "command": "welcome",
-      "timestamp": "2025-08-15T18:59:06.930Z",
+      "timestamp": "2025-08-16T16:37:00.987Z",
       "args": []
     },
     {
       "from": "service_discovery",
       "command": "action",
-      "timestamp": "2025-08-15T18:59:26.067Z",
+      "timestamp": "2025-08-16T16:37:20.923Z",
       "args": [
         "webapi-expert"
       ]
-    },
-    {
-      "from": "role_activated_with_memory",
-      "command": "remember",
-      "timestamp": "2025-08-15T19:27:00.417Z",
-      "args": [
-        "webapi-expert",
-        "Created comprehensive InvokeAI workflow form field interpretation guide at context/hints/invokeai-kb/howto-interpret-workflow-form-field.md\n\nKey findings about workflow form structure:\n1. Form field creates hierarchical GUI with containers (row/column layout), node-fields (actual workflow inputs), dividers, and text elements\n2. Node-field elements reference workflow nodes via nodeId + fieldName\n3. Field labels come from node.data.inputs[field].label, fallback to node.data.label, then node.data.type\n4. Form structure is purely for UI, not workflow execution order\n5. exposedFields array should match node-field elements in form\n\nCritical JSONPath queries:\n- All form elements: $.form.elements.*\n- Node fields only: $.form.elements[?(@.type == \"node-field\")]\n- Field references: $.form.elements[*].data.fieldIdentifier\n- Node label: $.nodes[?(@.id == \"nodeId\")].data.inputs.fieldName.label\n\nExample: Positive Prompt field\n- Form element: node-field-I7XLCaNo7D\n- References: Node 0a167316-ba62-4218-9fcf-b3cff7963df8, field \"value\"\n- Field label from node: \"Positive Prompt\"\n- Display format: \"NodeLabel: FieldLabel\"",
-        "--tags",
-        "invokeai workflow form jsonpath"
-      ]
-    },
-    {
-      "from": "memory_saved",
-      "command": "remember",
-      "timestamp": "2025-08-15T19:32:56.275Z",
-      "args": [
-        "webapi-expert",
-        "CRITICAL: InvokeAI workflow form fields have total ordering with unique input-index\n\nThe input-index is a 0-based index assigned to each node-field element based on depth-first tree traversal of the form structure. This index uniquely identifies each input field.\n\nExample from sdxl-flux-refine workflow (24 total input fields):\n- [0] Positive: Positive Prompt\n- [1] Negative: Negative Prompt  \n- [2] integer: Output Width\n- [3] integer: Output Height\n- [4] sdxl_model_loader: SDXL Model\n...\n- [23] float_math: Noise Ratio\n\nKey implementation details:\n1. Only node-field elements get an input-index (not containers, dividers, or text)\n2. Index is determined by tree traversal order starting from root\n3. Container children are processed in their listed order\n4. The input-index is essential for API calls where inputs may be provided as ordered arrays\n\nPython code to extract indices:\n```python\ndef traverse_form(elem_id, form_elements, input_fields):\n    elem = form_elements.get(elem_id)\n    if elem.get('type') == 'container':\n        for child_id in elem['data'].get('children', []):\n            traverse_form(child_id, form_elements, input_fields)\n    elif elem.get('type') == 'node-field':\n        input_fields.append({'input_index': len(input_fields), ...})\n```\n\nUpdated documentation at: context/hints/invokeai-kb/howto-interpret-workflow-form-field.md",
-        "--tags",
-        "invokeai workflow input-index form"
-      ]
-    },
-    {
-      "from": "memory_saved",
-      "command": "remember",
-      "timestamp": "2025-08-15T19:47:26.640Z",
-      "args": [
-        "webapi-expert",
-        "InvokeAI Model Resolution for Workflows - CRITICAL\n\nModel references in workflows have deployment-specific keys and hashes. Only the model NAME is consistent across deployments.\n\nAPI Endpoint: GET /api/v2/models/get_by_attrs\nParameters: name, type, base\n\nExample workflow model field:\n```json\n{\n  \"key\": \"cc644930-283a-464f-b48f-831e6add8ed5\",  // DEPLOYMENT-SPECIFIC\n  \"hash\": \"blake3:38aafa...\",                     // MAY DIFFER\n  \"name\": \"t5_bnb_int8_quantized_encoder\",        // CONSISTENT\n  \"base\": \"any\",\n  \"type\": \"t5_encoder\"\n}\n```\n\nResolution process:\n1. Extract model name, type, base from workflow\n2. Query local InvokeAI instance: /api/v2/models/get_by_attrs\n3. Update workflow with local key and hash\n4. Submit workflow with correct local references\n\nPython implementation:\n```python\ndef find_model_by_name(base_url, model_name, model_type, model_base):\n    response = requests.get(f\"{base_url}/api/v2/models/get_by_attrs\",\n                           params={\"name\": model_name, \"type\": model_type, \"base\": model_base})\n    return response.json() if response.status_code == 200 else None\n```\n\nCommon model types:\n- t5_encoder: T5 text encoder for FLUX\n- main: Primary diffusion models (flux, sdxl)\n- vae: VAE models\n- clip: CLIP text encoders\n\nTask 1.2 completed in: context/tasks/features/task-explore-workflow.md",
-        "--tags",
-        "invokeai models workflow api"
-      ]
-    },
-    {
-      "from": "memory_saved",
-      "command": "remember",
-      "timestamp": "2025-08-15T19:55:20.043Z",
-      "args": [
-        "webapi-expert",
-        "InvokeAI Workflow Output Nodes Analysis\n\nOutput nodes in workflows are save_image nodes that save generated images to boards.\n\nKey findings from sdxl-flux-refine workflow:\n- 4 total save_image nodes\n- 3 exposed as input-fields for board selection\n- 1 internal node for intermediate outputs\n\nExposed output nodes with input indices:\n- [5] Output Board: save_image(4414d4b5...) - SDXL Generation stage\n- [15] Output Board: save_image(67e997b2...) - Flux Domain Transfer stage  \n- [20] Output Board: save_image(abc466fe...) - Flux Refinement stage\n\nEach generation stage has its own save_image node allowing users to:\n1. Save outputs to different boards per stage\n2. Control where each stage's results are stored\n3. Organize outputs by processing phase\n\nThe board field is the configurable parameter exposed in the form, allowing runtime selection of destination board.\n\nNon-exposed save_image nodes handle intermediate outputs (e.g., HED edge detection) with fixed destinations.\n\nTask 1.3 completed in: context/tasks/features/task-explore-workflow.md",
-        "--tags",
-        "invokeai workflow output save_image"
-      ]
     }
   ],
-  "lastUpdated": "2025-08-15T19:55:20.046Z"
+  "lastUpdated": "2025-08-16T16:37:20.939Z"
 }

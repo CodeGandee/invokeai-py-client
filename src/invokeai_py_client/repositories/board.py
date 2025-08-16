@@ -1,20 +1,24 @@
 """
 Board repository for board-specific operations.
 
+DEPRECATED: This module is deprecated in favor of the new board subsystem.
+Please use:
+- invokeai_py_client.repositories.board_repo.BoardRepository for board management
+- invokeai_py_client.repositories.board_handle.BoardHandle for board operations
+
 This module implements the Repository pattern for board-related operations,
 keeping data models pure while providing rich functionality.
 """
 
 from __future__ import annotations
 
-import os
 from io import BytesIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, BinaryIO, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import requests
 
-from invokeai_py_client.models import Board, IvkImage, ImageCategory
+from invokeai_py_client.models import Board, ImageCategory, IvkImage
 
 if TYPE_CHECKING:
     from invokeai_py_client.client import InvokeAIClient
@@ -23,120 +27,122 @@ if TYPE_CHECKING:
 class BoardRepository:
     """
     Repository for board-specific operations.
-    
+
     This class provides all board-related operations including image management,
     following the Repository pattern to keep models pure and operations separate.
-    
+
     Attributes
     ----------
     _client : InvokeAIClient
         Reference to the InvokeAI client for API calls.
-    
+
     Examples
     --------
     >>> client = InvokeAIClient.from_url("http://localhost:9090")
     >>> board_repo = BoardRepository(client)
     >>> images = board_repo.list_images("board-id-123")
     """
-    
+
     def __init__(self, client: InvokeAIClient) -> None:
         """
         Initialize the BoardRepository.
-        
+
         Parameters
         ----------
         client : InvokeAIClient
             The InvokeAI client instance to use for API calls.
         """
         self._client = client
-    
+
     # =========================================================================
     # Board Management Methods
     # =========================================================================
-    
-    def list_boards(self, all: bool = True, include_uncategorized: bool = False) -> List[Board]:
+
+    def list_boards(
+        self, all: bool = True, include_uncategorized: bool = False
+    ) -> list[Board]:
         """
         List all available boards in the InvokeAI instance.
-        
+
         Note: The uncategorized board is not included by default as it's system-managed.
-        
+
         Parameters
         ----------
         all : bool, optional
             Whether to fetch all boards or use pagination, by default True.
         include_uncategorized : bool, optional
             Whether to include the uncategorized board in the list, by default False.
-        
+
         Returns
         -------
         List[Board]
             List of board objects containing board metadata.
-        
+
         Examples
         --------
         >>> boards = board_repo.list_boards()
         >>> for board in boards:
         ...     print(f"{board.board_name}: {board.image_count} images")
-        
+
         >>> # Include uncategorized board
         >>> boards = board_repo.list_boards(include_uncategorized=True)
         >>> for board in boards:
         ...     if board.is_uncategorized():
         ...         print(f"Uncategorized: {board.image_count} images")
         """
-        params = {'all': all}
-        response = self._client._make_request('GET', '/boards/', params=params)
-        
+        params = {"all": all}
+        response = self._client._make_request("GET", "/boards/", params=params)
+
         data = response.json()
-        
+
         # Handle both paginated and non-paginated responses
         if isinstance(data, list):
             # Direct list response when all=True
             boards_data = data
-        elif isinstance(data, dict) and 'items' in data:
+        elif isinstance(data, dict) and "items" in data:
             # Paginated response
-            boards_data = data['items']
+            boards_data = data["items"]
         else:
             boards_data = []
-        
+
         # Convert to Board objects
         boards = [Board.from_api_response(board_data) for board_data in boards_data]
-        
+
         # Add uncategorized board if requested
         if include_uncategorized:
             uncategorized_count = self.get_uncategorized_images_count()
             uncategorized_board = Board.uncategorized(image_count=uncategorized_count)
             boards.insert(0, uncategorized_board)  # Add at beginning
-        
+
         return boards
-    
-    def get_board_by_id(self, board_id: str) -> Optional[Board]:
+
+    def get_board_by_id(self, board_id: str) -> Board | None:
         """
         Get a specific board by ID.
-        
+
         Parameters
         ----------
         board_id : str
             The unique identifier of the board.
             Use the string "none" (not Python's None) for uncategorized board.
-            
+
             Why "none" instead of None:
             - InvokeAI API uses "none" as a special identifier in URL paths
             - Python's None cannot be used in URL paths (would need string conversion)
             - This follows InvokeAI's established API convention
-        
+
         Returns
         -------
         Optional[Board]
             The board object with full metadata, or None if not found.
-        
+
         Examples
         --------
         >>> # Get regular board
         >>> board = board_repo.get_board_by_id("abc-123")
         >>> if board:
         ...     print(f"Found board: {board.board_name}")
-        
+
         >>> # Get uncategorized board - must use string "none"
         >>> uncategorized = board_repo.get_board_by_id("none")
         """
@@ -144,66 +150,66 @@ class BoardRepository:
         if board_id == "none" or board_id is None:
             count = self.get_uncategorized_images_count()
             return Board.uncategorized(image_count=count)
-        
+
         try:
-            response = self._client._make_request('GET', f'/boards/{board_id}')
+            response = self._client._make_request("GET", f"/boards/{board_id}")
             return Board.from_api_response(response.json())
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code == 404:
                 return None
             raise
-    
-    def get_boards_by_name(self, name: str) -> List[Board]:
+
+    def get_boards_by_name(self, name: str) -> list[Board]:
         """
         Get all boards with a specific name.
-        
+
         Since board names are not unique in InvokeAI, this method returns
         a list of all boards matching the given name.
-        
+
         Parameters
         ----------
         name : str
             The name to search for. Use "Uncategorized" (case-sensitive)
             to include the uncategorized board in results.
-        
+
         Returns
         -------
         List[Board]
             List of boards with the matching name. Returns empty list if
             no boards are found.
-        
+
         Examples
         --------
         >>> # Get all boards named "Landscapes"
         >>> boards = board_repo.get_boards_by_name("Landscapes")
         >>> print(f"Found {len(boards)} board(s) named 'Landscapes'")
-        
+
         >>> # Get uncategorized board by name
         >>> uncategorized_list = board_repo.get_boards_by_name("Uncategorized")
         >>> if uncategorized_list:
         ...     print(f"Found uncategorized board with {uncategorized_list[0].image_count} images")
         """
-        matching_boards: List[Board] = []
-        
+        matching_boards: list[Board] = []
+
         # Check if searching for uncategorized board
         if name == "Uncategorized":
             # Get uncategorized board
             uncategorized = self.get_board_by_id("none")
             if uncategorized:
                 matching_boards.append(uncategorized)
-        
+
         # Get all regular boards and filter by name
         all_boards = self.list_boards(include_uncategorized=False)
         for board in all_boards:
             if board.board_name == name:
                 matching_boards.append(board)
-        
+
         return matching_boards
-    
+
     def create_board(self, name: str, is_private: bool = False) -> Board:
         """
         Create a new board.
-        
+
         Parameters
         ----------
         name : str
@@ -212,22 +218,22 @@ class BoardRepository:
             Note: Board names are not unique - multiple boards can have the same name.
         is_private : bool, optional
             Whether the board should be private, by default False.
-        
+
         Returns
         -------
         Board
             The newly created board object.
-        
+
         Raises
         ------
         ValueError
             If the board name is too long (>300 characters).
-        
+
         Examples
         --------
         >>> board = board_repo.create_board("My Artwork")
         >>> print(f"Created board: {board.board_name} ({board.board_id})")
-        
+
         >>> # Multiple boards can have the same name
         >>> board1 = board_repo.create_board("Landscapes")
         >>> board2 = board_repo.create_board("Landscapes")  # This is allowed
@@ -235,23 +241,20 @@ class BoardRepository:
         # Validate board name length (InvokeAI API constraint from OpenAPI spec)
         if len(name) > 300:
             raise ValueError(f"Board name too long: {len(name)} characters (max 300)")
-        
-        params = {
-            'board_name': name,
-            'is_private': is_private
-        }
-        
-        response = self._client._make_request('POST', '/boards/', params=params)
+
+        params = {"board_name": name, "is_private": is_private}
+
+        response = self._client._make_request("POST", "/boards/", params=params)
         return Board.from_api_response(response.json())
-    
+
     def delete_board(self, board_id: str, delete_images: bool = False) -> None:
         """
         Delete a board.
-        
+
         Note: The uncategorized board cannot be deleted as it is system-managed.
         We check for both board_id="none" (the API convention) and board_id=None
         (edge case) to prevent deletion attempts.
-        
+
         Parameters
         ----------
         board_id : str
@@ -260,12 +263,12 @@ class BoardRepository:
         delete_images : bool, optional
             Whether to also delete all images in the board, by default False.
             If False, images are moved to uncategorized.
-        
+
         Raises
         ------
         ValueError
             If trying to delete the uncategorized board or if board doesn't exist.
-        
+
         Examples
         --------
         >>> board_repo.delete_board("abc-123")  # Moves images to uncategorized
@@ -274,29 +277,29 @@ class BoardRepository:
         # Prevent deletion of system boards
         if board_id == "none" or board_id is None:
             raise ValueError("Cannot delete the uncategorized board (system-managed)")
-        
-        params = {'delete_board_images': delete_images}
-        
+
+        params = {"delete_board_images": delete_images}
+
         try:
-            self._client._make_request('DELETE', f'/boards/{board_id}', params=params)
+            self._client._make_request("DELETE", f"/boards/{board_id}", params=params)
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code == 404:
                 raise ValueError(f"Board with ID '{board_id}' does not exist")
             raise
-    
+
     def get_uncategorized_images_count(self) -> int:
         """
         Get the count of uncategorized images (images not assigned to any board).
-        
+
         This method uses the API endpoint /boards/none/image_names where "none"
         is the special board_id value that InvokeAI uses to represent uncategorized
         items. This is a string literal, not Python's None value.
-        
+
         Returns
         -------
         int
             Number of uncategorized images.
-        
+
         Examples
         --------
         >>> count = board_repo.get_uncategorized_images_count()
@@ -304,9 +307,9 @@ class BoardRepository:
         """
         try:
             # Get list of uncategorized image names
-            response = self._client._make_request('GET', '/boards/none/image_names')
+            response = self._client._make_request("GET", "/boards/none/image_names")
             image_names = response.json()
-            
+
             # Return count of images
             if isinstance(image_names, list):
                 return len(image_names)
@@ -314,49 +317,49 @@ class BoardRepository:
         except requests.HTTPError:
             # If endpoint fails, return 0
             return 0
-    
-    def get_uncategorized_images(self) -> List[str]:
+
+    def get_uncategorized_images(self) -> list[str]:
         """
         Get the list of uncategorized image names.
-        
+
         Uses the API endpoint /boards/none/image_names where "none" is InvokeAI's
         special convention for accessing uncategorized items. This must be the
         string "none", not Python's None value, as it's used as a URL path parameter.
-        
+
         Returns
         -------
         List[str]
             List of image names that are not assigned to any board.
-        
+
         Examples
         --------
         >>> images = board_repo.get_uncategorized_images()
         >>> print(f"Found {len(images)} uncategorized images")
         """
         try:
-            response = self._client._make_request('GET', '/boards/none/image_names')
+            response = self._client._make_request("GET", "/boards/none/image_names")
             image_names = response.json()
-            
+
             if isinstance(image_names, list):
                 return image_names
             return []
         except requests.HTTPError:
             return []
-    
+
     # =========================================================================
     # Image Management Methods
     # =========================================================================
-    
+
     def list_images(
         self,
         board_id: str,
-        limit: Optional[int] = None,
+        limit: int | None = None,
         order_dir: str = "DESC",
-        starred_first: bool = False
-    ) -> List[IvkImage]:
+        starred_first: bool = False,
+    ) -> list[IvkImage]:
         """
         List images in a board.
-        
+
         Parameters
         ----------
         board_id : str
@@ -367,78 +370,76 @@ class BoardRepository:
             Sort order: "DESC" (newest first) or "ASC" (oldest first), by default "DESC".
         starred_first : bool, optional
             Whether to show starred images first, by default False.
-        
+
         Returns
         -------
         List[IvkImage]
             List of IvkImage objects in the board.
-        
+
         Examples
         --------
         >>> # Get all images in a board
         >>> images = board_repo.list_images("board-id-123")
-        
+
         >>> # Get latest 10 images
         >>> latest = board_repo.list_images("board-id-123", limit=10)
-        
+
         >>> # Get starred images first
         >>> starred = board_repo.list_images("board-id-123", starred_first=True)
         """
         # First get image names using the optimized API endpoint
-        params: Dict[str, Any] = {
+        params: dict[str, Any] = {
             "board_id": board_id,
             "order_dir": order_dir,
-            "starred_first": starred_first
+            "starred_first": starred_first,
         }
-        
+
         if limit is not None:
             params["limit"] = limit
-        
+
         try:
             # Get sorted image names
-            response = self._client._make_request('GET', '/images/names', params=params)
+            response = self._client._make_request("GET", "/images/names", params=params)
             result = response.json()
-            
+
             # Handle response format
             if isinstance(result, dict):
-                image_names = result.get('image_names', [])
+                image_names = result.get("image_names", [])
             else:
                 image_names = result  # It's already a list
-            
+
             if not image_names:
                 return []
-            
+
             # Get full image DTOs
             dto_response = self._client._make_request(
-                'POST',
-                '/images/images_by_names',
-                json={"image_names": image_names}
+                "POST", "/images/images_by_names", json={"image_names": image_names}
             )
-            
+
             image_dtos = dto_response.json()
-            
+
             # Convert to IvkImage models
             images = []
             for dto in image_dtos:
                 images.append(IvkImage.from_api_response(dto))
-            
+
             return images
-            
+
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code == 404:
                 return []
             raise
-    
+
     def upload_image_by_file(
         self,
-        file_path: Union[str, Path],
-        board_id: Optional[str] = None,
-        image_category: Union[ImageCategory, str] = ImageCategory.USER,
-        is_intermediate: bool = False
+        file_path: str | Path,
+        board_id: str | None = None,
+        image_category: ImageCategory | str = ImageCategory.USER,
+        is_intermediate: bool = False,
     ) -> IvkImage:
         """
         Upload an image from a file to a board.
-        
+
         Parameters
         ----------
         file_path : Union[str, Path]
@@ -451,74 +452,77 @@ class BoardRepository:
             Accepts strings for backward compatibility.
         is_intermediate : bool, optional
             Whether this is an intermediate image, by default False.
-        
+
         Returns
         -------
         IvkImage
             The uploaded IvkImage object with server-assigned metadata.
-        
+
         Raises
         ------
         FileNotFoundError
             If the image file does not exist.
         ValueError
             If the upload fails.
-        
+
         Examples
         --------
         >>> # Upload to specific board
         >>> image = board_repo.upload_image_by_file("photo.png", board_id="board-123")
-        
+
         >>> # Upload to uncategorized
         >>> image = board_repo.upload_image_by_file("photo.png")
         """
         file_path = Path(file_path)
-        
+
         if not file_path.exists():
             raise FileNotFoundError(f"Image file not found: {file_path}")
-        
+
         # Prepare multipart form data
         try:
-            with open(file_path, 'rb') as image_file:
+            with open(file_path, "rb") as image_file:
                 files = {
-                    'file': (file_path.name, image_file, self._get_mime_type(file_path))
+                    "file": (file_path.name, image_file, self._get_mime_type(file_path))
                 }
-                
+
                 # Convert ImageCategory enum to string for API
-                category_str = image_category.value if isinstance(image_category, ImageCategory) else image_category
-                
-                params: Dict[str, Any] = {
-                    'image_category': category_str,
-                    'is_intermediate': is_intermediate
+                category_str = (
+                    image_category.value
+                    if isinstance(image_category, ImageCategory)
+                    else image_category
+                )
+
+                params: dict[str, Any] = {
+                    "image_category": category_str,
+                    "is_intermediate": is_intermediate,
                 }
-                
+
                 if board_id is not None:
-                    params['board_id'] = board_id
-                
+                    params["board_id"] = board_id
+
                 # Use the session's post method directly for multipart
                 # Note: Remove Content-Type header for multipart form data
                 url = f"{self._client.base_url}/images/upload"
-                
+
                 # Temporarily store and remove Content-Type header
-                original_content_type = self._client.session.headers.get('Content-Type')
-                if 'Content-Type' in self._client.session.headers:
-                    del self._client.session.headers['Content-Type']
-                
+                original_content_type = self._client.session.headers.get("Content-Type")
+                if "Content-Type" in self._client.session.headers:
+                    del self._client.session.headers["Content-Type"]
+
                 try:
                     response = self._client.session.post(
-                        url,
-                        files=files,
-                        params=params,
-                        timeout=self._client.timeout
+                        url, files=files, params=params, timeout=self._client.timeout
                     )
                     response.raise_for_status()
                 finally:
                     # Restore Content-Type header
                     if original_content_type:
-                        self._client.session.headers['Content-Type'] = original_content_type
-                
+                        self._client.session.headers["Content-Type"] = (
+                            original_content_type
+                        )
+
                 return IvkImage.from_api_response(response.json())
-                
+
         except requests.HTTPError as e:
             if e.response is not None:
                 error_msg = f"Upload failed: {e.response.status_code}"
@@ -529,21 +533,21 @@ class BoardRepository:
                     error_msg += f" - {e.response.text}"
                 raise ValueError(error_msg)
             raise
-    
-    def get_image(self, image_name: str) -> Optional[IvkImage]:
+
+    def get_image(self, image_name: str) -> IvkImage | None:
         """
         Get a specific image by name.
-        
+
         Parameters
         ----------
         image_name : str
             The server-side image name/ID.
-        
+
         Returns
         -------
         Optional[IvkImage]
             The IvkImage object if found, None otherwise.
-        
+
         Examples
         --------
         >>> image = board_repo.get_image("abc-123.png")
@@ -551,27 +555,27 @@ class BoardRepository:
         ...     print(f"Image size: {image.width}x{image.height}")
         """
         try:
-            response = self._client._make_request('GET', f'/images/i/{image_name}')
+            response = self._client._make_request("GET", f"/images/i/{image_name}")
             return IvkImage.from_api_response(response.json())
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code == 404:
                 return None
             raise
-    
+
     def delete_image(self, image_name: str) -> bool:
         """
         Delete an image.
-        
+
         Parameters
         ----------
         image_name : str
             The server-side image name/ID to delete.
-        
+
         Returns
         -------
         bool
             True if deletion was successful, False if image not found.
-        
+
         Examples
         --------
         >>> success = board_repo.delete_image("abc-123.png")
@@ -581,92 +585,90 @@ class BoardRepository:
         try:
             # The delete endpoint expects a JSON body with image names (list)
             self._client._make_request(
-                'POST',
-                '/images/delete',
-                json={"image_names": [image_name]}
+                "POST", "/images/delete", json={"image_names": [image_name]}
             )
             return True
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code == 404:
                 return False
             raise
-    
-    def download_image(
-        self,
-        image_name: str,
-        full_resolution: bool = True
-    ) -> bytes:
+
+    def download_image(self, image_name: str, full_resolution: bool = True) -> bytes:
         """
         Download an image from the server as bytes.
-        
+
         Parameters
         ----------
         image_name : str
             The server-side image name/ID.
         full_resolution : bool, optional
             Whether to download full resolution (True) or thumbnail (False), by default True.
-        
+
         Returns
         -------
         bytes
             Image data as bytes that can be decoded with imageio.imdecode().
-        
+
         Raises
         ------
         ValueError
             If the image does not exist.
         IOError
             If the download fails.
-        
+
         Examples
         --------
         >>> import imageio.v3 as iio
         >>> import numpy as np
-        >>> 
+        >>>
         >>> # Download and decode image
         >>> image_bytes = board_repo.download_image("abc-123.png")
         >>> image_array = iio.imread(image_bytes)  # RGB/RGBA numpy array
         >>> print(f"Image shape: {image_array.shape}")
-        
+
         >>> # Download thumbnail
         >>> thumb_bytes = board_repo.download_image("abc-123.png", full_resolution=False)
         >>> thumb_array = iio.imread(thumb_bytes)
         """
         # Determine endpoint
-        endpoint = f'/images/i/{image_name}/full' if full_resolution else f'/images/i/{image_name}/thumbnail'
-        
+        endpoint = (
+            f"/images/i/{image_name}/full"
+            if full_resolution
+            else f"/images/i/{image_name}/thumbnail"
+        )
+
         try:
-            response = self._client._make_request('GET', endpoint)
+            response = self._client._make_request("GET", endpoint)
             # response.content is bytes in requests library
             content: bytes = response.content
             return content
-            
+
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code == 404:
                 raise ValueError(f"Image not found: {image_name}")
-            raise IOError(f"Download failed: {e}")
-    
+            raise OSError(f"Download failed: {e}")
+
     def move_image_to_board(self, image_name: str, board_id: str) -> bool:
         """
         Move an image to a different board.
-        
+
         Parameters
         ----------
         image_name : str
             The image to move.
         board_id : str
             Target board ID. Use "none" to move to uncategorized.
-        
+
         Returns
         -------
         bool
             True if successful.
-        
+
         Examples
         --------
         >>> # Move to specific board
         >>> board_repo.move_image_to_board("image.png", "board-123")
-        
+
         >>> # Move to uncategorized (removes from current board)
         >>> board_repo.move_image_to_board("image.png", "none")
         """
@@ -674,38 +676,33 @@ class BoardRepository:
             if board_id == "none" or board_id is None:
                 # Remove from board (move to uncategorized)
                 self._client._make_request(
-                    'DELETE',
-                    '/board_images/',
-                    json={"image_name": image_name}
+                    "DELETE", "/board_images/", json={"image_name": image_name}
                 )
             else:
                 # Add to specific board
                 self._client._make_request(
-                    'POST',
-                    '/board_images/',
-                    json={
-                        "board_id": board_id,
-                        "image_name": image_name
-                    }
+                    "POST",
+                    "/board_images/",
+                    json={"board_id": board_id, "image_name": image_name},
                 )
             return True
         except requests.HTTPError:
             return False
-    
+
     def star_image(self, image_name: str) -> bool:
         """
         Star an image.
-        
+
         Parameters
         ----------
         image_name : str
             The image to star.
-        
+
         Returns
         -------
         bool
             True if successful.
-        
+
         Examples
         --------
         >>> board_repo.star_image("abc-123.png")
@@ -713,28 +710,26 @@ class BoardRepository:
         try:
             # The star endpoint expects a list of image names
             self._client._make_request(
-                'POST',
-                '/images/star',
-                json={"image_names": [image_name]}
+                "POST", "/images/star", json={"image_names": [image_name]}
             )
             return True
         except requests.HTTPError:
             return False
-    
+
     def unstar_image(self, image_name: str) -> bool:
         """
         Unstar an image.
-        
+
         Parameters
         ----------
         image_name : str
             The image to unstar.
-        
+
         Returns
         -------
         bool
             True if successful.
-        
+
         Examples
         --------
         >>> board_repo.unstar_image("abc-123.png")
@@ -742,30 +737,27 @@ class BoardRepository:
         try:
             # The unstar endpoint expects a list of image names
             self._client._make_request(
-                'POST',
-                '/images/unstar',
-                json={"image_names": [image_name]}
+                "POST", "/images/unstar", json={"image_names": [image_name]}
             )
             return True
         except requests.HTTPError:
             return False
-    
-    
+
     def upload_image_by_data(
         self,
         image_data: bytes,
         file_extension: str,
-        board_id: Optional[str] = None,
-        image_category: Union[ImageCategory, str] = ImageCategory.USER,
+        board_id: str | None = None,
+        image_category: ImageCategory | str = ImageCategory.USER,
         is_intermediate: bool = False,
-        filename: Optional[str] = None
+        filename: str | None = None,
     ) -> IvkImage:
         """
         Upload an image from encoded bytes to a board.
-        
+
         This method is useful when you have image data in memory
         (e.g., from imageio.imencode() or cv2.imencode()).
-        
+
         Parameters
         ----------
         image_data : bytes
@@ -782,17 +774,17 @@ class BoardRepository:
             Whether this is an intermediate image, by default False.
         filename : str, optional
             Filename to use for the upload. If None, generates a default.
-        
+
         Returns
         -------
         IvkImage
             The uploaded IvkImage object with server-assigned metadata.
-        
+
         Raises
         ------
         ValueError
             If the upload fails or extension is invalid.
-        
+
         Examples
         --------
         >>> import imageio.v3 as iio
@@ -803,7 +795,7 @@ class BoardRepository:
         >>> image = board_repo.upload_image_by_data(
         ...     encoded, ".png", board_id="board-123"
         ... )
-        
+
         >>> # Using cv2 (note: cv2 uses BGR, may need conversion)
         >>> import cv2
         >>> img = cv2.imread("photo.jpg")
@@ -814,60 +806,56 @@ class BoardRepository:
         ...     )
         """
         # Normalize extension
-        if not file_extension.startswith('.'):
-            file_extension = f'.{file_extension}'
-        
+        if not file_extension.startswith("."):
+            file_extension = f".{file_extension}"
+
         # Get mime type
         mime_type = self._get_mime_type_from_extension(file_extension)
-        
+
         # Generate filename if not provided
         if filename is None:
             import uuid
+
             filename = f"upload_{uuid.uuid4().hex[:8]}{file_extension}"
         elif not filename.endswith(file_extension):
             filename = f"{filename}{file_extension}"
-        
+
         # Prepare multipart form data
         try:
             # Create a file-like object from bytes
             file_like = BytesIO(image_data)
-            
-            files = {
-                'file': (filename, file_like, mime_type)
+
+            files = {"file": (filename, file_like, mime_type)}
+
+            params: dict[str, Any] = {
+                "image_category": image_category,
+                "is_intermediate": is_intermediate,
             }
-            
-            params: Dict[str, Any] = {
-                'image_category': image_category,
-                'is_intermediate': is_intermediate
-            }
-            
+
             if board_id is not None:
-                params['board_id'] = board_id
-            
+                params["board_id"] = board_id
+
             # Use the session's post method directly for multipart
             # Note: Remove Content-Type header for multipart form data
             url = f"{self._client.base_url}/images/upload"
-            
+
             # Temporarily store and remove Content-Type header
-            original_content_type = self._client.session.headers.get('Content-Type')
-            if 'Content-Type' in self._client.session.headers:
-                del self._client.session.headers['Content-Type']
-            
+            original_content_type = self._client.session.headers.get("Content-Type")
+            if "Content-Type" in self._client.session.headers:
+                del self._client.session.headers["Content-Type"]
+
             try:
                 response = self._client.session.post(
-                    url,
-                    files=files,
-                    params=params,
-                    timeout=self._client.timeout
+                    url, files=files, params=params, timeout=self._client.timeout
                 )
                 response.raise_for_status()
             finally:
                 # Restore Content-Type header
                 if original_content_type:
-                    self._client.session.headers['Content-Type'] = original_content_type
-            
+                    self._client.session.headers["Content-Type"] = original_content_type
+
             return IvkImage.from_api_response(response.json())
-            
+
         except requests.HTTPError as e:
             if e.response is not None:
                 error_msg = f"Upload failed: {e.response.status_code}"
@@ -878,17 +866,17 @@ class BoardRepository:
                     error_msg += f" - {e.response.text}"
                 raise ValueError(error_msg)
             raise
-    
+
     @staticmethod
     def _get_mime_type(file_path: Path) -> str:
         """
         Get MIME type for an image file.
-        
+
         Parameters
         ----------
         file_path : Path
             Path to the image file.
-        
+
         Returns
         -------
         str
@@ -896,35 +884,35 @@ class BoardRepository:
         """
         ext = file_path.suffix.lower()
         return BoardRepository._get_mime_type_from_extension(ext)
-    
+
     @staticmethod
     def _get_mime_type_from_extension(extension: str) -> str:
         """
         Get MIME type from file extension.
-        
+
         Parameters
         ----------
         extension : str
             File extension (e.g., '.png' or 'png').
-        
+
         Returns
         -------
         str
             MIME type string.
         """
         # Normalize extension
-        if not extension.startswith('.'):
-            extension = f'.{extension}'
+        if not extension.startswith("."):
+            extension = f".{extension}"
         extension = extension.lower()
-        
+
         mime_types = {
-            '.png': 'image/png',
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.gif': 'image/gif',
-            '.webp': 'image/webp',
-            '.bmp': 'image/bmp',
-            '.tiff': 'image/tiff',
-            '.tif': 'image/tiff'
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".gif": "image/gif",
+            ".webp": "image/webp",
+            ".bmp": "image/bmp",
+            ".tiff": "image/tiff",
+            ".tif": "image/tiff",
         }
-        return mime_types.get(extension, 'application/octet-stream')
+        return mime_types.get(extension, "application/octet-stream")
