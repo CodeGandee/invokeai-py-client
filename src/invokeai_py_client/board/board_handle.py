@@ -13,7 +13,8 @@ from typing import TYPE_CHECKING, Any
 
 import requests
 
-from invokeai_py_client.models import Board, ImageCategory, IvkImage
+from invokeai_py_client.board.board_model import Board
+from invokeai_py_client.models import ImageCategory, IvkImage
 
 if TYPE_CHECKING:
     from invokeai_py_client.client import InvokeAIClient

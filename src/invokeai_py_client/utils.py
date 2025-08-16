@@ -15,8 +15,9 @@ from typing import (
     Callable,
 )
 
+from invokeai_py_client.board import Board
 from invokeai_py_client.fields import Field
-from invokeai_py_client.models import Board, IvkImage
+from invokeai_py_client.models import IvkImage
 
 if TYPE_CHECKING:
     from invokeai_py_client.client import InvokeAIClient

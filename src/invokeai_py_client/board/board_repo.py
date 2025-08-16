@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING, Any
 
 import requests
 
-from invokeai_py_client.models import Board
-from invokeai_py_client.repositories.board_handle import BoardHandle
+from invokeai_py_client.board.board_handle import BoardHandle
+from invokeai_py_client.board.board_model import Board
 
 if TYPE_CHECKING:
     from invokeai_py_client.client import InvokeAIClient
@@ -358,7 +358,9 @@ class BoardRepository:
         """
         # Get the image count for uncategorized
         try:
-            response = self._client._make_request("GET", "/boards/uncategorized/images_count")
+            response = self._client._make_request(
+                "GET", "/boards/uncategorized/images_count"
+            )
             count = response.json().get("count", 0)
         except requests.HTTPError:
             count = 0
@@ -435,7 +437,9 @@ class BoardRepository:
             return self.get_board_by_id(board_id)
 
         try:
-            response = self._client._make_request("PATCH", f"/boards/{board_id}/", json=data)
+            response = self._client._make_request(
+                "PATCH", f"/boards/{board_id}/", json=data
+            )
             board = Board(**response.json())
 
             # Update cached handle if present

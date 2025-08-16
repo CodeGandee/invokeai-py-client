@@ -150,7 +150,7 @@ class WorkflowDefinition(BaseModel):
             with open(filepath, encoding="utf-8") as f:
                 data = json.load(f)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in workflow file: {e}")
+            raise ValueError(f"Invalid JSON in workflow file: {e}") from e
 
         return cls.from_dict(data)
 

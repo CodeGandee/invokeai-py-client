@@ -14,11 +14,11 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from invokeai_py_client.board import BoardRepository
 from invokeai_py_client.models import (
     IvkDnnModel,
     IvkJob,
 )
-from invokeai_py_client.repositories import BoardRepository
 from invokeai_py_client.workflow import (
     WorkflowDefinition,
     WorkflowHandle,

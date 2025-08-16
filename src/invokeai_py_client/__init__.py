@@ -42,6 +42,8 @@ __version__ = "0.1.0"
 __author__ = "InvokeAI Python Client Contributors"
 
 # Core client
+# Board subsystem
+from invokeai_py_client.board import Board, BoardHandle, BoardRepository
 from invokeai_py_client.client import InvokeAIClient
 
 # Field types - TODO: Implement these modules
@@ -62,7 +64,6 @@ from invokeai_py_client.client import InvokeAIClient
 # Data models
 from invokeai_py_client.models import (
     BaseModelEnum,
-    Board,
     ImageCategory,
     IvkDnnModel,
     IvkImage,
@@ -71,10 +72,7 @@ from invokeai_py_client.models import (
     SessionEvent,
 )
 
-# Repositories
-from invokeai_py_client.repositories import BoardRepository
-
-# Workflow management
+# Workflow subsystem
 from invokeai_py_client.workflow import (
     WorkflowDefinition,
     WorkflowHandle,
@@ -109,13 +107,15 @@ __all__ = [
     "__version__",
     # Core
     "InvokeAIClient",
+    # Board
+    "Board",
+    "BoardHandle",
     "BoardRepository",
     # Workflow
     "WorkflowDefinition",
     "WorkflowHandle",
     "WorkflowRepository",
     # Models
-    "Board",
     "IvkImage",
     "IvkJob",
     "IvkDnnModel",

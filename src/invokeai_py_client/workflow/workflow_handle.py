@@ -9,14 +9,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from invokeai_py_client.fields import Field
 from invokeai_py_client.models import IvkJob
 
 if TYPE_CHECKING:
     from invokeai_py_client.client import InvokeAIClient
-    from invokeai_py_client.workflow.workflow_def import WorkflowDefinition
+    from invokeai_py_client.workflow.workflow_model import WorkflowDefinition
 
 
 class InkWorkflowInput(BaseModel):
@@ -40,6 +40,8 @@ class InkWorkflowInput(BaseModel):
     input_index : int
         0-based index from form tree traversal.
     """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     label: str
     node_name: str

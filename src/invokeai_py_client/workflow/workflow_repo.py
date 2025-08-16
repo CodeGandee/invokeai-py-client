@@ -12,8 +12,8 @@ from typing import TYPE_CHECKING, Any
 
 import requests
 
-from invokeai_py_client.workflow.workflow_def import WorkflowDefinition
 from invokeai_py_client.workflow.workflow_handle import WorkflowHandle
+from invokeai_py_client.workflow.workflow_model import WorkflowDefinition
 
 if TYPE_CHECKING:
     from invokeai_py_client.client import InvokeAIClient
@@ -453,9 +453,9 @@ class WorkflowRepository:
                 try:
                     error_detail = e.response.json()
                     error_msg += f" - {error_detail}"
-                except:
+                except Exception:
                     error_msg += f" - {e.response.text}"
-                raise ValueError(error_msg)
+                raise ValueError(error_msg) from e
             raise
 
     def delete_workflow(self, workflow_id: str) -> bool:

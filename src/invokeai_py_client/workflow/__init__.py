@@ -7,8 +7,8 @@ This package provides workflow management functionality following the repository
 - WorkflowRepository: Creates and manages workflow instances
 """
 
-from invokeai_py_client.workflow.workflow_def import WorkflowDefinition
 from invokeai_py_client.workflow.workflow_handle import WorkflowHandle
+from invokeai_py_client.workflow.workflow_model import WorkflowDefinition
 from invokeai_py_client.workflow.workflow_repo import WorkflowRepository
 
 __all__ = [
