@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Python client library for interacting with InvokeAI APIs. The project provides a Pythonic interface over selected InvokeAI capabilities, focusing on common tasks like workflow execution, asset management, and job tracking.
 
-**Current Status**: Repository pattern implementation complete for both boards and workflows. Board subsystem refactored with BoardHandle pattern. Workflow subsystem partially implemented, field types stubbed but not implemented.
+**Current Status**: Repository pattern implementation complete (Task 3.1-3.7), workflow subsystem partially implemented, field types stubbed but not implemented.
 
 ## Development Commands
 
@@ -47,29 +47,62 @@ python -m ruff format src/ tests/ # Format code
 python -m mypy src/               # Type checking
 ```
 
+## Source Code Structure
+
+```
+src/
+└── invokeai_py_client/
+    ├── __init__.py              # Package initialization, public API exports
+    ├── client.py                # Main InvokeAIClient class, connection management
+    ├── exceptions.py            # Custom exception hierarchy (NotImplementedError stubs)
+    ├── fields.py                # IvkField base class and typed field implementations
+    ├── models.py                # Core Pydantic models (IvkImage, IvkJob, enums)
+    ├── utils.py                 # Utility classes (AssetManager, BoardManager, etc.)
+    │
+    ├── board/                   # Board subsystem (complete implementation)
+    │   ├── __init__.py          # Exports: Board, BoardHandle, BoardRepository
+    │   ├── board_model.py       # Board Pydantic model with uncategorized handling
+    │   ├── board_handle.py      # BoardHandle: manages board state, image operations
+    │   └── board_repo.py        # BoardRepository: board lifecycle, creates handles
+    │
+    └── workflow/                # Workflow subsystem (partial implementation)
+        ├── __init__.py          # Exports: WorkflowDefinition, WorkflowHandle, WorkflowRepository
+        ├── workflow_model.py    # WorkflowDefinition: Pydantic model for workflow JSON
+        ├── workflow_handle.py   # WorkflowHandle: manages workflow state, inputs, execution
+        └── workflow_repo.py     # WorkflowRepository: workflow lifecycle, creates handles
+```
+
+### File Purpose Details
+
+#### Core Files
+- **`client.py`**: Central client class that maintains HTTP session, WebSocket connection, and provides access to repositories. Contains `_make_request()` helper for API calls.
+- **`models.py`**: Shared Pydantic models used across subsystems - `IvkImage`, `IvkJob`, `IvkDnnModel`, `SessionEvent`, and enums (`JobStatus`, `ImageCategory`, `BaseModelEnum`).
+- **`fields.py`**: Type system for workflow inputs - `IvkField[T]` base class and concrete implementations (`IntegerField`, `StringField`, `ImageField`, etc.). All methods currently `NotImplementedError`.
+- **`exceptions.py`**: Custom exception hierarchy for error handling (currently all stubs).
+- **`utils.py`**: Helper classes - `AssetManager` for uploads/downloads, `BoardManager` for board operations, `TypeConverter` for field conversions, `ProgressTracker` for monitoring (all stubs).
+
+#### Board Subsystem (Complete)
+- **`board_model.py`**: `Board` Pydantic model with special handling for uncategorized board ("none" board_id), includes helper methods like `uncategorized()` and `is_uncategorized()`.
+- **`board_handle.py`**: `BoardHandle` class representing active board state - handles image upload/download, listing, starring, and board refresh operations.
+- **`board_repo.py`**: `BoardRepository` manages board lifecycle - creates/deletes boards, retrieves board handles, maintains handle cache, special handling for uncategorized board.
+
+#### Workflow Subsystem (In Progress)
+- **`workflow_model.py`**: `WorkflowDefinition` Pydantic model for loading/parsing workflow JSON files, extracts metadata, nodes, edges, and exposed fields.
+- **`workflow_handle.py`**: `WorkflowHandle` manages workflow execution state, `InkWorkflowInput` model for typed inputs. Methods for listing/setting inputs, submission, job tracking (all stubs).
+- **`workflow_repo.py`**: `WorkflowRepository` creates workflow handles, manages workflow lifecycle, handles definition loading and validation (mostly stubs).
+
 ## Architecture & Design Patterns
 
 ### Repository Pattern Architecture
 The client uses a Repository pattern to separate concerns:
 - **InvokeAIClient**: Main client class, manages connection and high-level operations
-- **BoardRepository**: Manages board lifecycle and creates BoardHandle instances
-- **BoardHandle**: Represents running state of a board, handles image operations
-- **WorkflowRepository**: Manages workflow lifecycle and creates WorkflowHandle instances
-- **WorkflowHandle**: Represents running state of a workflow, handles execution
+- **BoardRepository**: Handles all board and image management operations
+- **WorkflowRepository** (planned): Will manage workflow definitions and execution
 
 Example usage flow:
 ```python
 client = InvokeAIClient("localhost", 9090)
-
-# Board operations through handle
-board_handle = client.board_repo.create_board("My Art")
-board_handle.upload_image("photo.png")
-images = board_handle.list_images()
-
-# Workflow operations through handle
-workflow = client.create_workflow(workflow_def)
-workflow.get_input(0).field.value = "prompt"
-job = workflow.submit_sync()
+boards = client.board_repo.list_boards()  # Repository pattern access
 ```
 
 ### Workflow Subsystem Design
@@ -84,7 +117,7 @@ Key workflow components:
 
 ### Field Type System
 Field types follow a consistent pattern with abstract base class:
-- All fields inherit from `Field[T]` generic base class
+- All fields inherit from `IvkField[T]` generic base class (renamed from Field to avoid Pydantic conflicts)
 - Each field implements: `validate()`, `to_api_format()`, `from_api_format()`
 - Heavy data (images, models) use reference names, not actual data
 - Validation happens at two levels: per-field and workflow-level
@@ -146,18 +179,21 @@ results = workflow.wait_for_completion_sync()
 
 ### ✅ Completed
 - Repository pattern for boards (BoardRepository)
-- Pydantic models for core entities
-- Board/image management APIs
+- Board subsystem with BoardHandle/BoardRepository pattern
+- Workflow subsystem with WorkflowHandle/WorkflowRepository pattern
+- Pydantic models for core entities (Board, IvkImage, IvkJob, WorkflowDefinition)
+- Subsystem reorganization into dedicated directories (board/, workflow/)
+- IvkField base class and field type stubs
 - Project configuration (pyproject.toml with pixi integration)
 
 ### 🚧 In Progress
-- Workflow class methods (all NotImplementedError)
+- Workflow handle methods (all NotImplementedError)
 - Field type implementations (base classes exist, methods not implemented)
-- WorkflowRepository pattern
+- InkWorkflowInput implementation
 
-### 📋 Next Steps (from task-impl-2.md)
-1. Implement WorkflowRepository following BoardRepository pattern
-2. Create InkWorkflowInput and field type models
+### 📋 Next Steps (from task-impl-workflow.md)
+1. Implement WorkflowHandle methods (list_inputs, get_input, set_input, submit)
+2. Create InkWorkflowInput and complete field type models
 3. Implement workflow submission and job tracking
 4. Add asset cleanup after workflow completion
 5. Write comprehensive tests for all components

@@ -47,53 +47,57 @@ Below we use `data\workflows\sdxl-flux-refine.json` as an example workflow defin
 **Code Example**:
 ```python
 from invokeai_py_client import InvokeAIClient
-from invokeai_py_client.models import WorkflowDefinition, InkWorkflowInput
+from invokeai_py_client.workflow import WorkflowDefinition, WorkflowHandle, InkWorkflowInput
+from invokeai_py_client.fields import IvkField
 from typing import List, Optional
-import json
 
 # Initialize the client
 client = InvokeAIClient.from_url("http://localhost:9090")
 
-# Step 1: Read workflow JSON and create WorkflowDefinition data model
-with open("data/workflows/sdxl-flux-refine.json", "r") as f:
-    workflow_dict = json.load(f)
+# Step 1: Load workflow definition from JSON file
+workflow_def = WorkflowDefinition.from_file("data/workflows/sdxl-flux-refine.json")
 
-workflow_def = WorkflowDefinition.from_dict(workflow_dict)
+# Alternative: Load from dict
+# with open("data/workflows/sdxl-flux-refine.json", "r") as f:
+#     workflow_dict = json.load(f)
+# workflow_def = WorkflowDefinition.from_dict(workflow_dict)
 
-# Step 2: Create workflow instance from the definition
-workflow = client.create_workflow(workflow_def)
+# Step 2: Create workflow handle using the repository pattern
+# The WorkflowRepository creates and manages WorkflowHandle instances
+workflow_handle: WorkflowHandle = client.workflow_repo.create_workflow_handle(workflow_def)
 
 # Basic workflow information (from WorkflowDefinition properties)
-print(f"Workflow: {workflow.definition.name}")
-print(f"Description: {workflow.definition.description}")
-print(f"Version: {workflow.definition.version}")
-print(f"Author: {workflow.definition.author}")
+print(f"Workflow: {workflow_handle.definition.name}")
+print(f"Description: {workflow_handle.definition.description}")
+print(f"Version: {workflow_handle.definition.version}")
+print(f"Author: {workflow_handle.definition.author}")
 print()
 
 # List all configurable inputs (returns list ordered by input-index)
-inputs: List[InkWorkflowInput] = workflow.list_inputs()
+inputs: List[InkWorkflowInput] = workflow_handle.list_inputs()
 
 print(f"Total configurable inputs: {len(inputs)}")
 print("=" * 60)
 
 # Inputs are accessed by index (0-based) based on form tree traversal order
 for idx, input_info in enumerate(inputs):
-    # InkWorkflowInput has typed properties
+    # InkWorkflowInput has typed properties with IvkField base
     print(f"\n[{idx}] {input_info.label}")
     print(f"  Node: {input_info.node_name} ({input_info.node_id})")
     print(f"  Field: {input_info.field_name}")
-    print(f"  Type: {type(input_info.field).__name__}")  # e.g., InkStringField
+    print(f"  Type: {type(input_info.field).__name__}")  # e.g., InkStringField (subclass of IvkField)
     print(f"  Required: {input_info.required}")
     
-    # Show current value if set
-    if input_info.field.value is not None:
-        print(f"  Current Value: {input_info.field.value}")
+    # Show current value if set (using IvkField's get_value() method)
+    current_value = input_info.field.get_value()
+    if current_value is not None:
+        print(f"  Current Value: {current_value}")
 
 # Access inputs by index - the primary way to get/set inputs
-positive_prompt: InkWorkflowInput = workflow.get_input(0)  # Index [0] is Positive Prompt
-negative_prompt: InkWorkflowInput = workflow.get_input(1)  # Index [1] is Negative Prompt
-width_input: InkWorkflowInput = workflow.get_input(2)      # Index [2] is Output Width
-height_input: InkWorkflowInput = workflow.get_input(3)     # Index [3] is Output Height
+positive_prompt: InkWorkflowInput = workflow_handle.get_input(0)  # Index [0] is Positive Prompt
+negative_prompt: InkWorkflowInput = workflow_handle.get_input(1)  # Index [1] is Negative Prompt
+width_input: InkWorkflowInput = workflow_handle.get_input(2)      # Index [2] is Output Width
+height_input: InkWorkflowInput = workflow_handle.get_input(3)     # Index [3] is Output Height
 
 # Example: Print information about a specific input
 print(f"\nInput at index 0:")
@@ -102,36 +106,43 @@ print(f"  Node: {positive_prompt.node_name}")  # "Positive" (from node's label f
 print(f"  Field: {positive_prompt.field_name}")  # "value"
 
 # Get all inputs as an indexed list
-all_inputs: List[InkWorkflowInput] = workflow.get_all_inputs()
+all_inputs: List[InkWorkflowInput] = workflow_handle.get_all_inputs()
 # Returns ordered list where index matches input-index:
 # [
-#     InkWorkflowInput(...),  # [0] Positive Prompt
-#     InkWorkflowInput(...),  # [1] Negative Prompt
-#     InkWorkflowInput(...),  # [2] Output Width
+#     InkWorkflowInput(...),  # [0] Positive Prompt with IvkField subclass
+#     InkWorkflowInput(...),  # [1] Negative Prompt with IvkField subclass
+#     InkWorkflowInput(...),  # [2] Output Width with IvkField subclass
 #     ...                      # up to [23] for this workflow
 # ]
 
 # Find input by searching (returns index, or None if not found)
-def find_input_index(workflow, node_name: str, field_name: str) -> Optional[int]:
+def find_input_index(workflow_handle: WorkflowHandle, node_name: str, field_name: str) -> Optional[int]:
     """Helper to find input index by node/field names if needed."""
-    for idx, input_info in enumerate(workflow.list_inputs()):
+    for idx, input_info in enumerate(workflow_handle.list_inputs()):
         if input_info.node_name == node_name and input_info.field_name == field_name:
             return idx
     return None
 
 # Example: Find the FLUX model input
-flux_model_idx = find_input_index(workflow, "flux_model_loader", "model")
+flux_model_idx = find_input_index(workflow_handle, "flux_model_loader", "model")
 if flux_model_idx is not None:
-    flux_model_input = workflow.get_input(flux_model_idx)
+    flux_model_input = workflow_handle.get_input(flux_model_idx)
     print(f"\nFound FLUX model input at index {flux_model_idx}")
 
 # Check which required inputs are missing values (returns list of indices)
-missing_indices = workflow.get_missing_required_input_indices()
+missing_indices = workflow_handle.get_missing_required_input_indices()
 if missing_indices:
     print(f"\nRequired inputs still needed at indices: {missing_indices}")
     for idx in missing_indices:
-        input_info = workflow.get_input(idx)
+        input_info = workflow_handle.get_input(idx)
         print(f"  [{idx}] {input_info.label}")
+
+# Alternative: Get another workflow handle for the same definition
+# This creates a new instance with independent state
+another_workflow = client.workflow_repo.create_workflow_handle(workflow_def)
+
+# Or retrieve an existing workflow handle by ID (if implemented)
+# existing_workflow = client.workflow_repo.get_workflow_handle(workflow_id)
 ```
 
 **Expected Output**:
@@ -216,33 +227,41 @@ Required inputs still needed at indices: [0, 1, 4, 11, 12, 13, 14, 19]
 
 **Key Design Points**:
 
-1. **Data Model Architecture**: 
-   - `WorkflowDefinition` - Pydantic model for workflow JSON structure
+1. **Repository Pattern Architecture**: 
+   - **WorkflowRepository** - Manages workflow lifecycle, creates and tracks WorkflowHandle instances
+   - **WorkflowHandle** - Represents the running state of a workflow, manages inputs and execution
+   - **WorkflowDefinition** - Pydantic model for workflow JSON structure (in `workflow_model.py`)
+   - Follows same pattern as BoardRepository/BoardHandle for consistency
+
+2. **Data Model Hierarchy**:
    - `InkWorkflowInput` - Typed data model containing:
      - `label`: User-facing field label (e.g., "Positive Prompt")
      - `node_name`: Node's display name - uses node's "label" field if not empty, otherwise falls back to node's "type" (InvokeAI default)
      - `node_id`: UUID of the workflow node
      - `field_name`: Name of the field in the node (e.g., "value")
-     - `field`: The actual typed field instance (`InkStringField`, `InkImageField`, etc.)
+     - `field`: IvkField subclass instance (`InkStringField`, `InkImageField`, etc.)
      - `required`: Boolean indicating if the input must be provided
+   - All field types inherit from `IvkField` base class (renamed from `Field` to avoid conflicts)
 
-2. **Index-Based Access System**:
+3. **Index-Based Access System**:
    - **Input-index**: 0-based index from depth-first form tree traversal
-   - Primary access via `workflow.get_input(index)` method
+   - Primary access via `workflow_handle.get_input(index)` method
    - Stable ordering guaranteed by form structure
    - Eliminates naming conflicts completely
 
-3. **Type Safety**: 
-   - All methods return proper data models, not raw dicts
-   - `workflow.list_inputs()` returns ordered `List[InkWorkflowInput]`
-   - `workflow.get_input(idx)` returns `InkWorkflowInput` at that index
-   - Each field is a typed instance (`InkStringField`, `InkImageField`, etc.)
+4. **Type Safety with IvkField**: 
+   - All field types are subclasses of `IvkField[T]` generic base
+   - `workflow_handle.list_inputs()` returns ordered `List[InkWorkflowInput]`
+   - `workflow_handle.get_input(idx)` returns `InkWorkflowInput` at that index
+   - Field values accessed via `field.get_value()` and `field.set_value()` methods
+   - Each field is a typed instance with proper validation
 
-4. **Input Discovery**:
+5. **Input Discovery**:
    - Iterate through ordered list to find inputs by properties
    - Helper functions can search by node/field names if needed
    - Missing inputs tracked by indices for clear identification
    - No ambiguity in input references
+   - Repository pattern allows creating multiple workflow handles from same definition
 
 ### Use case 2: setting inputs of the `example-workflow.json`
 

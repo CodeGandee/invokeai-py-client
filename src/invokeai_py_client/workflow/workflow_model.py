@@ -71,7 +71,7 @@ class WorkflowDefinition(BaseModel):
     description: str = Field(default="", description="Workflow description")
     author: str = Field(default="", description="Workflow author")
     contact: str = Field(default="", description="Contact information")
-    tags: list[str] = Field(default_factory=list, description="Workflow tags")
+    tags: str | list[str] = Field(default_factory=list, description="Workflow tags")
     notes: str = Field(default="", description="Additional notes")
 
     # Structure fields - using Dict[str, Any] for flexibility
@@ -183,6 +183,11 @@ class WorkflowDefinition(BaseModel):
         # Store the raw data
         workflow_data = data.copy()
         workflow_data["raw_data"] = data.copy()
+
+        # Handle tags field - can be string or list
+        if "tags" in workflow_data and isinstance(workflow_data["tags"], str):
+            # Split comma-separated string into list
+            workflow_data["tags"] = [t.strip() for t in workflow_data["tags"].split(",")]
 
         # Create the instance with all data
         return cls(**workflow_data)

@@ -53,9 +53,11 @@ class IvkField(ABC, Generic[T]):
         description: str | None = None,
     ) -> None:
         """Initialize the field."""
-        raise NotImplementedError
+        self._value = value
+        self.name = name
+        self.description = description
+        self.metadata: dict[str, Any] = {}
 
-    @abstractmethod
     def validate(self) -> bool:
         """
         Validate the current field value.
@@ -70,7 +72,7 @@ class IvkField(ABC, Generic[T]):
         ValueError
             If validation fails with details about the error.
         """
-        raise NotImplementedError
+        return True  # Default implementation
 
     @abstractmethod
     def to_api_format(self) -> dict[str, Any]:
@@ -102,13 +104,13 @@ class IvkField(ABC, Generic[T]):
         """
         raise NotImplementedError
 
-    def set_value(self, value: T) -> None:
+    def set_value(self, value: T | None) -> None:
         """
         Set the field value with validation.
 
         Parameters
         ----------
-        value : T
+        value : T | None
             The new value to set.
 
         Raises
@@ -116,7 +118,9 @@ class IvkField(ABC, Generic[T]):
         ValueError
             If the value fails validation.
         """
-        raise NotImplementedError
+        self._value = value
+        if value is not None:
+            self.validate()
 
     def get_value(self) -> T | None:
         """
@@ -127,7 +131,17 @@ class IvkField(ABC, Generic[T]):
         Optional[T]
             The current value, or None if not set.
         """
-        raise NotImplementedError
+        return self._value
+
+    @property
+    def value(self) -> T | None:
+        """Property for backward compatibility."""
+        return self._value
+
+    @value.setter
+    def value(self, val: T | None) -> None:
+        """Property setter for backward compatibility."""
+        self.set_value(val)
 
 
 class IntegerField(IvkField[int]):

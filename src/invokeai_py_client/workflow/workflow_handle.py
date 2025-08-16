@@ -11,7 +11,16 @@ from typing import TYPE_CHECKING, Any, Callable
 
 from pydantic import BaseModel, ConfigDict
 
-from invokeai_py_client.fields import IvkField
+from invokeai_py_client.ink_fields import (
+    InkBoardField,
+    InkBooleanField,
+    InkEnumField,
+    InkFloatField,
+    InkImageField,
+    InkIntegerField,
+    InkModelIdentifierField,
+    InkStringField,
+)
 from invokeai_py_client.models import IvkJob
 
 if TYPE_CHECKING:
@@ -47,7 +56,7 @@ class InkWorkflowInput(BaseModel):
     node_name: str
     node_id: str
     field_name: str
-    field: IvkField[Any]
+    field: Any  # Will be an Ink*Field instance
     required: bool
     input_index: int
 
@@ -107,10 +116,257 @@ class WorkflowHandle:
         This parses the form structure and exposed fields to create
         the ordered list of InkWorkflowInput objects.
         """
-        # This is a placeholder - full implementation would parse
-        # the form structure and create InkWorkflowInput instances
-        # based on the exposed fields and their types
-        pass
+        # Get form elements and nodes for reference
+        form_elements = self.definition.form.get("elements", {})
+        nodes = {node["id"]: node for node in self.definition.nodes}
+
+        # Track input index
+        input_index = 0
+
+        def traverse_form(elem_id: str) -> None:
+            """Traverse form tree and collect node-field elements."""
+            nonlocal input_index
+
+            elem = form_elements.get(elem_id)
+            if not elem:
+                return
+
+            elem_type = elem.get("type")
+
+            if elem_type == "container":
+                # Process children in order
+                for child_id in elem.get("data", {}).get("children", []):
+                    traverse_form(child_id)
+
+            elif elem_type == "node-field":
+                # Extract field information
+                field_id = elem["data"]["fieldIdentifier"]
+                node_id = field_id["nodeId"]
+                field_name = field_id["fieldName"]
+
+                # Get node and field metadata
+                node = nodes.get(node_id, {})
+                node_data = node.get("data", {})
+                node_type = node_data.get("type", "unknown")
+
+                # Get labels
+                node_label = node_data.get("label", "")
+                if not node_label:
+                    # Use node type as fallback
+                    node_label = node_type
+
+                # Get field info from node inputs
+                field_info = node_data.get("inputs", {}).get(field_name, {})
+                field_label = field_info.get("label", field_name)
+                field_description = field_info.get("description", "")
+
+                # Determine if required
+                required = field_info.get("required", False)
+
+                # Create appropriate field instance based on type
+                field_instance = self._create_field_from_node(
+                    node_data, field_name, field_info
+                )
+
+                # Create InkWorkflowInput
+                workflow_input = InkWorkflowInput(
+                    label=field_label,
+                    node_name=node_label,
+                    node_id=node_id,
+                    field_name=field_name,
+                    field=field_instance,
+                    required=required,
+                    input_index=input_index
+                )
+
+                self.inputs.append(workflow_input)
+                input_index += 1
+
+        # Start traversal from root
+        traverse_form("root")
+
+    def _create_field_from_node(
+        self, node_data: dict[str, Any], field_name: str, field_info: dict[str, Any]
+    ) -> Any:
+        """
+        Create appropriate field instance based on node and field information.
+        
+        Parameters
+        ----------
+        node_data : Dict[str, Any]
+            The node's data section
+        field_name : str
+            The field name within the node
+        field_info : Dict[str, Any]
+            The field's metadata from node.inputs[field_name]
+        
+        Returns
+        -------
+        Any
+            Appropriate Ink*Field instance (InkStringField, InkIntegerField, etc.)
+        """
+        # Get node type for context
+        node_type = node_data.get("type", "")
+
+        # Get field value if exists
+        field_value = field_info.get("value")
+
+        # Detect field type based on various hints
+        field_type = self._detect_field_type(node_type, field_name, field_info)
+
+        # Create field instance based on detected type
+        if field_type == "string":
+            return InkStringField(
+                value=field_value,
+                name=field_name,
+                description=field_info.get("description")
+            )
+
+        elif field_type == "integer":
+            return InkIntegerField(
+                value=field_value,
+                name=field_name,
+                description=field_info.get("description"),
+                minimum=field_info.get("minimum"),
+                maximum=field_info.get("maximum")
+            )
+
+        elif field_type == "float":
+            return InkFloatField(
+                value=field_value,
+                name=field_name,
+                description=field_info.get("description"),
+                minimum=field_info.get("minimum"),
+                maximum=field_info.get("maximum")
+            )
+
+        elif field_type == "boolean":
+            return InkBooleanField(
+                value=field_value,
+                name=field_name,
+                description=field_info.get("description")
+            )
+
+        elif field_type == "model":
+            return InkModelIdentifierField(
+                value=field_value,
+                name=field_name,
+                description=field_info.get("description")
+            )
+
+        elif field_type == "board":
+            # Board values can be dict with board_id or string
+            board_value = field_value
+            if isinstance(field_value, dict) and "board_id" in field_value:
+                board_value = field_value["board_id"]
+            return InkBoardField(
+                value=board_value,
+                name=field_name,
+                description=field_info.get("description")
+            )
+
+        elif field_type == "image":
+            return InkImageField(
+                value=field_value,
+                name=field_name,
+                description=field_info.get("description")
+            )
+
+        elif field_type == "enum":
+            # Get choices from options or ui_choices
+            choices = field_info.get("options", [])
+            if not choices:
+                ui_choices = field_info.get("ui_choices", [])
+                if ui_choices:
+                    choices = ui_choices
+
+            return InkEnumField(
+                value=field_value,
+                name=field_name,
+                description=field_info.get("description"),
+                choices=choices
+            )
+
+        else:
+            # Default to string field for unknown types
+            return InkStringField(
+                value=field_value,
+                name=field_name,
+                description=field_info.get("description")
+            )
+
+    def _detect_field_type(
+        self, node_type: str, field_name: str, field_info: dict[str, Any]
+    ) -> str:
+        """
+        Detect the field type based on various hints.
+        
+        Parameters
+        ----------
+        node_type : str
+            The type of the node (e.g., "string", "integer", "save_image")
+        field_name : str
+            The field name (e.g., "value", "model", "board")
+        field_info : Dict[str, Any]
+            The field metadata
+        
+        Returns
+        -------
+        str
+            Detected field type identifier
+        """
+        # Check explicit type hint in field info
+        if "type" in field_info:
+            return str(field_info["type"])
+
+        # Check by field name patterns
+        if field_name == "board":
+            return "board"
+        elif field_name == "model" or field_name.endswith("_model"):
+            return "model"
+        elif field_name == "image":
+            return "image"
+        elif field_name == "scheduler":
+            return "enum"
+
+        # Check by node type for primitive nodes
+        if node_type == "string":
+            return "string"
+        elif node_type == "integer":
+            return "integer"
+        elif node_type == "float" or node_type == "float_math":
+            return "float"
+        elif node_type == "boolean":
+            return "boolean"
+
+        # Check value type if present
+        value = field_info.get("value")
+        if value is not None:
+            if isinstance(value, bool):
+                return "boolean"
+            elif isinstance(value, int) and not isinstance(value, bool):
+                return "integer"
+            elif isinstance(value, float):
+                return "float"
+            elif isinstance(value, dict):
+                # Model fields have dict values with key/name/base/type
+                if "key" in value and "base" in value:
+                    return "model"
+            elif isinstance(value, str):
+                return "string"
+
+        # Check for enum fields by presence of options/choices
+        if "options" in field_info or "ui_choices" in field_info:
+            return "enum"
+
+        # Check for numeric constraints
+        if "minimum" in field_info or "maximum" in field_info:
+            if "multiple_of" in field_info:
+                return "integer"
+            return "float"
+
+        # Default to string
+        return "string"
 
     def list_inputs(self) -> list[InkWorkflowInput]:
         """
@@ -158,6 +414,43 @@ class WorkflowHandle:
                 f"Input index {index} out of range (0-{len(self.inputs) - 1})"
             )
         return self.inputs[index]
+
+    def set_input(self, index: int, value: Any) -> None:
+        """
+        Set a workflow input value by index.
+
+        Parameters
+        ----------
+        index : int
+            The 0-based input index.
+        value : Any
+            The value to set. Will be automatically converted to the field's type.
+
+        Raises
+        ------
+        IndexError
+            If the index is out of range.
+        ValueError
+            If the value cannot be converted to the field's type.
+
+        Examples
+        --------
+        >>> workflow.set_input(0, "A beautiful landscape")
+        >>> workflow.set_input(2, 1024)  # Width
+        >>> workflow.set_input(3, 768)   # Height
+        """
+        if index < 0 or index >= len(self.inputs):
+            raise IndexError(
+                f"Input index {index} out of range (0-{len(self.inputs) - 1})"
+            )
+        
+        input_field = self.inputs[index]
+        try:
+            input_field.field.set_value(value)
+        except Exception as e:
+            raise ValueError(
+                f"Failed to set value for input {index} ({input_field.label}): {e}"
+            )
 
     def get_all_inputs(self) -> list[InkWorkflowInput]:
         """
