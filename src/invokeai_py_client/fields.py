@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 
 
-class Field(ABC, Generic[T]):
+class IvkField(ABC, Generic[T]):
     """
     Abstract base class for all InvokeAI field types.
 
@@ -86,7 +86,7 @@ class Field(ABC, Generic[T]):
 
     @classmethod
     @abstractmethod
-    def from_api_format(cls, data: dict[str, Any]) -> Field[T]:
+    def from_api_format(cls, data: dict[str, Any]) -> IvkField[T]:
         """
         Create a field instance from API response data.
 
@@ -97,7 +97,7 @@ class Field(ABC, Generic[T]):
 
         Returns
         -------
-        Field[T]
+        IvkField[T]
             A new field instance with the parsed value.
         """
         raise NotImplementedError
@@ -130,7 +130,7 @@ class Field(ABC, Generic[T]):
         raise NotImplementedError
 
 
-class IntegerField(Field[int]):
+class IntegerField(IvkField[int]):
     """
     Integer field type with optional constraints.
 
@@ -182,7 +182,7 @@ class IntegerField(Field[int]):
         raise NotImplementedError
 
 
-class FloatField(Field[float]):
+class FloatField(IvkField[float]):
     """
     Float field type with optional constraints.
 
@@ -231,7 +231,7 @@ class FloatField(Field[float]):
         raise NotImplementedError
 
 
-class StringField(Field[str]):
+class StringField(IvkField[str]):
     """
     String field type with optional constraints.
 
@@ -283,7 +283,7 @@ class StringField(Field[str]):
         raise NotImplementedError
 
 
-class BooleanField(Field[bool]):
+class BooleanField(IvkField[bool]):
     """
     Boolean field type.
 
@@ -326,7 +326,7 @@ class BooleanField(Field[bool]):
         raise NotImplementedError
 
 
-class ImageField(Field[Union[str, Path]]):
+class ImageField(IvkField[Union[str, Path]]):
     """
     Image field for handling image references and uploads.
 
@@ -426,7 +426,7 @@ class ImageField(Field[Union[str, Path]]):
         raise NotImplementedError
 
 
-class LatentsField(Field[str]):
+class LatentsField(IvkField[str]):
     """
     Latents field for latent space representations.
 
@@ -463,7 +463,7 @@ class LatentsField(Field[str]):
         raise NotImplementedError
 
 
-class ModelField(Field[dict[str, str]]):
+class ModelField(IvkField[dict[str, str]]):
     """
     DnnModel reference field.
 
@@ -517,7 +517,7 @@ class ModelField(Field[dict[str, str]]):
         raise NotImplementedError
 
 
-class EnumField(Field[str]):
+class EnumField(IvkField[str]):
     """
     Enum field with predefined choices.
 
@@ -564,7 +564,7 @@ class EnumField(Field[str]):
         raise NotImplementedError
 
 
-class ColorField(Field[str]):
+class ColorField(IvkField[str]):
     """
     Color field for RGBA color values.
 
@@ -618,7 +618,7 @@ class ColorField(Field[str]):
         raise NotImplementedError
 
 
-class ConditioningField(Field[dict[str, Any]]):
+class ConditioningField(IvkField[dict[str, Any]]):
     """
     Conditioning field for prompt embeddings.
 
@@ -655,7 +655,7 @@ class ConditioningField(Field[dict[str, Any]]):
         raise NotImplementedError
 
 
-class CollectionField(Field[list[T]], Generic[T]):
+class CollectionField(IvkField[list[T]], Generic[T]):
     """
     Collection field for lists of values.
 

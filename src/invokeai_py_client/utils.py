@@ -16,7 +16,7 @@ from typing import (
 )
 
 from invokeai_py_client.board import Board
-from invokeai_py_client.fields import Field
+from invokeai_py_client.fields import IvkField
 from invokeai_py_client.models import IvkImage
 
 if TYPE_CHECKING:
@@ -428,13 +428,13 @@ class TypeConverter:
     """
 
     @staticmethod
-    def field_to_api(field: Field[Any]) -> dict[str, Any]:
+    def field_to_api(field: IvkField[Any]) -> dict[str, Any]:
         """
         Convert a client field to API format.
 
         Parameters
         ----------
-        field : Field
+        field : IvkField
             Client field instance.
 
         Returns
@@ -445,7 +445,7 @@ class TypeConverter:
         raise NotImplementedError
 
     @staticmethod
-    def api_to_field(data: dict[str, Any], field_type: str) -> Field[Any]:
+    def api_to_field(data: dict[str, Any], field_type: str) -> IvkField[Any]:
         """
         Convert API data to a client field.
 
@@ -458,7 +458,7 @@ class TypeConverter:
 
         Returns
         -------
-        Field
+        IvkField
             Appropriate field instance.
         """
         raise NotImplementedError

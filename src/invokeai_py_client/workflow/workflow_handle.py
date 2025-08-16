@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Callable
 
 from pydantic import BaseModel, ConfigDict
 
-from invokeai_py_client.fields import Field
+from invokeai_py_client.fields import IvkField
 from invokeai_py_client.models import IvkJob
 
 if TYPE_CHECKING:
@@ -33,7 +33,7 @@ class InkWorkflowInput(BaseModel):
         UUID of the workflow node.
     field_name : str
         Name of the field in the node.
-    field : Field
+    field : IvkField
         The actual typed field instance.
     required : bool
         Whether this input must be provided.
@@ -47,7 +47,7 @@ class InkWorkflowInput(BaseModel):
     node_name: str
     node_id: str
     field_name: str
-    field: Field[Any]
+    field: IvkField[Any]
     required: bool
     input_index: int
 
