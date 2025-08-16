@@ -11,15 +11,15 @@ from typing import TYPE_CHECKING, Any, Callable
 
 from pydantic import BaseModel, ConfigDict
 
-from invokeai_py_client.ink_fields import (
-    InkBoardField,
-    InkBooleanField,
-    InkEnumField,
-    InkFloatField,
-    InkImageField,
-    InkIntegerField,
-    InkModelIdentifierField,
-    InkStringField,
+from invokeai_py_client.ivk_fields import (
+    IvkBoardField,
+    IvkBooleanField,
+    IvkEnumField,
+    IvkFloatField,
+    IvkImageField,
+    IvkIntegerField,
+    IvkModelIdentifierField,
+    IvkStringField,
 )
 from invokeai_py_client.models import IvkJob
 
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from invokeai_py_client.workflow.workflow_model import WorkflowDefinition
 
 
-class InkWorkflowInput(BaseModel):
+class IvkWorkflowInput(BaseModel):
     """
     Represents a single workflow input with metadata and typed field.
 
@@ -82,7 +82,7 @@ class WorkflowHandle:
         Reference to the parent client.
     definition : WorkflowDefinition
         The workflow structure and metadata.
-    inputs : List[InkWorkflowInput]
+    inputs : List[IvkWorkflowInput]
         Ordered list of workflow inputs.
     job : Optional[IvkJob]
         Current or last job execution.
@@ -102,7 +102,7 @@ class WorkflowHandle:
         """Initialize the workflow handle."""
         self.client = client
         self.definition = definition
-        self.inputs: list[InkWorkflowInput] = []
+        self.inputs: list[IvkWorkflowInput] = []
         self.job: IvkJob | None = None
         self.uploaded_assets: list[str] = []
 
@@ -114,7 +114,7 @@ class WorkflowHandle:
         Initialize workflow inputs from the definition.
 
         This parses the form structure and exposed fields to create
-        the ordered list of InkWorkflowInput objects.
+        the ordered list of IvkWorkflowInput objects.
         """
         # Get form elements and nodes for reference
         form_elements = self.definition.form.get("elements", {})
@@ -168,8 +168,8 @@ class WorkflowHandle:
                     node_data, field_name, field_info
                 )
 
-                # Create InkWorkflowInput
-                workflow_input = InkWorkflowInput(
+                # Create IvkWorkflowInput
+                workflow_input = IvkWorkflowInput(
                     label=field_label,
                     node_name=node_label,
                     node_id=node_id,
@@ -203,7 +203,7 @@ class WorkflowHandle:
         Returns
         -------
         Any
-            Appropriate Ink*Field instance (InkStringField, InkIntegerField, etc.)
+            Appropriate Ivk*Field instance (IvkStringField, IvkIntegerField, etc.)
         """
         # Get node type for context
         node_type = node_data.get("type", "")
@@ -216,14 +216,14 @@ class WorkflowHandle:
 
         # Create field instance based on detected type
         if field_type == "string":
-            return InkStringField(
+            return IvkStringField(
                 value=field_value,
                 name=field_name,
                 description=field_info.get("description")
             )
 
         elif field_type == "integer":
-            return InkIntegerField(
+            return IvkIntegerField(
                 value=field_value,
                 name=field_name,
                 description=field_info.get("description"),
@@ -232,7 +232,7 @@ class WorkflowHandle:
             )
 
         elif field_type == "float":
-            return InkFloatField(
+            return IvkFloatField(
                 value=field_value,
                 name=field_name,
                 description=field_info.get("description"),
@@ -241,14 +241,14 @@ class WorkflowHandle:
             )
 
         elif field_type == "boolean":
-            return InkBooleanField(
+            return IvkBooleanField(
                 value=field_value,
                 name=field_name,
                 description=field_info.get("description")
             )
 
         elif field_type == "model":
-            return InkModelIdentifierField(
+            return IvkModelIdentifierField(
                 value=field_value,
                 name=field_name,
                 description=field_info.get("description")
@@ -259,14 +259,14 @@ class WorkflowHandle:
             board_value = field_value
             if isinstance(field_value, dict) and "board_id" in field_value:
                 board_value = field_value["board_id"]
-            return InkBoardField(
+            return IvkBoardField(
                 value=board_value,
                 name=field_name,
                 description=field_info.get("description")
             )
 
         elif field_type == "image":
-            return InkImageField(
+            return IvkImageField(
                 value=field_value,
                 name=field_name,
                 description=field_info.get("description")
@@ -280,7 +280,7 @@ class WorkflowHandle:
                 if ui_choices:
                     choices = ui_choices
 
-            return InkEnumField(
+            return IvkEnumField(
                 value=field_value,
                 name=field_name,
                 description=field_info.get("description"),
@@ -289,7 +289,7 @@ class WorkflowHandle:
 
         else:
             # Default to string field for unknown types
-            return InkStringField(
+            return IvkStringField(
                 value=field_value,
                 name=field_name,
                 description=field_info.get("description")
@@ -368,13 +368,13 @@ class WorkflowHandle:
         # Default to string
         return "string"
 
-    def list_inputs(self) -> list[InkWorkflowInput]:
+    def list_inputs(self) -> list[IvkWorkflowInput]:
         """
         List all available workflow inputs.
 
         Returns
         -------
-        List[InkWorkflowInput]
+        List[IvkWorkflowInput]
             Ordered list of input definitions.
 
         Examples
@@ -385,7 +385,7 @@ class WorkflowHandle:
         """
         return self.inputs.copy()
 
-    def get_input(self, index: int) -> InkWorkflowInput:
+    def get_input(self, index: int) -> IvkWorkflowInput:
         """
         Get a workflow input by index.
 
@@ -396,7 +396,7 @@ class WorkflowHandle:
 
         Returns
         -------
-        InkWorkflowInput
+        IvkWorkflowInput
             The input at the specified index.
 
         Raises
@@ -452,13 +452,13 @@ class WorkflowHandle:
                 f"Failed to set value for input {index} ({input_field.label}): {e}"
             )
 
-    def get_all_inputs(self) -> list[InkWorkflowInput]:
+    def get_all_inputs(self) -> list[IvkWorkflowInput]:
         """
         Get all inputs as an indexed list.
 
         Returns
         -------
-        List[InkWorkflowInput]
+        List[IvkWorkflowInput]
             All inputs where index matches input-index.
         """
         return self.inputs.copy()
