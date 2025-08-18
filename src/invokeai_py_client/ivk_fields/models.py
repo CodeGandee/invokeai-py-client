@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 from invokeai_py_client.ivk_fields.base import IvkField, PydanticFieldMixin
 

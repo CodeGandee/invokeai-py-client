@@ -7,7 +7,7 @@ interpolation modes, and other predefined option sets.
 
 from __future__ import annotations
 
-from typing import Any, Optional, Literal
+from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 

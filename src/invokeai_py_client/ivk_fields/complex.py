@@ -7,8 +7,8 @@ and other structured data types.
 
 from __future__ import annotations
 
-import re
-from typing import Any, Generic, Iterator, Optional, TypeVar
+from typing import Any, Generic, Optional, TypeVar
+from collections.abc import Iterator
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 

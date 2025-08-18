@@ -17,7 +17,8 @@ See IvkField class documentation for detailed requirements.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generic, Iterator, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from collections.abc import Iterator
 from pathlib import Path
 
 if TYPE_CHECKING:
