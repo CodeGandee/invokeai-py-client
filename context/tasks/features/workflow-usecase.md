@@ -348,7 +348,7 @@ if isinstance(bbox_field, IvkBoundingBoxField):
     bbox_field.x_max = 512
     bbox_field.y_max = 512
     # Or use the helper method
-    bbox_field.set_bounds(0, 0, 512, 512)
+    bbox_field.set_box(0, 0, 512, 512)
 
 
 # Method 2: Complete field replacement using set_input_value()
@@ -446,7 +446,7 @@ All required inputs are set, workflow ready for submission
      - Composite model fields (IvkUNetField, IvkCLIPField, IvkVAEField)
    - **Type checking**: Always use `hasattr(field, 'value')` or `isinstance(field, FieldType)` before accessing
    - **Direct property access**: Safe pattern is to check first, then access
-   - **Helper methods**: Complex fields provide convenience methods like `set_rgba()`, `set_bounds()`, `set_hex()`
+   - **Helper methods**: Complex fields provide convenience methods like `set_rgba()`, `set_box()`, `set_hex()`
 
 2. **Two Primary Access Methods**:
    - **Method 1 - Direct field access**: `workflow_handle.get_input_value(index)` returns IvkField for direct property manipulation
