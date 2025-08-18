@@ -473,7 +473,7 @@ All required inputs are set, workflow ready for submission
 
 ### Use case 3: submitting the workflow and tracking the job status
 
-**Scenario**: After setting all inputs (from Use Case 2), the developer needs to submit the workflow for execution and track its progress through completion.
+**Scenario**: After setting all inputs (from Use Case 2), the developer needs to submit the workflow for execution and track its progress through completion. The client library provides both synchronous and asynchronous submission methods.
 
 **Code Example**:
 ```python
@@ -482,10 +482,11 @@ All required inputs are set, workflow ready for submission
 # - workflow_handle: WorkflowHandle instance with all inputs configured
 
 import time
+import asyncio
 from typing import Optional, Callable, Dict, Any
-from invokeai_py_client.models import JobStatus
+from invokeai_py_client.models import JobStatus, SessionEvent
 
-# Simple synchronous submission with polling
+# Option 1: Simple synchronous submission with polling
 def submit_and_track_sync():
     """Simple synchronous workflow submission with status polling."""
     
@@ -529,14 +530,131 @@ def submit_and_track_sync():
         raise
 
 
-# Usage example:
+# Option 2: Asynchronous submission with real-time events via Socket.IO
+async def submit_and_track_async():
+    """Asynchronous workflow submission with real-time event streaming."""
+    
+    # Define event callbacks for progress tracking
+    def on_invocation_started(event: dict[str, Any]):
+        """Called when a node starts executing."""
+        print(f"  ▶️ Node started: {event['node_id']} ({event['node_type']})")
+    
+    def on_invocation_progress(event: dict[str, Any]):
+        """Called for progress updates during node execution."""
+        progress_pct = event.get('progress', 0) * 100
+        print(f"  ⏳ Progress: {progress_pct:.1f}% - {event.get('message', '')}")
+    
+    def on_invocation_complete(event: dict[str, Any]):
+        """Called when a node completes successfully."""
+        print(f"  ✅ Node completed: {event['node_id']}")
+        if 'outputs' in event:
+            # Can access intermediate outputs here
+            for output_type, output_data in event['outputs'].items():
+                print(f"     Output: {output_type}")
+    
+    def on_invocation_error(event: dict[str, Any]):
+        """Called when a node encounters an error."""
+        print(f"  ❌ Node error: {event['node_id']} - {event.get('error', 'Unknown error')}")
+    
+    # Submit with event subscriptions
+    batch_result = await workflow_handle.submit(
+        queue_id="default",
+        board_id="samples",
+        priority=5,  # Higher priority
+        subscribe_events=True,  # Enable Socket.IO events
+        on_invocation_started=on_invocation_started,
+        on_invocation_progress=on_invocation_progress,
+        on_invocation_complete=on_invocation_complete,
+        on_invocation_error=on_invocation_error
+    )
+    
+    print(f"Batch submitted: {batch_result.batch_id}")
+    print(f"Session ID: {batch_result.session_id}")
+    print(f"Items enqueued: {batch_result.enqueued}")
+    
+    # Wait for completion with async/await
+    try:
+        # This awaits completion while receiving real-time events
+        job = await workflow_handle.wait_for_completion(timeout=60.0)
+        
+        print(f"✅ Workflow completed!")
+        print(f"  Job ID: {job.id}")
+        print(f"  Status: {job.status}")
+        print(f"  Duration: {job.duration_seconds:.2f}s")
+        
+        return job
+        
+    except asyncio.TimeoutError:
+        print("❌ Job timed out")
+        await workflow_handle.cancel_async()
+        raise
+    except Exception as e:
+        print(f"❌ Job failed: {e}")
+        raise
+
+
+# Option 3: Hybrid approach - submit sync, monitor async
+async def submit_sync_monitor_async():
+    """Submit synchronously but monitor with async events."""
+    
+    # Submit synchronously (simpler API)
+    batch_result = workflow_handle.submit_sync(
+        queue_id="default",
+        board_id="samples"
+    )
+    
+    print(f"Submitted batch: {batch_result['batch_id']}")
+    
+    # Connect to Socket.IO for real-time monitoring
+    async with client.connect_socketio() as socket:
+        # Subscribe to session events
+        await socket.subscribe_session(batch_result['session_id'])
+        
+        # Monitor events asynchronously
+        async for event in socket.listen_events():
+            if event.type == SessionEvent.INVOCATION_STARTED:
+                print(f"  ▶️ {event.node_type} started")
+            elif event.type == SessionEvent.INVOCATION_COMPLETE:
+                print(f"  ✅ {event.node_type} completed")
+            elif event.type == SessionEvent.INVOCATION_ERROR:
+                print(f"  ❌ Error: {event.error}")
+                break
+            elif event.type == SessionEvent.GRAPH_COMPLETE:
+                print(f"✅ Workflow completed!")
+                break
+    
+    # Get final results
+    return workflow_handle.get_queue_item()
+
+
+# Usage examples:
+
+# Synchronous (blocking) - simplest approach
 print("=== Synchronous Submission ===")
 queue_item = submit_and_track_sync()
+print(f"Final status: {queue_item['status']}")
 
-# Check final status
-print(f"\nFinal status: {queue_item['status']}")
-print(f"Session ID: {queue_item['session_id']}")
-print(f"Batch ID: {queue_item['batch_id']}")
+# Asynchronous (non-blocking) - for concurrent workflows
+print("\n=== Asynchronous Submission ===")
+async def main():
+    job = await submit_and_track_async()
+    print(f"Job completed: {job.id}")
+    
+    # Can run multiple workflows concurrently
+    tasks = [
+        submit_and_track_async(),
+        submit_and_track_async(),
+        submit_and_track_async()
+    ]
+    results = await asyncio.gather(*tasks)
+    print(f"Completed {len(results)} workflows concurrently")
+
+# Run async example
+asyncio.run(main())
+
+# Hybrid approach - best of both worlds
+print("\n=== Hybrid Submission ===")
+asyncio.run(submit_sync_monitor_async())
 ```
 
 **Expected Output**:
@@ -555,37 +673,101 @@ Status: pending
   Status: completed - Item 42
 ✅ Job completed successfully!
   Item ID: 42
-
 Final status: completed
-Session ID: session_789xyz
-Batch ID: batch_abc123
+
+=== Asynchronous Submission ===
+Batch submitted: batch_def456
+Session ID: session_456def
+Items enqueued: 1
+  ▶️ Node started: node_123 (string)
+  ✅ Node completed: node_123
+  ▶️ Node started: node_456 (sdxl_model_loader)
+  ✅ Node completed: node_456
+  ▶️ Node started: node_789 (denoise_latents)
+  ⏳ Progress: 25.0% - Denoising step 5/20
+  ⏳ Progress: 50.0% - Denoising step 10/20
+  ⏳ Progress: 75.0% - Denoising step 15/20
+  ⏳ Progress: 100.0% - Denoising step 20/20
+  ✅ Node completed: node_789
+     Output: latents
+  ▶️ Node started: node_abc (l2i)
+  ✅ Node completed: node_abc
+     Output: image
+  ▶️ Node started: node_def (save_image)
+  ✅ Node completed: node_def
+✅ Workflow completed!
+  Job ID: job_xyz789
+  Status: completed
+  Duration: 18.34s
+Job completed: job_xyz789
+Completed 3 workflows concurrently
+
+=== Hybrid Submission ===
+Submitted batch: batch_ghi789
+  ▶️ string started
+  ✅ string completed
+  ▶️ sdxl_model_loader started
+  ✅ sdxl_model_loader completed
+  ▶️ denoise_latents started
+  ✅ denoise_latents completed
+  ▶️ l2i started
+  ✅ l2i completed
+  ▶️ save_image started
+  ✅ save_image completed
+✅ Workflow completed!
 ```
 
 **Key Design Points**:
 
-1. **Workflow Submission Process**:
-   - Convert workflow definition to API format (nodes dict, edges list)
-   - Submit to queue endpoint `/api/v1/queue/{queue_id}/enqueue_batch`
-   - Receive batch_id and item_ids for tracking
-   - Store queue item information for monitoring
+1. **Dual Submission Modes**:
+   - **Synchronous**: `submit_sync()` - Simple blocking call with polling
+   - **Asynchronous**: `submit()` - Non-blocking with real-time events
+   - Both methods convert workflow to API format and submit to queue
+   - Submit endpoint: `/api/v1/queue/{queue_id}/enqueue_batch`
 
-2. **Status Polling System**:
-   - Poll queue item endpoint `/api/v1/queue/{queue_id}/i/{item_id}`
-   - Track status transitions: pending → in_progress → completed/failed/cancelled
-   - Configurable poll interval and timeout
-   - Optional progress callback for real-time updates
+2. **Progress Tracking Options**:
+   - **Polling-based** (sync): 
+     - `wait_for_completion_sync()` with configurable poll interval
+     - Optional progress callback for status updates
+     - Poll endpoint: `/api/v1/queue/{queue_id}/i/{item_id}`
+   - **Event-driven** (async):
+     - Socket.IO connection for real-time events
+     - Node-level callbacks: started, progress, complete, error
+     - No polling overhead, instant updates
 
-3. **Queue Item Structure**:
-   - Contains session_id, batch_id, item_id for identification
-   - Status field indicates current execution state
-   - Timestamps for created_at, started_at, completed_at
-   - Results embedded in completed queue item
+3. **Event Subscription System** (async only):
+   - `subscribe_events=True` enables Socket.IO connection
+   - Per-node callbacks for granular monitoring:
+     - `on_invocation_started`: Node execution begins
+     - `on_invocation_progress`: Progress updates (e.g., denoising steps)
+     - `on_invocation_complete`: Node finishes with outputs
+     - `on_invocation_error`: Node encounters error
+   - Session-level events for overall workflow status
 
-4. **Error Handling & Cancellation**:
-   - Timeout protection with automatic cancellation
-   - Cancel endpoint `/api/v1/queue/{queue_id}/i/{item_id}/cancel`
-   - Graceful error propagation with detailed messages
-   - Cleanup of partial results on failure
+4. **Queue Management**:
+   - Queue item tracking with session_id, batch_id, item_id
+   - Status transitions: pending → in_progress → completed/failed/cancelled
+   - Priority queuing support (higher values = higher priority)
+   - Board assignment for output organization
+
+5. **Concurrency Support** (async):
+   - Run multiple workflows simultaneously with `asyncio.gather()`
+   - Each workflow maintains independent state
+   - Shared client connection for efficiency
+   - Real-time monitoring of all concurrent executions
+
+6. **Error Handling & Cancellation**:
+   - Timeout protection in both sync and async modes
+   - Cancellation methods: `cancel()` (sync) and `cancel_async()` (async)
+   - Cancel endpoint: `/api/v1/queue/{queue_id}/i/{item_id}/cancel`
+   - Graceful error propagation with context
+   - Automatic cleanup on failure
+
+7. **Hybrid Approach**:
+   - Submit synchronously for simplicity
+   - Monitor asynchronously for real-time updates
+   - Best for applications needing simple submission but rich monitoring
+   - Combines ease of sync API with power of async events
 
 ### Use case 4: retrieving outputs and cleaning up
 
