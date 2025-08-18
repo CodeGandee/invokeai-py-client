@@ -146,6 +146,97 @@ class IvkField(Generic[T]):
         """
         raise NotImplementedError("Subclass must implement from_api_format()")
 
+    @classmethod
+    def from_json_dict(cls, data: dict[str, Any]) -> IvkField[T]:
+        """
+        Create a field instance from a JSON-like dictionary.
+
+        Parameters
+        ----------
+        data : Dict[str, Any]
+            The JSON-like dictionary containing field data.
+
+        Returns
+        -------
+        IvkField[T]
+            A new field instance created from the dictionary.
+            
+        Raises
+        ------
+        NotImplementedError
+            If the subclass hasn't implemented this method.
+        """
+        raise NotImplementedError("Subclass must implement from_json_dict()")
+
+    def to_json_dict(self) -> dict[str, Any]:
+        """
+        Serialize the field to a JSON-like dictionary.
+
+        Returns
+        -------
+        Dict[str, Any]
+            The field data as a JSON-serializable dictionary.
+            
+        Raises
+        ------
+        NotImplementedError
+            If the subclass hasn't implemented this method.
+        """
+        raise NotImplementedError("Subclass must implement to_json_dict()")
+
+
+
+class PydanticFieldMixin:
+    """
+    Mixin for IvkField subclasses that are also Pydantic models.
+    
+    Provides JSON conversion methods leveraging Pydantic's built-in serialization.
+    This mixin avoids code duplication across all Pydantic-based field classes.
+    """
+    
+    @classmethod
+    def from_json_dict(cls, data: dict[str, Any]) -> Any:
+        """
+        Create a field instance from a JSON-like dictionary.
+        
+        Uses Pydantic's model_validate to handle the conversion.
+        
+        Parameters
+        ----------
+        data : Dict[str, Any]
+            The JSON-like dictionary containing field data.
+        
+        Returns
+        -------
+        IvkField
+            A new field instance created from the dictionary.
+        """
+        # Leverage Pydantic's model_validate for proper deserialization
+        from pydantic import BaseModel
+        if issubclass(cls, BaseModel):
+            return cls.model_validate(data)
+        else:
+            # Fallback to regular constructor for non-Pydantic classes
+            return cls(**data)
+    
+    def to_json_dict(self) -> dict[str, Any]:
+        """
+        Serialize the field to a JSON-like dictionary.
+        
+        Uses Pydantic's model_dump for Pydantic models.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            The field data as a JSON-serializable dictionary.
+        """
+        from pydantic import BaseModel
+        if isinstance(self, BaseModel):
+            # Use model_dump for Pydantic models
+            return self.model_dump(exclude_none=False)
+        else:
+            # Fallback for non-Pydantic classes
+            return self.__dict__.copy()
 
 
 class IvkImageFieldMixin:

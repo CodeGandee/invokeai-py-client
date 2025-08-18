@@ -12,12 +12,12 @@ from typing import Any, Generic, Iterator, Optional, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from invokeai_py_client.ivk_fields.base import IvkField, IvkCollectionFieldMixin
+from invokeai_py_client.ivk_fields.base import IvkField, IvkCollectionFieldMixin, PydanticFieldMixin
 
 T = TypeVar("T")
 
 
-class IvkColorField(BaseModel, IvkField[dict[str, int]]):
+class IvkColorField(BaseModel, PydanticFieldMixin, IvkField[dict[str, int]]):
     """
     Color field for RGBA color values.
     
@@ -142,7 +142,7 @@ class IvkColorField(BaseModel, IvkField[dict[str, int]]):
             return f"#{self.r:02X}{self.g:02X}{self.b:02X}"
 
 
-class IvkBoundingBoxField(BaseModel, IvkField[dict[str, Any]]):
+class IvkBoundingBoxField(BaseModel, PydanticFieldMixin, IvkField[dict[str, Any]]):
     """
     Bounding box field for region specifications.
     
@@ -226,7 +226,7 @@ class IvkBoundingBoxField(BaseModel, IvkField[dict[str, Any]]):
         return self.get_width() * self.get_height()
 
 
-class IvkCollectionField(BaseModel, IvkField[list[T]], IvkCollectionFieldMixin[T], Generic[T]):
+class IvkCollectionField(BaseModel, PydanticFieldMixin, IvkField[list[T]], IvkCollectionFieldMixin[T], Generic[T]):
     """
     Collection field for lists of values.
     

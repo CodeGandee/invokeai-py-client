@@ -11,10 +11,10 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from invokeai_py_client.ivk_fields.base import IvkField
+from invokeai_py_client.ivk_fields.base import IvkField, PydanticFieldMixin
 
 
-class IvkConditioningField(BaseModel, IvkField[str]):
+class IvkConditioningField(BaseModel, PydanticFieldMixin, IvkField[str]):
     """
     Standard conditioning field for SD models.
     
@@ -90,7 +90,7 @@ class IvkConditioningField(BaseModel, IvkField[str]):
 
 
 
-class IvkFluxConditioningField(BaseModel, IvkField[str]):
+class IvkFluxConditioningField(BaseModel, PydanticFieldMixin, IvkField[str]):
     """
     FLUX conditioning field for FLUX models.
     
@@ -166,7 +166,7 @@ class IvkFluxConditioningField(BaseModel, IvkField[str]):
 
 
 
-class IvkFluxReduxConditioningField(BaseModel, IvkField[dict[str, Any]]):
+class IvkFluxReduxConditioningField(BaseModel, PydanticFieldMixin, IvkField[dict[str, Any]]):
     """
     FLUX Redux conditioning field.
     
@@ -249,7 +249,7 @@ class IvkFluxReduxConditioningField(BaseModel, IvkField[dict[str, Any]]):
 
 
 
-class IvkFluxFillConditioningField(BaseModel, IvkField[dict[str, Any]]):
+class IvkFluxFillConditioningField(BaseModel, PydanticFieldMixin, IvkField[dict[str, Any]]):
     """
     FLUX Fill conditioning field for inpainting.
     
@@ -332,7 +332,7 @@ class IvkFluxFillConditioningField(BaseModel, IvkField[dict[str, Any]]):
 
 
 
-class IvkFluxKontextConditioningField(BaseModel, IvkField[dict[str, Any]]):
+class IvkFluxKontextConditioningField(BaseModel, PydanticFieldMixin, IvkField[dict[str, Any]]):
     """
     FLUX Kontext conditioning field.
     
@@ -405,7 +405,7 @@ class IvkFluxKontextConditioningField(BaseModel, IvkField[dict[str, Any]]):
 
 
 
-class IvkSD3ConditioningField(BaseModel, IvkField[str]):
+class IvkSD3ConditioningField(BaseModel, PydanticFieldMixin, IvkField[str]):
     """
     Stable Diffusion 3 conditioning field.
     
@@ -466,7 +466,7 @@ class IvkSD3ConditioningField(BaseModel, IvkField[str]):
 
 
 
-class IvkCogView4ConditioningField(BaseModel, IvkField[str]):
+class IvkCogView4ConditioningField(BaseModel, PydanticFieldMixin, IvkField[str]):
     """
     CogView4 conditioning field.
     

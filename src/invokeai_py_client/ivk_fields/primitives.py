@@ -11,10 +11,10 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from invokeai_py_client.ivk_fields.base import IvkField
+from invokeai_py_client.ivk_fields.base import IvkField, PydanticFieldMixin
 
 
-class IvkStringField(BaseModel, IvkField[str]):
+class IvkStringField(BaseModel, PydanticFieldMixin, IvkField[str]):
     """
     String field with Pydantic validation for workflow inputs.
     
@@ -75,7 +75,7 @@ class IvkStringField(BaseModel, IvkField[str]):
         return cls(value=data.get("value"))
 
 
-class IvkIntegerField(BaseModel, IvkField[int]):
+class IvkIntegerField(BaseModel, PydanticFieldMixin, IvkField[int]):
     """
     Integer field with Pydantic validation for workflow inputs.
     
@@ -141,7 +141,7 @@ class IvkIntegerField(BaseModel, IvkField[int]):
         return cls(value=data.get("value"))
 
 
-class IvkFloatField(BaseModel, IvkField[float]):
+class IvkFloatField(BaseModel, PydanticFieldMixin, IvkField[float]):
     """
     Float field with Pydantic validation for workflow inputs.
     
@@ -201,7 +201,7 @@ class IvkFloatField(BaseModel, IvkField[float]):
         return cls(value=data.get("value"))
 
 
-class IvkBooleanField(BaseModel, IvkField[bool]):
+class IvkBooleanField(BaseModel, PydanticFieldMixin, IvkField[bool]):
     """
     Boolean field with Pydantic validation for workflow inputs.
     

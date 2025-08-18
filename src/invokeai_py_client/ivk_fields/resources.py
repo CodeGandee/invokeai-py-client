@@ -12,13 +12,13 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 
-from invokeai_py_client.ivk_fields.base import IvkField, IvkImageFieldMixin
+from invokeai_py_client.ivk_fields.base import IvkField, IvkImageFieldMixin, PydanticFieldMixin
 
 if TYPE_CHECKING:
     from invokeai_py_client.client import InvokeAIClient
 
 
-class IvkImageField(BaseModel, IvkField[str], IvkImageFieldMixin):
+class IvkImageField(BaseModel, PydanticFieldMixin, IvkField[str], IvkImageFieldMixin):
     """
     Image field for handling image references and uploads.
     
@@ -103,7 +103,7 @@ class IvkImageField(BaseModel, IvkField[str], IvkImageFieldMixin):
         raise NotImplementedError
 
 
-class IvkBoardField(BaseModel, IvkField[str]):
+class IvkBoardField(BaseModel, PydanticFieldMixin, IvkField[str]):
     """
     Board field for specifying output board destinations.
     
@@ -168,7 +168,7 @@ class IvkBoardField(BaseModel, IvkField[str]):
 
 
 
-class IvkLatentsField(BaseModel, IvkField[str]):
+class IvkLatentsField(BaseModel, PydanticFieldMixin, IvkField[str]):
     """
     Latents field for latent space representations.
     
@@ -245,7 +245,7 @@ class IvkLatentsField(BaseModel, IvkField[str]):
 
 
 
-class IvkTensorField(BaseModel, IvkField[str]):
+class IvkTensorField(BaseModel, PydanticFieldMixin, IvkField[str]):
     """
     Tensor field for generic tensor references.
     
@@ -311,7 +311,7 @@ class IvkTensorField(BaseModel, IvkField[str]):
 
 
 
-class IvkDenoiseMaskField(BaseModel, IvkField[dict[str, Any]]):
+class IvkDenoiseMaskField(BaseModel, PydanticFieldMixin, IvkField[dict[str, Any]]):
     """
     Denoise mask field for inpainting operations.
     
@@ -395,7 +395,7 @@ class IvkDenoiseMaskField(BaseModel, IvkField[dict[str, Any]]):
         )
 
 
-class IvkMetadataField(BaseModel, IvkField[dict[str, Any]]):
+class IvkMetadataField(BaseModel, PydanticFieldMixin, IvkField[dict[str, Any]]):
     """
     Metadata field for arbitrary key-value pairs.
     

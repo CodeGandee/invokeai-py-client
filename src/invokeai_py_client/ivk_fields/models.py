@@ -11,10 +11,10 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from invokeai_py_client.ivk_fields.base import IvkField
+from invokeai_py_client.ivk_fields.base import IvkField, PydanticFieldMixin
 
 
-class IvkModelIdentifierField(BaseModel, IvkField[dict[str, str]]):
+class IvkModelIdentifierField(BaseModel, PydanticFieldMixin, IvkField[dict[str, str]]):
     """
     Model identifier field for DNN model references.
     
@@ -95,7 +95,7 @@ class IvkModelIdentifierField(BaseModel, IvkField[dict[str, str]]):
         return cls(value=data.get("value"))
 
 
-class IvkUNetField(BaseModel, IvkField[dict[str, Any]]):
+class IvkUNetField(BaseModel, PydanticFieldMixin, IvkField[dict[str, Any]]):
     """
     UNet field with configuration for SD models.
     
@@ -153,7 +153,7 @@ class IvkUNetField(BaseModel, IvkField[dict[str, Any]]):
         )
 
 
-class IvkCLIPField(BaseModel, IvkField[dict[str, Any]]):
+class IvkCLIPField(BaseModel, PydanticFieldMixin, IvkField[dict[str, Any]]):
     """
     CLIP field with text encoder configuration.
     
@@ -207,7 +207,7 @@ class IvkCLIPField(BaseModel, IvkField[dict[str, Any]]):
         )
 
 
-class IvkTransformerField(BaseModel, IvkField[dict[str, Any]]):
+class IvkTransformerField(BaseModel, PydanticFieldMixin, IvkField[dict[str, Any]]):
     """
     Transformer field for FLUX models.
     
@@ -253,7 +253,7 @@ class IvkTransformerField(BaseModel, IvkField[dict[str, Any]]):
 
 
 
-class IvkLoRAField(BaseModel, IvkField[dict[str, Any]]):
+class IvkLoRAField(BaseModel, PydanticFieldMixin, IvkField[dict[str, Any]]):
     """
     LoRA field with model and weight configuration.
     

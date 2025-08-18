@@ -11,7 +11,7 @@ from typing import Any, Optional, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from invokeai_py_client.ivk_fields.base import IvkField
+from invokeai_py_client.ivk_fields.base import IvkField, PydanticFieldMixin
 
 # Scheduler options from InvokeAI
 SCHEDULER_NAMES = [
@@ -53,7 +53,7 @@ COLOR_MODES = [
 ]
 
 
-class IvkEnumField(BaseModel, IvkField[str]):
+class IvkEnumField(BaseModel, PydanticFieldMixin, IvkField[str]):
     """
     Enum field with predefined choices for workflow inputs.
     
@@ -247,7 +247,7 @@ class IvkColorModeField(IvkEnumField):
         return cls(value=data.get("value"))
 
 
-class IvkLiteralField(BaseModel, IvkField[str]):
+class IvkLiteralField(BaseModel, PydanticFieldMixin, IvkField[str]):
     """
     Literal field for compile-time constant choices.
     
