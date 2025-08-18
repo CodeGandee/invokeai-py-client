@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, PrivateAttr, model_validator
 
 from invokeai_py_client.ivk_fields import (
     IvkBoardField,
@@ -49,9 +49,18 @@ class IvkWorkflowInput(BaseModel):
         Whether this input must be provided.
     input_index : int
         0-based index from form tree traversal.
+
+    Field Type Immutability
+    -----------------------
+    After the model is first instantiated, the concrete Python class of the
+    `.field` attribute is locked. Any subsequent reassignment of `.field` must
+    be an instance of the exact same class (not just a subclass). Attempting to
+    assign a different concrete field type raises ``TypeError``. This ensures
+    stable downstream logic that may rely on the original field interface.
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    # Enable arbitrary types and assignment validation so our model_validator runs on re-assignment.
+    model_config = ConfigDict(arbitrary_types_allowed=True, validate_assignment=True)
 
     label: str
     node_name: str
@@ -60,6 +69,26 @@ class IvkWorkflowInput(BaseModel):
     field: IvkField[Any]  # Base class for all field types
     required: bool
     input_index: int
+
+    # Private attribute to remember the concrete type of `field` after first initialization.
+    _field_type: type[IvkField[Any]] | None = PrivateAttr(default=None)
+
+    @model_validator(mode="after")
+    def _lock_field_type(self) -> IvkWorkflowInput:
+        """Capture the initial concrete type of `field` and enforce exact-type reassignments.
+
+        Runs after model creation and again on any assignment (validate_assignment=True).
+        """
+        if self.field is not None:
+            if self._field_type is None:
+                self._field_type = type(self.field)
+            else:
+                if type(self.field) is not self._field_type:
+                    raise TypeError(
+                        "Cannot reassign 'field' with different type: "
+                        f"expected {self._field_type.__name__}, got {type(self.field).__name__}"
+                    )
+        return self
 
     def validate_input(self) -> bool:
         """
@@ -186,7 +215,8 @@ class WorkflowHandle:
                 # Get field info from node inputs
                 field_info = node_data.get("inputs", {}).get(field_name, {})
                 field_label = field_info.get("label", field_name)
-                field_description = field_info.get("description", "")
+                # description currently unused, keep retrieval if needed later
+                # field_description = field_info.get("description", "")  # noqa: F841
 
                 # Determine if required
                 required = field_info.get("required", False)
@@ -461,6 +491,95 @@ class WorkflowHandle:
                 errors[inp.input_index].append(f"Validation error: {str(e)}")
 
         return errors
+
+    def get_input_value(self, index: int) -> IvkField[Any]:
+        """
+        Get the field instance for a workflow input by index.
+
+        This method provides direct access to the IvkField instance,
+        allowing users to inspect and modify field properties directly.
+
+        Parameters
+        ----------
+        index : int
+            The 0-based input index.
+
+        Returns
+        -------
+        IvkField[Any]
+            The field instance at the specified index.
+
+        Raises
+        ------
+        IndexError
+            If the index is out of range.
+
+        Examples
+        --------
+        >>> field = workflow.get_input_value(0)
+        >>> if hasattr(field, 'value'):
+        ...     print(f"Current value: {field.value}")
+        >>> field.value = "New value"
+        """
+        if index < 0 or index >= len(self.inputs):
+            raise IndexError(
+                f"Input index {index} out of range (0-{len(self.inputs) - 1})"
+            )
+        return self.inputs[index].field
+
+    def set_input_value(self, index: int, value: IvkField[Any]) -> None:
+        """
+        Update the field instance for a workflow input by index.
+
+        This method replaces the entire field instance, ensuring type
+        consistency and validating the result. The new field must be
+        of the exact same type as the original field.
+
+        Parameters
+        ----------
+        index : int
+            The 0-based input index.
+        value : IvkField[Any]
+            The new field instance to set.
+
+        Raises
+        ------
+        IndexError
+            If the index is out of range.
+        TypeError
+            If the field type doesn't match the original field type.
+        ValueError
+            If the field validation fails after setting.
+
+        Examples
+        --------
+        >>> # Get the original field to understand its type
+        >>> original_field = workflow.get_input_value(0)
+        >>> # Create a new field of the same type
+        >>> new_field = type(original_field)(value="New value")
+        >>> # Set the new field
+        >>> workflow.set_input_value(0, new_field)
+        """
+        if index < 0 or index >= len(self.inputs):
+            raise IndexError(
+                f"Input index {index} out of range (0-{len(self.inputs) - 1})"
+            )
+        
+        workflow_input = self.inputs[index]
+        
+        # Validate type consistency - use the field type locking mechanism
+        expected_type = workflow_input._field_type
+        if expected_type is not None and type(value) is not expected_type:
+            raise TypeError(
+                f"Field type mismatch: expected {expected_type.__name__}, "
+                f"got {type(value).__name__}"
+            )
+        
+        # Set the new field value
+        workflow_input.field = value
+        
+        # Validate the input after setting
+        workflow_input.validate_input()
 
     def submit_sync(
         self,

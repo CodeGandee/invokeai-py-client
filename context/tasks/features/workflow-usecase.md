@@ -283,6 +283,14 @@ Required inputs still needed at indices: [0, 1, 4, 11, 12, 13, 14, 19]
 workflow_handle.get_input(0).field.value = "A serene mountain landscape at sunset, photorealistic, high detail"
 workflow_handle.get_input(1).field.value = "blurry, low quality, distorted"
 
+# Method 1a: Alternative using get_input_value() for cleaner access
+# get_input_value() returns the field directly, avoiding the .field access
+prompt_field = workflow_handle.get_input_value(0)  # Returns IvkStringField directly
+prompt_field.value = "A serene mountain landscape at sunset, photorealistic, high detail"
+
+negative_field = workflow_handle.get_input_value(1)  # Returns IvkStringField directly  
+negative_field.value = "blurry, low quality, distorted"
+
 # Set dimensions (indices 2 and 3) - Pydantic handles type conversion
 workflow_handle.get_input(2).field.value = 1024  # or "1024" - Pydantic converts
 workflow_handle.get_input(3).field.value = 768
@@ -355,6 +363,30 @@ input_values = {
 
 for idx, value in input_values.items():
     workflow_handle.get_input(idx).field.value = value
+
+# Method 4: Complete field replacement using set_input_value()
+# This method replaces the entire field instance, useful for advanced scenarios
+# where you need to create a field with specific configuration
+
+# Example: Create a string field with custom validation constraints
+from invokeai_py_client.ivk_fields import IvkStringField
+
+# Get the current field type to ensure compatibility
+original_field = workflow_handle.get_input_value(0)
+field_type = type(original_field)
+
+# Create a new field instance of the same type with specific configuration
+new_prompt_field = field_type(
+    value="A majestic dragon soaring through clouds",
+    min_length=10,
+    max_length=500
+)
+
+# Replace the entire field (enforces type consistency)
+workflow_handle.set_input_value(0, new_prompt_field)
+
+# This automatically validates the new field after setting
+print("✓ Field replaced and validated successfully")
 
 # Example of validation error handling with direct field access
 try:
@@ -430,9 +462,11 @@ All required inputs are set, workflow ready for submission
 
 1. **Direct Field Manipulation**:
    - **Primary Method**: `workflow_handle.get_input(index).field.value = value` - Direct field access
+   - **Alternative Access**: `field = workflow_handle.get_input_value(index)` - Returns field directly
+   - **Field Replacement**: `workflow_handle.set_input_value(index, new_field)` - Replace entire field instance
    - **Stored Reference**: Store input reference to avoid repeated get_input() calls
    - **Batch Setting**: Use loops to set multiple values efficiently
-   - All methods benefit from Pydantic validation
+   - All methods benefit from Pydantic validation and type enforcement
 
 2. **Index-Based Access System**:
    - Inputs accessed by stable 0-based indices from form tree traversal
