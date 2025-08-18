@@ -275,9 +275,12 @@ Required inputs still needed at indices: [0, 1, 4, 11, 12, 13, 14, 19]
 
 **Important Note**: Not all IvkField subclasses have a `value` property:
 - **Primitive fields** (IvkStringField, IvkIntegerField, IvkFloatField, IvkBooleanField): Have `value` property
-- **Model/Resource fields** (IvkModelIdentifierField, IvkImageField, IvkBoardField): Have `value` property
-- **Complex fields** (IvkColorField, IvkBoundingBoxField): Have specific properties (e.g., r,g,b,a or x_min,y_min,x_max,y_max)
-- **Composite fields** (IvkUNetField, IvkCLIPField): Have structured properties, no single `value`
+- **Resource fields** (IvkImageField, IvkBoardField, IvkLatentsField, IvkTensorField): Have `value` property
+- **Enum fields** (IvkEnumField, IvkSchedulerField): Have `value` property
+- **Collection fields** (IvkCollectionField): Have `value` property (a list)
+- **Model identifier field** (IvkModelIdentifierField): Uses direct properties (key, hash, name, base, type, submodel_type) - NO `value` property
+- **Complex fields** (IvkColorField, IvkBoundingBoxField): Use specific properties instead (e.g., r,g,b,a or x_min,y_min,x_max,y_max)
+- **Composite fields** (IvkUNetField, IvkCLIPField, IvkVAEField): Have structured properties, no single `value`
 
 **Code Example**:
 ```python
@@ -287,130 +290,76 @@ Required inputs still needed at indices: [0, 1, 4, 11, 12, 13, 14, 19]
 
 # Note: All field classes are Pydantic models with validate_assignment=True
 
-# Method 1: Direct field access for fields WITH value property
-# Check if field has 'value' before using it
+# Method 1: Type-aware field access - ALWAYS check field type or hasattr before accessing
+# This is the safest approach for production code
 
-# Set text prompts (IvkStringField - has value property)
-if hasattr(workflow_handle.get_input(0).field, 'value'):
-    workflow_handle.get_input(0).field.value = "A serene mountain landscape at sunset, photorealistic, high detail"
-    workflow_handle.get_input(1).field.value = "blurry, low quality, distorted"
+# Example: Set text prompts (checking for value property first)
+prompt_input = workflow_handle.get_input(0)
+if hasattr(prompt_input.field, 'value'):
+    prompt_input.field.value = "A serene mountain landscape at sunset, photorealistic, high detail"
+else:
+    # Handle complex field types
+    print(f"Field type {type(prompt_input.field).__name__} doesn't use 'value' property")
+    print(f"Available properties: {prompt_input.field.to_json_dict()}")
 
-# Method 1a: Alternative using get_input_value() for cleaner access
-# get_input_value() returns the field directly, avoiding the .field access
-prompt_field = workflow_handle.get_input_value(0)  # Returns IvkStringField directly
-prompt_field.value = "A serene mountain landscape at sunset, photorealistic, high detail"
+# Method 1a: Using get_input_value() for cleaner direct field access
+# This is preferred when you know the field type
+from invokeai_py_client.ivk_fields import IvkStringField, IvkColorField, IvkBoundingBoxField
 
-negative_field = workflow_handle.get_input_value(1)  # Returns IvkStringField directly  
-negative_field.value = "blurry, low quality, distorted"
+prompt_field = workflow_handle.get_input_value(0)  # Returns IvkField directly
+if isinstance(prompt_field, IvkStringField):
+    prompt_field.value = "A serene mountain landscape at sunset, photorealistic, high detail"
 
-# Set dimensions (IvkIntegerField - has value property)
-workflow_handle.get_input(2).field.value = 1024  # or "1024" - Pydantic converts
-workflow_handle.get_input(3).field.value = 768
+negative_field = workflow_handle.get_input_value(1)
+if isinstance(negative_field, IvkStringField):
+    negative_field.value = "blurry, low quality, distorted"
 
-# Example: If this were a color field (IvkColorField - NO value property)
-# color_input = workflow_handle.get_input(some_index)
-# if isinstance(color_input.field, IvkColorField):
-#     color_input.field.r = 255
-#     color_input.field.g = 128
-#     color_input.field.b = 0
-#     color_input.field.a = 255
-#     # Or use helper method
-#     color_input.field.set_rgba(255, 128, 0, 255)
+# Set dimensions (type-safe approach)
+width_field = workflow_handle.get_input_value(2)
+if hasattr(width_field, 'value'):
+    width_field.value = 1024  # Pydantic converts "1024" string automatically
 
-# Set SDXL model (IvkModelIdentifierField - has value property for dict)
-workflow_handle.get_input(4).field.value = {
-    "key": "sdxl-model-key-123",
-    "name": "SDXL 1.0",
-    "base": "sdxl",
-    "type": "main"
-}
+height_field = workflow_handle.get_input_value(3)
+if hasattr(height_field, 'value'):
+    height_field.value = 768
 
-# Set output board (IvkBoardField - has value property)
-workflow_handle.get_input(5).field.value = "samples"  # Board name or ID
+# Method 2: Handle fields WITHOUT value property using type checking
+# Example: If encountering a color field
+color_index = 10  # hypothetical index
+color_field = workflow_handle.get_input_value(color_index)
+if isinstance(color_field, IvkColorField):
+    # IvkColorField uses r,g,b,a properties, not value
+    color_field.r = 255
+    color_field.g = 128
+    color_field.b = 0
+    color_field.a = 255
+    # Or use the helper method
+    color_field.set_rgba(255, 128, 0, 255)
+    # Or set from hex
+    color_field.set_hex("#FF8000")
 
-# Set SDXL generation parameters
-workflow_handle.get_input(6).field.value = "DPMSolverMultistep"  # IvkEnumField - has value
-workflow_handle.get_input(7).field.value = 25                    # IvkIntegerField - has value
-workflow_handle.get_input(8).field.value = 7.5                   # IvkFloatField - has value
+# Example: If encountering a bounding box field
+bbox_index = 11  # hypothetical index
+bbox_field = workflow_handle.get_input_value(bbox_index)
+if isinstance(bbox_field, IvkBoundingBoxField):
+    # IvkBoundingBoxField uses x_min, y_min, x_max, y_max, not value
+    bbox_field.x_min = 0
+    bbox_field.y_min = 0
+    bbox_field.x_max = 512
+    bbox_field.y_max = 512
+    # Or use the helper method
+    bbox_field.set_bounds(0, 0, 512, 512)
 
-# Method 2: Handle fields WITHOUT value property
-# Some complex fields use specific properties instead of a single value
 
-# Example: If you encounter a IvkBoundingBoxField (no value property)
-# bbox_input = workflow_handle.get_input(some_index)
-# if isinstance(bbox_input.field, IvkBoundingBoxField):
-#     bbox_input.field.x_min = 0
-#     bbox_input.field.y_min = 0
-#     bbox_input.field.x_max = 512
-#     bbox_input.field.y_max = 512
-#     # Or use helper method
-#     bbox_input.field.set_bounds(0, 0, 512, 512)
+# Method 2: Complete field replacement using set_input_value()
+# This method replaces the entire field instance - most general approach
+# Useful when you need to create fields with specific configurations
 
-# Method 3: Store input reference for cleaner code
-# You can store the input reference to avoid repeated get_input() calls
-
-# Set Flux models (indices 11-14) - IvkModelIdentifierField has value
-workflow_handle.get_input(11).field.value = {
-    "key": "flux-model-key-456",
-    "name": "FLUX.1-schnell",
-    "base": "flux",
-    "type": "main"
-}
-
-workflow_handle.get_input(12).field.value = {
-    "key": "t5-encoder-key-789",
-    "name": "T5 Encoder FLUX",
-    "base": "flux",
-    "type": "t5_encoder"
-}
-
-workflow_handle.get_input(13).field.value = {
-    "key": "clip-embed-key-012",
-    "name": "CLIP-L Encoder",
-    "base": "flux",
-    "type": "clip_embed"
-}
-
-workflow_handle.get_input(14).field.value = {
-    "key": "vae-model-key-345",
-    "name": "FLUX VAE",
-    "base": "flux",
-    "type": "vae"
-}
-
-# Method 4: Batch setting with a loop
-input_values = {
-    15: "flux_outputs",     # Output board for Flux stage
-    16: 0.7,                # Noise ratio
-    17: 20,                 # Num steps for Flux Domain Transfer
-    18: 1.0,                # Control weight
-    19: {                   # Another Flux model
-        "key": "flux-model-key-678",
-        "name": "FLUX.1-dev",
-        "base": "flux",
-        "type": "main"
-    },
-    20: "final_outputs",   # Output board for final stage
-    21: 15,                 # Num steps for Flux Refinement
-    22: 0.8,                # Control strength
-    23: 0.5                 # Final noise ratio
-}
-
-for idx, value in input_values.items():
-    workflow_handle.get_input(idx).field.value = value
-
-# Method 5: Complete field replacement using set_input_value()
-# This method replaces the entire field instance, useful for advanced scenarios
-# where you need to create a field with specific configuration
-
-# Example: Create a string field with custom validation constraints
-from invokeai_py_client.ivk_fields import IvkStringField
-
-# Get the current field type to ensure compatibility
+# Example 1: Replace a string field with constraints
 original_field = workflow_handle.get_input_value(0)
 field_type = type(original_field)
 
-# Create a new field instance of the same type with specific configuration
+# Create new field of same type with specific configuration
 new_prompt_field = field_type(
     value="A majestic dragon soaring through clouds",
     min_length=10,
@@ -420,82 +369,39 @@ new_prompt_field = field_type(
 # Replace the entire field (enforces type consistency)
 workflow_handle.set_input_value(0, new_prompt_field)
 
-# This automatically validates the new field after setting
-print("✓ Field replaced and validated successfully")
+# Example 2: Replace a model field with all properties
+original_model = workflow_handle.get_input_value(4)
+if isinstance(original_model, IvkModelIdentifierField):
+    # Create new model field with all required properties
+    new_model_field = IvkModelIdentifierField(
+        key="sdxl-turbo-key-999",
+        hash="blake3:turbo999xyz",
+        name="SDXL Turbo",
+        base="sdxl",
+        type="main",
+        submodel_type=None
+    )
+    workflow_handle.set_input_value(4, new_model_field)
 
-# Method 6: JSON serialization and deserialization
-# All IvkField subclasses support JSON conversion for persistence
-
-# Save current field configuration to JSON
-input_config = {}
-for inp in workflow_handle.list_inputs():
-    # Use to_json_dict() to serialize any field type
-    input_config[inp.input_index] = {
-        "label": inp.label,
-        "type": type(inp.field).__name__,
-        "data": inp.field.to_json_dict()  # Works for ALL field types
-    }
-
-# Save to file
-import json
-with open("workflow_inputs.json", "w") as f:
-    json.dump(input_config, f, indent=2)
-
-# Later: Restore field configuration from JSON
-with open("workflow_inputs.json", "r") as f:
-    saved_config = json.load(f)
-
-# Reconstruct fields from saved data
-for idx, config in saved_config.items():
-    input_obj = workflow_handle.get_input(int(idx))
-    field_type = type(input_obj.field)
-    # Use from_json_dict() to deserialize
-    restored_field = field_type.from_json_dict(config["data"])
-    # Replace the field with restored version
-    workflow_handle.set_input_value(int(idx), restored_field)
+# Example 3: Replace a color field
+color_index = 10  # hypothetical
+original_color = workflow_handle.get_input_value(color_index)
+if isinstance(original_color, IvkColorField):
+    new_color_field = IvkColorField(r=128, g=64, b=255, a=200)
+    workflow_handle.set_input_value(color_index, new_color_field)
 
 # Example of validation error handling
 try:
     # This will fail validation - steps must be positive integer
-    step_input = workflow_handle.get_input(7)
-    if hasattr(step_input.field, 'value'):
-        step_input.field.value = -5
+    step_field = workflow_handle.get_input_value(7)
+    if isinstance(step_field, IvkIntegerField):
+        step_field.value = -5  # Will raise ValueError
 except ValueError as e:
     print(f"Field validation error: {e}")
     # Set valid value
-    step_input.field.value = 25
+    step_field.value = 25
 
-# Helper function for batch setting with field type awareness
-def set_inputs_safely(workflow_handle, input_map):
-    """Helper to set multiple inputs with error handling and type awareness."""
-    errors = []
-    for idx, value in input_map.items():
-        try:
-            input_obj = workflow_handle.get_input(idx)
-            
-            # Check if field has 'value' property
-            if hasattr(input_obj.field, 'value'):
-                input_obj.field.value = value
-                print(f"✓ Set [{idx}] {input_obj.label}")
-            else:
-                # For fields without 'value', you'd need custom handling
-                # based on the field type
-                field_type_name = type(input_obj.field).__name__
-                errors.append(f"[{idx}] {input_obj.label}: {field_type_name} requires custom handling")
-                
-        except ValueError as e:
-            input_obj = workflow_handle.get_input(idx)
-            errors.append(f"[{idx}] {input_obj.label}: {e}")
-        except IndexError as e:
-            errors.append(f"[{idx}]: {e}")
-    
-    if errors:
-        print("Errors setting inputs:")
-        for error in errors:
-            print(f"  ✗ {error}")
-    return len(errors) == 0
-
-# Validate all inputs together
+# Validate all inputs
 validation_errors = workflow_handle.validate_inputs()
 if validation_errors:
     print("Validation errors found:")
@@ -503,17 +409,7 @@ if validation_errors:
         input_info = workflow_handle.get_input(idx)
         print(f"  [{idx}] {input_info.label}: {', '.join(errors)}")
 else:
-    print("All inputs are valid")
-
-# Check if all required inputs are set
-missing_inputs = [inp for inp in workflow_handle.list_inputs() 
-                   if inp.required and hasattr(inp.field, 'value') and inp.field.value is None]
-if missing_inputs:
-    print(f"Still missing {len(missing_inputs)} required inputs:")
-    for inp in missing_inputs:
-        print(f"  [{inp.input_index}] {inp.label}")
-else:
-    print("All required inputs are set, workflow ready for submission")
+    print("All inputs are valid, workflow ready for submission")
 ```
 
 **Expected Output**:
@@ -538,39 +434,42 @@ All required inputs are set, workflow ready for submission
 **Key Design Points**:
 
 1. **Field Property Patterns**:
-   - **Fields WITH `.value` property**: Primitive fields (String, Integer, Float, Boolean), Model/Resource fields (ModelIdentifier, Image, Board)
-   - **Fields WITHOUT `.value` property**: Complex fields like IvkColorField (has r,g,b,a), IvkBoundingBoxField (has x_min,y_min,x_max,y_max), IvkUNetField (structured properties)
-   - **Type checking**: Use `hasattr(field, 'value')` or `isinstance(field, FieldType)` to determine field structure
-   - **Direct property access**: `field.value = x` for fields with value, `field.r = 255` for color fields, etc.
-   - **Helper methods**: Many complex fields provide convenience methods like `set_rgba()`, `set_bounds()`
+   - **Fields WITH `.value` property**: 
+     - Primitives: IvkStringField, IvkIntegerField, IvkFloatField, IvkBooleanField
+     - Resources: IvkImageField, IvkBoardField, IvkLatentsField, IvkTensorField
+     - Enums: IvkEnumField, IvkSchedulerField
+     - Collections: IvkCollectionField (value is a list)
+   - **Fields WITHOUT `.value` property**: 
+     - IvkModelIdentifierField (has key, hash, name, base, type, submodel_type properties)
+     - IvkColorField (has r,g,b,a properties)
+     - IvkBoundingBoxField (has x_min,y_min,x_max,y_max)
+     - Composite model fields (IvkUNetField, IvkCLIPField, IvkVAEField)
+   - **Type checking**: Always use `hasattr(field, 'value')` or `isinstance(field, FieldType)` before accessing
+   - **Direct property access**: Safe pattern is to check first, then access
+   - **Helper methods**: Complex fields provide convenience methods like `set_rgba()`, `set_bounds()`, `set_hex()`
 
-2. **Field Access Methods**:
-   - **Primary**: `workflow_handle.get_input(index).field` - Get field for manipulation
-   - **Direct field**: `workflow_handle.get_input_value(index)` - Returns IvkField directly
-   - **Field replacement**: `workflow_handle.set_input_value(index, new_field)` - Replace entire field with type checking
-   - **Batch operations**: Loop through inputs with type awareness
-   - All methods benefit from Pydantic validation
+2. **Two Primary Access Methods**:
+   - **Method 1 - Direct field access**: `workflow_handle.get_input_value(index)` returns IvkField for direct property manipulation
+     - Use `isinstance()` checks to handle different field types safely
+     - Best for simple, type-aware field setting
+   - **Method 2 - Field replacement**: `workflow_handle.set_input_value(index, new_field)` replaces entire field instance
+     - Most general approach - works for any field type
+     - Useful for fields with complex initialization or constraints
+     - Enforces type consistency (new field must match original type)
 
-3. **JSON Persistence**:
-   - **Serialization**: All fields support `to_json_dict()` for saving state
-   - **Deserialization**: All fields support `from_json_dict(data)` for restoring
-   - **Type preservation**: JSON includes all field properties, not just value
-   - **Workflow state saving**: Can persist entire workflow configuration
-   - **Cross-session support**: Save inputs to file, restore in new session
-
-4. **Pydantic-Powered Validation**:
+3. **Pydantic-Powered Validation**:
    - All `Ivk*Field` classes inherit from `BaseModel` with `validate_assignment=True`
    - Immediate validation on property assignment
-   - Type conversion for compatible types (e.g., "1024" → 1024)
+   - Automatic type conversion for compatible types (e.g., "1024" → 1024)
    - Custom validators for field-specific constraints
    - Rich error messages with validation context
 
-5. **Type-Safe Field Handling**:
-   - **Index-based access**: Stable 0-based indices from form traversal
-   - **Type introspection**: Check field type before accessing properties
-   - **Field-specific logic**: Handle each field type according to its structure
-   - **No assumptions**: Don't assume `.value` exists, check field type first
-   - **Validation delegation**: Each field validates itself through Pydantic
+4. **Type-Safe Field Handling Best Practices**:
+   - **Use isinstance() checks**: Always check field type before accessing properties
+   - **No assumptions**: Never assume a field has `.value` property
+   - **Know your field patterns**: Understand which fields have value vs direct properties
+   - **Leverage type hints**: Import specific field types for type checking
+   - **Let Pydantic validate**: Fields validate themselves on property assignment
 
 ### Use case 3: submitting the workflow and tracking the job status
 

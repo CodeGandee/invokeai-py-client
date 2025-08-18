@@ -298,9 +298,25 @@ class WorkflowHandle:
             )
 
         elif field_type == "model":
-            return IvkModelIdentifierField(
-                value=field_value
-            )
+            # Extract model properties from field_value dict
+            if isinstance(field_value, dict):
+                return IvkModelIdentifierField(
+                    key=field_value.get("key", ""),
+                    hash=field_value.get("hash", ""),
+                    name=field_value.get("name", ""),
+                    base=field_value.get("base", "any"),
+                    type=field_value.get("type", "main"),
+                    submodel_type=field_value.get("submodel_type")
+                )
+            else:
+                # Handle case where field_value is not a dict
+                return IvkModelIdentifierField(
+                    key="",
+                    hash="",
+                    name=str(field_value) if field_value else "",
+                    base="any",
+                    type="main"
+                )
 
         elif field_type == "board":
             # Board values can be dict with board_id or string

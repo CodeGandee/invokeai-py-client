@@ -14,85 +14,68 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from invokeai_py_client.ivk_fields.base import IvkField, PydanticFieldMixin
 
 
-class IvkModelIdentifierField(BaseModel, PydanticFieldMixin, IvkField[dict[str, str]]):
+class IvkModelIdentifierField(BaseModel, PydanticFieldMixin, IvkField[dict[str, Any]]):
     """
     Model identifier field for DNN model references.
     
-    Handles model references with key, name, base, and type attributes.
+    Corresponds to InvokeAI's ModelIdentifierField.
+    
+    This field directly contains the model identification attributes
+    (key, hash, name, base, type) without a separate 'value' property.
     
     Examples
     --------
-    >>> field = IvkModelIdentifierField()
-    >>> field.value = {
-    ...     "key": "sdxl-model-key",
-    ...     "name": "SDXL 1.0",
-    ...     "base": "sdxl",
-    ...     "type": "main"
-    ... }
+    >>> field = IvkModelIdentifierField(
+    ...     key="sdxl-model-key",
+    ...     hash="blake3:abc123...",
+    ...     name="SDXL 1.0",
+    ...     base="sdxl",
+    ...     type="main"
+    ... )
+    >>> print(field.name)
+    SDXL 1.0
     """
 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
 
-    value: Optional[dict[str, str]] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
-
-    def __init__(self, **data: Any) -> None:
-        """Initialize with Pydantic validation."""
-        # Extract fields
-        value = data.pop('value', None)
-        name = data.pop('name', None)
-        description = data.pop('description', None)
-
-        # Initialize BaseModel
-        BaseModel.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description,
-            **data
-        )
-        
-        # Initialize IvkField
-        IvkField.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description
-        )
-
-    @field_validator("value")
-    @classmethod
-    def validate_model_structure(cls, v: Optional[dict[str, str]], info: Any) -> Optional[dict[str, str]]:
-        """Validate model reference structure."""
-        if v is None:
-            return v
-
-        # Required fields for model reference
-        required = ["key", "name", "base", "type"]
-        missing = [f for f in required if f not in v]
-        if missing:
-            # Allow partial model info during initialization
-            pass
-
-        return v
+    # Direct fields matching InvokeAI's ModelIdentifierField
+    key: str = Field(description="The model's unique key")
+    hash: str = Field(description="The model's BLAKE3 hash")
+    name: str = Field(description="The model's name")
+    base: str = Field(description="The model's base model type (e.g., 'sdxl', 'flux', 'sd-1', 'sd-2')")
+    type: str = Field(description="The model's type (e.g., 'main', 'vae', 'lora', 'controlnet')")
+    submodel_type: Optional[str] = Field(
+        default=None,
+        description="The submodel to load, if this is a main model"
+    )
 
     def validate_field(self) -> bool:
-        """Validate the model reference."""
-        if self.value is None:
-            return True
+        """Validate the model reference has all required fields."""
+        # All required fields are enforced by Pydantic
         return True
 
     def to_api_format(self) -> dict[str, Any]:
-        """Convert to API format."""
-        if self.value is None:
-            return {"value": None, "type": "model"}
-        return {"value": self.value, "type": "model"}
+        """Convert to API format for InvokeAI ModelIdentifierField."""
+        return {
+            "key": self.key,
+            "hash": self.hash,
+            "name": self.name,
+            "base": self.base,
+            "type": self.type,
+            "submodel_type": self.submodel_type
+        }
 
     @classmethod
     def from_api_format(cls, data: dict[str, Any]) -> IvkModelIdentifierField:
         """Create from API data."""
-        return cls(value=data.get("value"))
+        return cls(
+            key=data.get("key", ""),
+            hash=data.get("hash", ""),
+            name=data.get("name", ""),
+            base=data.get("base", "any"),
+            type=data.get("type", "main"),
+            submodel_type=data.get("submodel_type")
+        )
 
 
 class IvkUNetField(BaseModel, PydanticFieldMixin, IvkField[dict[str, Any]]):

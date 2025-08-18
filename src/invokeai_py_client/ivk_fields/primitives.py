@@ -18,7 +18,7 @@ class IvkStringField(BaseModel, PydanticFieldMixin, IvkField[str]):
     """
     String field with Pydantic validation for workflow inputs.
     
-    Corresponds to InvokeAI's StringInvocation primitive type.
+    Corresponds to InvokeAI's StringField primitive type.
     
     Supports length constraints and pattern validation.
     Primitive string fields keep a `value` field to store the actual string data.
@@ -79,7 +79,7 @@ class IvkIntegerField(BaseModel, PydanticFieldMixin, IvkField[int]):
     """
     Integer field with Pydantic validation for workflow inputs.
     
-    Corresponds to InvokeAI's IntegerInvocation primitive type.
+    Corresponds to InvokeAI's IntegerField primitive type.
     
     Supports min/max constraints and multiple-of validation.
     Primitive integer fields keep a `value` field to store the actual integer data.
@@ -145,7 +145,7 @@ class IvkFloatField(BaseModel, PydanticFieldMixin, IvkField[float]):
     """
     Float field with Pydantic validation for workflow inputs.
     
-    Corresponds to InvokeAI's FloatInvocation primitive type.
+    Corresponds to InvokeAI's FloatField primitive type.
     
     Supports min/max constraints and decimal precision.
     Primitive float fields keep a `value` field to store the actual float data.
@@ -205,7 +205,7 @@ class IvkBooleanField(BaseModel, PydanticFieldMixin, IvkField[bool]):
     """
     Boolean field with Pydantic validation for workflow inputs.
     
-    Corresponds to InvokeAI's BooleanInvocation primitive type.
+    Corresponds to InvokeAI's BooleanField primitive type.
     
     Primitive boolean fields keep a `value` field to store the actual boolean data.
     
