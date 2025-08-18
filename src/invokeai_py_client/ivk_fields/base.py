@@ -3,6 +3,16 @@ Base classes for InvokeAI field types.
 
 This module provides the foundation for all field types used in workflows,
 with Pydantic integration and type safety.
+
+CRITICAL DESIGN REQUIREMENT
+---------------------------
+ALL IvkField SUBCLASSES MUST BE DEFAULT-CONSTRUCTABLE!
+
+Every field class must be able to be created with no arguments:
+    field = MyFieldClass()  # This MUST work!
+
+This is non-negotiable for proper workflow system operation.
+See IvkField class documentation for detailed requirements.
 """
 
 from __future__ import annotations
@@ -24,10 +34,37 @@ class IvkField(Generic[T]):
     for workflow field types. All concrete field classes should inherit
     from both this class and Pydantic's BaseModel.
     
+    IMPORTANT: Default Constructability Requirement
+    ------------------------------------------------
+    ALL SUBCLASSES MUST BE DEFAULT-CONSTRUCTABLE!
+    
+    Every IvkField subclass MUST be able to be instantiated without any
+    required arguments: `field = MyFieldClass()`. This is essential for:
+    - Workflow initialization and discovery
+    - Automatic field creation from workflow definitions
+    - Type inspection and validation
+    - Testing and debugging
+    
+    Use Pydantic's Field(default=...) or Field(default_factory=...) for
+    all field attributes to ensure default constructability.
+    
+    Example:
+    --------
+    >>> # GOOD - Default constructable
+    >>> class MyField(BaseModel, IvkField[str]):
+    ...     value: Optional[str] = None  # Has default
+    ...     items: list[str] = Field(default_factory=list)  # Factory for mutable
+    ...
+    >>> # BAD - Not default constructable
+    >>> class BadField(BaseModel, IvkField[str]):
+    ...     value: str  # No default - will fail!
+    ...     items: list[str] = []  # Mutable default - dangerous!
+    
     Subclasses are responsible for:
+    - Being default-constructable (no required __init__ parameters)
     - Storing their own data (e.g., value, name, description) 
     - Implementing abstract methods like validate_field, to_api_format, etc.
-    - Providing appropriate initialization
+    - Using proper Pydantic patterns for defaults and validation
 
     Notes
     -----
@@ -42,6 +79,14 @@ class IvkField(Generic[T]):
         
         This is a placeholder initialization that subclasses can override.
         The base class doesn't store any data itself.
+        
+        IMPORTANT: Subclasses MUST remain default-constructable!
+        If you override __init__, ensure it can still be called without
+        any required arguments. Use default values for all parameters:
+        
+        def __init__(self, value: Optional[str] = None, **kwargs):
+            super().__init__(**kwargs)
+            self.value = value
         """
         pass  # Base class has no member fields
 

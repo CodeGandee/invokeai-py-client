@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from invokeai_py_client.ivk_fields.base import IvkField
 
@@ -119,8 +119,8 @@ class IvkUNetField(BaseModel, IvkField[dict[str, Any]]):
     # UNet configuration fields - these ARE the value
     unet_model: Optional[dict[str, str]] = None
     scheduler: Optional[dict[str, str]] = None
-    loras: list[dict[str, Any]] = []
-    seamless_axes: list[str] = []
+    loras: list[dict[str, Any]] = Field(default_factory=list)
+    seamless_axes: list[str] = Field(default_factory=list)
     freeu_config: Optional[dict[str, Any]] = None
 
     def validate_field(self) -> bool:
@@ -178,7 +178,7 @@ class IvkCLIPField(BaseModel, IvkField[dict[str, Any]]):
     tokenizer: Optional[dict[str, str]] = None
     text_encoder: Optional[dict[str, str]] = None
     skipped_layers: int = 0
-    loras: list[dict[str, Any]] = []
+    loras: list[dict[str, Any]] = Field(default_factory=list)
 
     def validate_field(self) -> bool:
         """Validate CLIP configuration."""
@@ -228,7 +228,7 @@ class IvkTransformerField(BaseModel, IvkField[dict[str, Any]]):
 
     # Transformer configuration fields - these ARE the value
     transformer_model: Optional[dict[str, str]] = None
-    loras: list[dict[str, Any]] = []
+    loras: list[dict[str, Any]] = Field(default_factory=list)
 
     def validate_field(self) -> bool:
         """Validate Transformer configuration."""

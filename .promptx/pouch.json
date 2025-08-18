@@ -4,7 +4,7 @@
     {
       "from": "initial",
       "command": "init",
-      "timestamp": "2025-08-16T16:36:33.359Z",
+      "timestamp": "2025-08-18T02:14:32.809Z",
       "args": [
         {
           "workingDirectory": "D:\\code\\invokeai-py-client"
@@ -13,18 +13,12 @@
     },
     {
       "from": "initialized",
-      "command": "welcome",
-      "timestamp": "2025-08-16T16:37:00.987Z",
-      "args": []
-    },
-    {
-      "from": "service_discovery",
       "command": "action",
-      "timestamp": "2025-08-16T16:37:20.923Z",
+      "timestamp": "2025-08-18T02:14:57.334Z",
       "args": [
         "webapi-expert"
       ]
     }
   ],
-  "lastUpdated": "2025-08-16T16:37:20.939Z"
+  "lastUpdated": "2025-08-18T02:14:57.364Z"
 }

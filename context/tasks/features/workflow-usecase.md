@@ -24,9 +24,9 @@ we already have partial implementation of the workflow subsystem in `src\invokea
 
 - each workflow has different kinds of nodes, and different numbers of inputs and outputs. Note that, workflows typically write their outputs to a `board`, so in order to find out the outputs of a workflow, we need to look at the nodes in the workflow and see which nodes write to which boards.
 
-- in GUI, user can add some of the fields of the nodes as inputs, by adding them to the `form` section of the workflow definition, these fields are called `workflow-inputs`, they map to some of the fields in the nodes, and they are somewhat like the public interface of the workflow. Our API should capture this concept, and expose these `workflow-inputs` to the user, via some generic methods like `set_input`, `get_input`, etc.
+- in GUI, user can add some of the fields of the nodes as inputs, by adding them to the `form` section of the workflow definition, these fields are called `workflow-inputs`, they map to some of the fields in the nodes, and they are somewhat like the public interface of the workflow. Our API should capture this concept, and expose these `workflow-inputs` to the user, allowing direct field manipulation through the `get_input` method.
 
-- we know that InvokeAI has a type system, some of them are already defined in our data models, see `src\invokeai_py_client\models.py`, for more info you can see `context\hints\invokeai-kb\about-invokeai-workflow-input-types.md`. We shall define data models for these types (naming them as `Ivk<TypeName>`), and use these data models in the `set_input` and `get_input` methods.
+- we know that InvokeAI has a type system, some of them are already defined in our data models, see `src\invokeai_py_client\models.py`, for more info you can see `context\hints\invokeai-kb\about-invokeai-workflow-input-types.md`. We shall define data models for these types (naming them as `Ivk<TypeName>`), and use these data models for the workflow input fields.
 
 - we know that heavy data like images and masks are referred to by their names in the workflow definition, the names are given by the InvokeAI backend when these data are uploaded to the backend, and to get the actual data, we need to download them from the backend given the names. 
   
@@ -106,7 +106,7 @@ print(f"  Node: {positive_prompt.node_name}")  # "Positive" (from node's label f
 print(f"  Field: {positive_prompt.field_name}")  # "value"
 
 # Get all inputs as an indexed list
-all_inputs: List[IvkWorkflowInput] = workflow_handle.get_all_inputs()
+all_inputs: List[IvkWorkflowInput] = workflow_handle.list_inputs()
 # Returns ordered list where index matches input-index:
 # [
 #     IvkWorkflowInput(...),  # [0] Positive Prompt with IvkField subclass
@@ -129,13 +129,13 @@ if flux_model_idx is not None:
     flux_model_input = workflow_handle.get_input(flux_model_idx)
     print(f"\nFound FLUX model input at index {flux_model_idx}")
 
-# Check which required inputs are missing values (returns list of indices)
-missing_indices = workflow_handle.get_missing_required_input_indices()
-if missing_indices:
-    print(f"\nRequired inputs still needed at indices: {missing_indices}")
-    for idx in missing_indices:
-        input_info = workflow_handle.get_input(idx)
-        print(f"  [{idx}] {input_info.label}")
+# Check which required inputs are missing values
+missing_inputs = [inp for inp in workflow_handle.list_inputs() 
+                   if inp.required and hasattr(inp.field, 'value') and inp.field.value is None]
+if missing_inputs:
+    print(f"\nRequired inputs still needed:")
+    for inp in missing_inputs:
+        print(f"  [{inp.input_index}] {inp.label}")
 
 # Alternative: Get another workflow handle for the same definition
 # This creates a new instance with independent state
@@ -276,37 +276,37 @@ Required inputs still needed at indices: [0, 1, 4, 11, 12, 13, 14, 19]
 # Note: All field classes (IvkModelIdentifierField, IvkStringField, etc.) are Pydantic models
 # with validate_assignment=True, providing automatic validation and type conversion
 
-# Method 1: Set inputs using the workflow handle's set_input() method
-# This is the recommended approach as it includes proper error handling
+# Method 1: Direct field access via get_input()
+# This is the recommended approach - get the input and modify its field directly
 
 # Set text prompts (indices 0 and 1)
-workflow_handle.set_input(0, "A serene mountain landscape at sunset, photorealistic, high detail")
-workflow_handle.set_input(1, "blurry, low quality, distorted")
+workflow_handle.get_input(0).field.value = "A serene mountain landscape at sunset, photorealistic, high detail"
+workflow_handle.get_input(1).field.value = "blurry, low quality, distorted"
 
-# Set dimensions (indices 2 and 3) - automatic type conversion
-workflow_handle.set_input(2, "1024")  # String converted to int
-workflow_handle.set_input(3, 768)     # Int stays int
+# Set dimensions (indices 2 and 3) - Pydantic handles type conversion
+workflow_handle.get_input(2).field.value = 1024  # or "1024" - Pydantic converts
+workflow_handle.get_input(3).field.value = 768
 
 # Set SDXL model (index 4) - can pass dict, Pydantic validates and converts
-workflow_handle.set_input(4, {
+workflow_handle.get_input(4).field.value = {
     "key": "sdxl-model-key-123",
     "name": "SDXL 1.0",
     "base": "sdxl",
     "type": "main"
-})
+}
 
 # Set output board for SDXL stage (index 5)
-workflow_handle.set_input(5, "samples")  # Board name or ID
+workflow_handle.get_input(5).field.value = "samples"  # Board name or ID
 
 # Set SDXL generation parameters (indices 6-8)
-workflow_handle.set_input(6, "DPMSolverMultistep")  # scheduler
-workflow_handle.set_input(7, 25)                    # steps
-workflow_handle.set_input(8, 7.5)                   # cfg_scale
+workflow_handle.get_input(6).field.value = "DPMSolverMultistep"  # scheduler
+workflow_handle.get_input(7).field.value = 25                    # steps
+workflow_handle.get_input(8).field.value = 7.5                   # cfg_scale
 
-# Method 2: Direct field access via get_input()
-# You can also directly set the field value property
+# Method 2: Store input reference for cleaner code
+# You can store the input reference to avoid repeated get_input() calls
 
-# Set Flux models (indices 11-14) using direct field access
+# Set Flux models (indices 11-14) - store reference first
 workflow_handle.get_input(11).field.value = {
     "key": "flux-model-key-456",
     "name": "FLUX.1-schnell",
@@ -354,16 +354,16 @@ input_values = {
 }
 
 for idx, value in input_values.items():
-    workflow_handle.set_input(idx, value)
+    workflow_handle.get_input(idx).field.value = value
 
-# Example of validation error handling with set_input()
+# Example of validation error handling with direct field access
 try:
     # This will fail validation - steps must be positive integer
-    workflow_handle.set_input(7, -5)
+    workflow_handle.get_input(7).field.value = -5
 except ValueError as e:
     print(f"Field validation error: {e}")
     # Set valid value
-    workflow_handle.set_input(7, 25)
+    workflow_handle.get_input(7).field.value = 25
 
 # Helper function for batch setting with validation
 def set_inputs_safely(workflow_handle, input_map):
@@ -371,8 +371,8 @@ def set_inputs_safely(workflow_handle, input_map):
     errors = []
     for idx, value in input_map.items():
         try:
-            workflow_handle.set_input(idx, value)
             input_field = workflow_handle.get_input(idx)
+            input_field.field.value = value
             print(f"✓ Set [{idx}] {input_field.label}")
         except ValueError as e:
             input_field = workflow_handle.get_input(idx)
@@ -396,13 +396,13 @@ if validation_errors:
 else:
     print("All inputs are valid")
 
-# Check if all required inputs are set (returns list of indices)
-missing_indices = workflow_handle.get_missing_required_input_indices()
-if missing_indices:
-    print(f"Still missing required inputs at indices: {missing_indices}")
-    for idx in missing_indices:
-        input_info = workflow_handle.get_input(idx)
-        print(f"  [{idx}] {input_info.label}")
+# Check if all required inputs are set
+missing_inputs = [inp for inp in workflow_handle.list_inputs() 
+                   if inp.required and hasattr(inp.field, 'value') and inp.field.value is None]
+if missing_inputs:
+    print(f"Still missing {len(missing_inputs)} required inputs:")
+    for inp in missing_inputs:
+        print(f"  [{inp.input_index}] {inp.label}")
 else:
     print("All required inputs are set, workflow ready for submission")
 ```
@@ -428,10 +428,10 @@ All required inputs are set, workflow ready for submission
 
 **Key Design Points**:
 
-1. **Multiple Input Setting Methods**:
-   - **Method 1**: `workflow_handle.set_input(index, value)` - Recommended approach with error handling
-   - **Method 2**: `workflow_handle.get_input(index).field.value = value` - Direct field access
-   - **Method 3**: Batch setting via loops for efficiency
+1. **Direct Field Manipulation**:
+   - **Primary Method**: `workflow_handle.get_input(index).field.value = value` - Direct field access
+   - **Stored Reference**: Store input reference to avoid repeated get_input() calls
+   - **Batch Setting**: Use loops to set multiple values efficiently
    - All methods benefit from Pydantic validation
 
 2. **Index-Based Access System**:
@@ -454,11 +454,11 @@ All required inputs are set, workflow ready for submission
    - All validated and converted through Pydantic models
 
 5. **Validation and Error Handling**:
-   - **Per-field validation**: Immediate feedback when setting values
-   - **Workflow-level validation**: `validate_inputs()` checks all inputs
-   - `get_missing_required_input_indices()` identifies incomplete required fields
+   - **Per-field validation**: Immediate feedback when setting values via Pydantic
+   - **Input-level validation**: Each `IvkWorkflowInput` has a `validate_input()` method
+   - **Workflow-level validation**: `validate_inputs()` delegates to each input's validate_input()
+   - Users can check `inp.required` and `inp.field.value` to identify missing values
    - Validation errors include field index and descriptive messages
-   - Clear workflow readiness status before submission
 
 ### Use case 3: submitting the workflow and tracking the job status
 

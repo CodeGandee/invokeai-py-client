@@ -61,6 +61,33 @@ class IvkWorkflowInput(BaseModel):
     required: bool
     input_index: int
 
+    def validate_input(self) -> bool:
+        """
+        Validate the workflow input by delegating to the field's validate_field method.
+        
+        Returns
+        -------
+        bool
+            True if the field is valid, False otherwise.
+            
+        Raises
+        ------
+        ValueError
+            If the field validation fails with specific error details.
+            
+        Notes
+        -----
+        This method delegates validation to the underlying IvkField instance.
+        Required fields with None values will raise a ValueError.
+        """
+        # Check if required field has value
+        if self.required:
+            if hasattr(self.field, 'value') and self.field.value is None:
+                raise ValueError(f"Required field '{self.label}' is not set")
+        
+        # Delegate to field's validation
+        return self.field.validate_field()
+
 
 class WorkflowHandle:
     """
@@ -398,96 +425,11 @@ class WorkflowHandle:
             )
         return self.inputs[index]
 
-    def set_input(self, index: int, value: Any) -> None:
-        """
-        Set a workflow input value by index.
-
-        Parameters
-        ----------
-        index : int
-            The 0-based input index.
-        value : Any
-            The value to set. Will be automatically converted to the field's type.
-
-        Raises
-        ------
-        IndexError
-            If the index is out of range.
-        ValueError
-            If the value cannot be converted to the field's type.
-
-        Examples
-        --------
-        >>> workflow.set_input(0, "A beautiful landscape")
-        >>> workflow.set_input(2, 1024)  # Width
-        >>> workflow.set_input(3, 768)   # Height
-        """
-        if index < 0 or index >= len(self.inputs):
-            raise IndexError(
-                f"Input index {index} out of range (0-{len(self.inputs) - 1})"
-            )
-        
-        input_field = self.inputs[index]
-        try:
-            # For primitive fields with 'value' attribute
-            if hasattr(input_field.field, 'value'):
-                input_field.field.value = value
-            else:
-                # For complex fields, update the entire field (not common in set_input)
-                raise ValueError(
-                    f"Field at index {index} ({input_field.label}) is a complex field "
-                    f"that should be configured directly"
-                )
-        except Exception as e:
-            raise ValueError(
-                f"Failed to set value for input {index} ({input_field.label}): {e}"
-            )
-
-    def get_all_inputs(self) -> list[IvkWorkflowInput]:
-        """
-        Get all inputs as an indexed list.
-
-        Returns
-        -------
-        List[IvkWorkflowInput]
-            All inputs where index matches input-index.
-        """
-        return self.inputs.copy()
-
-    def get_missing_required_input_indices(self) -> list[int]:
-        """
-        Get indices of required inputs that have no value set.
-
-        Returns
-        -------
-        List[int]
-            List of indices for missing required inputs.
-
-        Examples
-        --------
-        >>> missing = workflow.get_missing_required_input_indices()
-        >>> if missing:
-        ...     print(f"Missing inputs at indices: {missing}")
-        """
-        missing = []
-        for inp in self.inputs:
-            # Check if field is empty based on field type
-            is_empty = False
-            if hasattr(inp.field, 'value'):
-                # Primitive fields have a value attribute
-                is_empty = inp.field.value is None
-            else:
-                # Complex fields - check if key fields are set
-                # This is a simplified check - could be enhanced
-                is_empty = not inp.field.validate_field()
-            
-            if inp.required and is_empty:
-                missing.append(inp.input_index)
-        return missing
-
     def validate_inputs(self) -> dict[int, list[str]]:
         """
         Validate all configured inputs.
+
+        Delegates validation to each IvkWorkflowInput's validate() method.
 
         Returns
         -------
@@ -504,24 +446,19 @@ class WorkflowHandle:
         """
         errors: dict[int, list[str]] = {}
 
-        # Check required inputs
+        # Validate each input using its validate_input() method
         for inp in self.inputs:
-            # Check if field is empty based on field type
-            is_empty = False
-            if hasattr(inp.field, 'value'):
-                # Primitive fields have a value attribute
-                is_empty = inp.field.value is None
-            else:
-                # Complex fields - check if key fields are set
-                is_empty = not inp.field.validate_field()
-            
-            if inp.required and is_empty:
+            try:
+                inp.validate_input()
+            except ValueError as e:
                 if inp.input_index not in errors:
                     errors[inp.input_index] = []
-                errors[inp.input_index].append("Required field is not set")
-
-        # Additional validation would go here
-        # (field-specific validation, inter-field dependencies, etc.)
+                errors[inp.input_index].append(str(e))
+            except Exception as e:
+                # Catch any other validation errors
+                if inp.input_index not in errors:
+                    errors[inp.input_index] = []
+                errors[inp.input_index].append(f"Validation error: {str(e)}")
 
         return errors
 
