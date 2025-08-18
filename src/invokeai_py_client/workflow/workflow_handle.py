@@ -21,6 +21,7 @@ from invokeai_py_client.ivk_fields import (
     IvkModelIdentifierField,
     IvkStringField,
 )
+from invokeai_py_client.ivk_fields.base import IvkField
 from invokeai_py_client.models import IvkJob
 
 if TYPE_CHECKING:
@@ -56,7 +57,7 @@ class IvkWorkflowInput(BaseModel):
     node_name: str
     node_id: str
     field_name: str
-    field: Any  # Will be an Ink*Field instance
+    field: IvkField[Any]  # Base class for all field types
     required: bool
     input_index: int
 
@@ -187,7 +188,7 @@ class WorkflowHandle:
 
     def _create_field_from_node(
         self, node_data: dict[str, Any], field_name: str, field_info: dict[str, Any]
-    ) -> Any:
+    ) -> IvkField[Any]:
         """
         Create appropriate field instance based on node and field information.
         
@@ -202,7 +203,7 @@ class WorkflowHandle:
         
         Returns
         -------
-        Any
+        IvkField[Any]
             Appropriate Ivk*Field instance (IvkStringField, IvkIntegerField, etc.)
         """
         # Get node type for context
@@ -217,16 +218,12 @@ class WorkflowHandle:
         # Create field instance based on detected type
         if field_type == "string":
             return IvkStringField(
-                value=field_value,
-                name=field_name,
-                description=field_info.get("description")
+                value=field_value
             )
 
         elif field_type == "integer":
             return IvkIntegerField(
                 value=field_value,
-                name=field_name,
-                description=field_info.get("description"),
                 minimum=field_info.get("minimum"),
                 maximum=field_info.get("maximum")
             )
@@ -234,24 +231,18 @@ class WorkflowHandle:
         elif field_type == "float":
             return IvkFloatField(
                 value=field_value,
-                name=field_name,
-                description=field_info.get("description"),
                 minimum=field_info.get("minimum"),
                 maximum=field_info.get("maximum")
             )
 
         elif field_type == "boolean":
             return IvkBooleanField(
-                value=field_value,
-                name=field_name,
-                description=field_info.get("description")
+                value=field_value
             )
 
         elif field_type == "model":
             return IvkModelIdentifierField(
-                value=field_value,
-                name=field_name,
-                description=field_info.get("description")
+                value=field_value
             )
 
         elif field_type == "board":
@@ -260,16 +251,12 @@ class WorkflowHandle:
             if isinstance(field_value, dict) and "board_id" in field_value:
                 board_value = field_value["board_id"]
             return IvkBoardField(
-                value=board_value,
-                name=field_name,
-                description=field_info.get("description")
+                value=board_value
             )
 
         elif field_type == "image":
             return IvkImageField(
-                value=field_value,
-                name=field_name,
-                description=field_info.get("description")
+                value=field_value
             )
 
         elif field_type == "enum":
@@ -282,17 +269,13 @@ class WorkflowHandle:
 
             return IvkEnumField(
                 value=field_value,
-                name=field_name,
-                description=field_info.get("description"),
                 choices=choices
             )
 
         else:
             # Default to string field for unknown types
             return IvkStringField(
-                value=field_value,
-                name=field_name,
-                description=field_info.get("description")
+                value=field_value
             )
 
     def _detect_field_type(
@@ -446,7 +429,15 @@ class WorkflowHandle:
         
         input_field = self.inputs[index]
         try:
-            input_field.field.set_value(value)
+            # For primitive fields with 'value' attribute
+            if hasattr(input_field.field, 'value'):
+                input_field.field.value = value
+            else:
+                # For complex fields, update the entire field (not common in set_input)
+                raise ValueError(
+                    f"Field at index {index} ({input_field.label}) is a complex field "
+                    f"that should be configured directly"
+                )
         except Exception as e:
             raise ValueError(
                 f"Failed to set value for input {index} ({input_field.label}): {e}"
@@ -480,7 +471,17 @@ class WorkflowHandle:
         """
         missing = []
         for inp in self.inputs:
-            if inp.required and inp.field.get_value() is None:
+            # Check if field is empty based on field type
+            is_empty = False
+            if hasattr(inp.field, 'value'):
+                # Primitive fields have a value attribute
+                is_empty = inp.field.value is None
+            else:
+                # Complex fields - check if key fields are set
+                # This is a simplified check - could be enhanced
+                is_empty = not inp.field.validate_field()
+            
+            if inp.required and is_empty:
                 missing.append(inp.input_index)
         return missing
 
@@ -505,7 +506,16 @@ class WorkflowHandle:
 
         # Check required inputs
         for inp in self.inputs:
-            if inp.required and inp.field.get_value() is None:
+            # Check if field is empty based on field type
+            is_empty = False
+            if hasattr(inp.field, 'value'):
+                # Primitive fields have a value attribute
+                is_empty = inp.field.value is None
+            else:
+                # Complex fields - check if key fields are set
+                is_empty = not inp.field.validate_field()
+            
+            if inp.required and is_empty:
                 if inp.input_index not in errors:
                     errors[inp.input_index] = []
                 errors[inp.input_index].append("Required field is not set")
@@ -747,7 +757,13 @@ class WorkflowHandle:
         """
         # Reset all input values
         for inp in self.inputs:
-            inp.field.set_value(None)
+            if hasattr(inp.field, 'value'):
+                # Primitive fields have a value attribute
+                inp.field.value = None
+            else:
+                # Complex fields - reset individual attributes
+                # This would need field-specific logic
+                pass
 
         # Clear job and assets
         self.job = None

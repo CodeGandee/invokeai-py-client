@@ -20,41 +20,30 @@ class IvkField(Generic[T]):
     """
     Base class for all InvokeAI field types.
 
-    This is a non-abstract base class that provides common functionality
+    This is an abstract-like base class that provides common functionality
     for workflow field types. All concrete field classes should inherit
     from both this class and Pydantic's BaseModel.
+    
+    Subclasses are responsible for:
+    - Storing their own data (e.g., value, name, description) 
+    - Implementing abstract methods like validate_field, to_api_format, etc.
+    - Providing appropriate initialization
 
-    Parameters
-    ----------
-    value : T, optional
-        The initial value for the field.
-    name : str, optional
-        The field name in the workflow.
-    description : str, optional
-        Human-readable description of the field.
-
-    Attributes
-    ----------
-    value : T
-        The current value of the field.
-    name : str
-        The field identifier.
-    metadata : Dict[str, Any]
-        Additional field metadata.
+    Notes
+    -----
+    This base class does not use ABC/abstractmethod decorators.
+    Instead, it raises NotImplementedError for methods that must be 
+    implemented by subclasses.
     """
 
-    def __init__(
-        self,
-        value: T | None = None,
-        name: str | None = None,
-        description: str | None = None,
-        **kwargs: Any
-    ) -> None:
-        """Initialize the field."""
-        self._value = value
-        self.name = name
-        self.description = description
-        self.metadata: dict[str, Any] = {}
+    def __init__(self, **kwargs: Any) -> None:
+        """
+        Initialize the field.
+        
+        This is a placeholder initialization that subclasses can override.
+        The base class doesn't store any data itself.
+        """
+        pass  # Base class has no member fields
 
     def validate_field(self) -> bool:
         """
@@ -69,8 +58,10 @@ class IvkField(Generic[T]):
         ------
         ValueError
             If validation fails with details about the error.
+        NotImplementedError
+            If the subclass hasn't implemented this method.
         """
-        return True  # Default implementation
+        raise NotImplementedError("Subclass must implement validate_field()")
 
     def to_api_format(self) -> dict[str, Any]:
         """
@@ -80,8 +71,13 @@ class IvkField(Generic[T]):
         -------
         Dict[str, Any]
             The field in API-compatible format.
+            
+        Raises
+        ------
+        NotImplementedError
+            If the subclass hasn't implemented this method.
         """
-        return {"value": self.get_value(), "type": "unknown"}
+        raise NotImplementedError("Subclass must implement to_api_format()")
 
     @classmethod
     def from_api_format(cls, data: dict[str, Any]) -> IvkField[T]:
@@ -97,47 +93,14 @@ class IvkField(Generic[T]):
         -------
         IvkField[T]
             A new field instance with the parsed value.
-        """
-        return cls(value=data.get("value"))
-
-    def set_value(self, value: T | None) -> None:
-        """
-        Set the field value with validation.
-
-        Parameters
-        ----------
-        value : T | None
-            The new value to set.
-
+            
         Raises
         ------
-        ValueError
-            If the value fails validation.
+        NotImplementedError
+            If the subclass hasn't implemented this method.
         """
-        self._value = value
-        if value is not None:
-            self.validate_field()
+        raise NotImplementedError("Subclass must implement from_api_format()")
 
-    def get_value(self) -> T | None:
-        """
-        Get the current field value.
-
-        Returns
-        -------
-        Optional[T]
-            The current value, or None if not set.
-        """
-        return self._value
-
-    @property
-    def value(self) -> T | None:
-        """Property for backward compatibility."""
-        return self._value
-
-    @value.setter
-    def value(self, val: T | None) -> None:
-        """Property setter for backward compatibility."""
-        self.set_value(val)
 
 
 class IvkImageFieldMixin:

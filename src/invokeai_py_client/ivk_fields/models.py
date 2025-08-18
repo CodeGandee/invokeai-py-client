@@ -94,389 +94,208 @@ class IvkModelIdentifierField(BaseModel, IvkField[dict[str, str]]):
         """Create from API data."""
         return cls(value=data.get("value"))
 
-    def get_value(self) -> Optional[dict[str, str]]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[dict[str, str]]) -> None:
-        """Set the value with validation."""
-        self.value = value
-
 
 class IvkUNetField(BaseModel, IvkField[dict[str, Any]]):
     """
     UNet field with configuration for SD models.
     
-    Contains UNet model, scheduler, LoRAs, and other configuration.
+    Corresponds to InvokeAI's UNetField model type.
+    
+    This field represents a complete UNet configuration including the model,
+    scheduler, LoRAs, and other settings. The field itself IS the value - it
+    doesn't contain a separate value field.
     
     Examples
     --------
-    >>> field = IvkUNetField()
-    >>> field.unet_model = {"key": "unet-key", "base": "sdxl", "type": "main"}
-    >>> field.scheduler = {"key": "scheduler-key", "base": "any", "type": "scheduler"}
+    >>> field = IvkUNetField(
+    ...     unet_model={"key": "unet-key", "base": "sdxl", "type": "main"},
+    ...     scheduler={"key": "scheduler-key", "base": "any", "type": "scheduler"}
+    ... )
+    >>> field.loras.append({"lora": {...}, "weight": 0.8})
     """
 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
 
-    value: Optional[dict[str, Any]] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
+    # UNet configuration fields - these ARE the value
     unet_model: Optional[dict[str, str]] = None
     scheduler: Optional[dict[str, str]] = None
     loras: list[dict[str, Any]] = []
     seamless_axes: list[str] = []
     freeu_config: Optional[dict[str, Any]] = None
 
-    def __init__(self, **data: Any) -> None:
-        """Initialize with Pydantic validation."""
-        # Extract fields
-        value = data.pop('value', None)
-        name = data.pop('name', None)
-        description = data.pop('description', None)
-        unet_model = data.pop('unet_model', None)
-        scheduler = data.pop('scheduler', None)
-        loras = data.pop('loras', [])
-        seamless_axes = data.pop('seamless_axes', [])
-        freeu_config = data.pop('freeu_config', None)
-
-        # Build value dict from components
-        if value is None:
-            value = {}
-            if unet_model:
-                value["unet"] = unet_model
-            if scheduler:
-                value["scheduler"] = scheduler
-            if loras:
-                value["loras"] = loras
-            if seamless_axes:
-                value["seamless_axes"] = seamless_axes
-            if freeu_config:
-                value["freeu_config"] = freeu_config
-
-        # Initialize BaseModel
-        BaseModel.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description,
-            unet_model=unet_model,
-            scheduler=scheduler,
-            loras=loras,
-            seamless_axes=seamless_axes,
-            freeu_config=freeu_config,
-            **data
-        )
-        
-        # Initialize IvkField
-        IvkField.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description
-        )
-
     def validate_field(self) -> bool:
         """Validate UNet configuration."""
+        # Could add validation for required fields here
         return True
 
     def to_api_format(self) -> dict[str, Any]:
-        """Convert to API format."""
-        return {
-            "value": self.value,
-            "type": "unet"
-        }
+        """Convert to API format for InvokeAI UNetField."""
+        api_dict: dict[str, Any] = {}
+        if self.unet_model:
+            api_dict["unet"] = self.unet_model
+        if self.scheduler:
+            api_dict["scheduler"] = self.scheduler
+        api_dict["loras"] = self.loras
+        api_dict["seamless_axes"] = self.seamless_axes
+        if self.freeu_config:
+            api_dict["freeu_config"] = self.freeu_config
+        return api_dict
 
     @classmethod
     def from_api_format(cls, data: dict[str, Any]) -> IvkUNetField:
         """Create from API data."""
-        unet_data = data.get("value", {})
         return cls(
-            value=unet_data,
-            unet_model=unet_data.get("unet"),
-            scheduler=unet_data.get("scheduler"),
-            loras=unet_data.get("loras", []),
-            seamless_axes=unet_data.get("seamless_axes", []),
-            freeu_config=unet_data.get("freeu_config")
+            unet_model=data.get("unet"),
+            scheduler=data.get("scheduler"),
+            loras=data.get("loras", []),
+            seamless_axes=data.get("seamless_axes", []),
+            freeu_config=data.get("freeu_config")
         )
-
-    def get_value(self) -> Optional[dict[str, Any]]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[dict[str, Any]]) -> None:
-        """Set the value with validation."""
-        self.value = value
 
 
 class IvkCLIPField(BaseModel, IvkField[dict[str, Any]]):
     """
     CLIP field with text encoder configuration.
     
-    Contains tokenizer, text encoder, and LoRA configuration.
+    Corresponds to InvokeAI's CLIPField model type.
+    
+    This field represents a complete CLIP configuration including tokenizer,
+    text encoder, and LoRA settings. The field itself IS the value - it doesn't
+    contain a separate value field.
     
     Examples
     --------
-    >>> field = IvkCLIPField()
-    >>> field.tokenizer = {"key": "tokenizer-key", "base": "sdxl", "type": "clip"}
-    >>> field.text_encoder = {"key": "encoder-key", "base": "sdxl", "type": "text_encoder"}
+    >>> field = IvkCLIPField(
+    ...     tokenizer={"key": "tokenizer-key", "base": "sdxl", "type": "clip"},
+    ...     text_encoder={"key": "encoder-key", "base": "sdxl", "type": "text_encoder"}
+    ... )
+    >>> field.skipped_layers = 2
     """
 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
 
-    value: Optional[dict[str, Any]] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
+    # CLIP configuration fields - these ARE the value
     tokenizer: Optional[dict[str, str]] = None
     text_encoder: Optional[dict[str, str]] = None
     skipped_layers: int = 0
     loras: list[dict[str, Any]] = []
 
-    def __init__(self, **data: Any) -> None:
-        """Initialize with Pydantic validation."""
-        # Extract fields
-        value = data.pop('value', None)
-        name = data.pop('name', None)
-        description = data.pop('description', None)
-        tokenizer = data.pop('tokenizer', None)
-        text_encoder = data.pop('text_encoder', None)
-        skipped_layers = data.pop('skipped_layers', 0)
-        loras = data.pop('loras', [])
-
-        # Build value dict from components
-        if value is None:
-            value = {}
-            if tokenizer:
-                value["tokenizer"] = tokenizer
-            if text_encoder:
-                value["text_encoder"] = text_encoder
-            value["skipped_layers"] = skipped_layers
-            if loras:
-                value["loras"] = loras
-
-        # Initialize BaseModel
-        BaseModel.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description,
-            tokenizer=tokenizer,
-            text_encoder=text_encoder,
-            skipped_layers=skipped_layers,
-            loras=loras,
-            **data
-        )
-        
-        # Initialize IvkField
-        IvkField.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description
-        )
-
     def validate_field(self) -> bool:
         """Validate CLIP configuration."""
+        # Could add validation for required fields here
         return True
 
     def to_api_format(self) -> dict[str, Any]:
-        """Convert to API format."""
-        return {
-            "value": self.value,
-            "type": "clip"
-        }
+        """Convert to API format for InvokeAI CLIPField."""
+        api_dict: dict[str, Any] = {}
+        if self.tokenizer:
+            api_dict["tokenizer"] = self.tokenizer
+        if self.text_encoder:
+            api_dict["text_encoder"] = self.text_encoder
+        api_dict["skipped_layers"] = self.skipped_layers
+        api_dict["loras"] = self.loras
+        return api_dict
 
     @classmethod
     def from_api_format(cls, data: dict[str, Any]) -> IvkCLIPField:
         """Create from API data."""
-        clip_data = data.get("value", {})
         return cls(
-            value=clip_data,
-            tokenizer=clip_data.get("tokenizer"),
-            text_encoder=clip_data.get("text_encoder"),
-            skipped_layers=clip_data.get("skipped_layers", 0),
-            loras=clip_data.get("loras", [])
+            tokenizer=data.get("tokenizer"),
+            text_encoder=data.get("text_encoder"),
+            skipped_layers=data.get("skipped_layers", 0),
+            loras=data.get("loras", [])
         )
-
-    def get_value(self) -> Optional[dict[str, Any]]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[dict[str, Any]]) -> None:
-        """Set the value with validation."""
-        self.value = value
 
 
 class IvkTransformerField(BaseModel, IvkField[dict[str, Any]]):
     """
     Transformer field for FLUX models.
     
-    Contains transformer model and LoRA configuration.
+    Corresponds to InvokeAI's TransformerField type.
+    
+    This field represents a transformer configuration directly through its attributes.
+    The field itself IS the value - it doesn't contain a separate value field.
     
     Examples
     --------
-    >>> field = IvkTransformerField()
-    >>> field.transformer_model = {"key": "flux-key", "base": "flux", "type": "main"}
+    >>> field = IvkTransformerField(
+    ...     transformer_model={"key": "flux-key", "base": "flux", "type": "main"}
+    ... )
+    >>> field.loras.append({"lora": {...}, "weight": 0.8})
     """
 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
 
-    value: Optional[dict[str, Any]] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
+    # Transformer configuration fields - these ARE the value
     transformer_model: Optional[dict[str, str]] = None
     loras: list[dict[str, Any]] = []
 
-    def __init__(self, **data: Any) -> None:
-        """Initialize with Pydantic validation."""
-        # Extract fields
-        value = data.pop('value', None)
-        name = data.pop('name', None)
-        description = data.pop('description', None)
-        transformer_model = data.pop('transformer_model', None)
-        loras = data.pop('loras', [])
-
-        # Build value dict from components
-        if value is None:
-            value = {}
-            if transformer_model:
-                value["transformer"] = transformer_model
-            if loras:
-                value["loras"] = loras
-
-        # Initialize BaseModel
-        BaseModel.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description,
-            transformer_model=transformer_model,
-            loras=loras,
-            **data
-        )
-        
-        # Initialize IvkField
-        IvkField.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description
-        )
-
     def validate_field(self) -> bool:
         """Validate Transformer configuration."""
+        # Could add validation for required fields here
         return True
 
     def to_api_format(self) -> dict[str, Any]:
-        """Convert to API format."""
-        return {
-            "value": self.value,
-            "type": "transformer"
-        }
+        """Convert to API format for InvokeAI TransformerField."""
+        api_dict: dict[str, Any] = {}
+        if self.transformer_model:
+            api_dict["transformer"] = self.transformer_model
+        api_dict["loras"] = self.loras
+        return api_dict
 
     @classmethod
     def from_api_format(cls, data: dict[str, Any]) -> IvkTransformerField:
         """Create from API data."""
-        transformer_data = data.get("value", {})
         return cls(
-            value=transformer_data,
-            transformer_model=transformer_data.get("transformer"),
-            loras=transformer_data.get("loras", [])
+            transformer_model=data.get("transformer"),
+            loras=data.get("loras", [])
         )
 
-    def get_value(self) -> Optional[dict[str, Any]]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[dict[str, Any]]) -> None:
-        """Set the value with validation."""
-        self.value = value
 
 
 class IvkLoRAField(BaseModel, IvkField[dict[str, Any]]):
     """
     LoRA field with model and weight configuration.
     
+    Corresponds to InvokeAI's LoRAField type.
+    
+    This field represents a LoRA configuration directly through its attributes.
+    The field itself IS the value - it doesn't contain a separate value field.
+    
     Examples
     --------
-    >>> field = IvkLoRAField()
-    >>> field.lora_model = {"key": "lora-key", "base": "sdxl", "type": "lora"}
-    >>> field.weight = 0.8
+    >>> field = IvkLoRAField(
+    ...     lora_model={"key": "lora-key", "base": "sdxl", "type": "lora"},
+    ...     weight=0.8
+    ... )
     """
 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
 
-    value: Optional[dict[str, Any]] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
+    # LoRA configuration fields - these ARE the value
     lora_model: Optional[dict[str, str]] = None
     weight: float = 1.0
 
-    def __init__(self, **data: Any) -> None:
-        """Initialize with Pydantic validation."""
-        # Extract fields
-        value = data.pop('value', None)
-        name = data.pop('name', None)
-        description = data.pop('description', None)
-        lora_model = data.pop('lora_model', None)
-        weight = data.pop('weight', 1.0)
-
-        # Build value dict from components
-        if value is None and lora_model:
-            value = {
-                "lora": lora_model,
-                "weight": weight
-            }
-
-        # Initialize BaseModel
-        BaseModel.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description,
-            lora_model=lora_model,
-            weight=weight,
-            **data
-        )
-        
-        # Initialize IvkField
-        IvkField.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description
-        )
-
     def validate_field(self) -> bool:
         """Validate LoRA configuration."""
+        # Could add validation for required fields here
         return True
 
     def to_api_format(self) -> dict[str, Any]:
-        """Convert to API format."""
-        return {
-            "value": self.value,
-            "type": "lora"
-        }
+        """Convert to API format for InvokeAI LoRAField."""
+        api_dict: dict[str, Any] = {}
+        if self.lora_model:
+            api_dict["lora"] = self.lora_model
+        api_dict["weight"] = self.weight
+        return api_dict
 
     @classmethod
     def from_api_format(cls, data: dict[str, Any]) -> IvkLoRAField:
         """Create from API data."""
-        lora_data = data.get("value", {})
         return cls(
-            value=lora_data,
-            lora_model=lora_data.get("lora"),
-            weight=lora_data.get("weight", 1.0)
+            lora_model=data.get("lora"),
+            weight=data.get("weight", 1.0)
         )
-
-    def get_value(self) -> Optional[dict[str, Any]]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[dict[str, Any]]) -> None:
-        """Set the value with validation."""
-        self.value = value
-        if value:
-            self.lora_model = value.get("lora")
-            self.weight = value.get("weight", 1.0)
 
 
 # Create aliases for common model field types

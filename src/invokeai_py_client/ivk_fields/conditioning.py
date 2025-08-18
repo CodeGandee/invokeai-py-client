@@ -88,13 +88,6 @@ class IvkConditioningField(BaseModel, IvkField[str]):
             mask=mask_name
         )
 
-    def get_value(self) -> Optional[str]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[str]) -> None:
-        """Set the value with validation."""
-        self.value = value
 
 
 class IvkFluxConditioningField(BaseModel, IvkField[str]):
@@ -171,13 +164,6 @@ class IvkFluxConditioningField(BaseModel, IvkField[str]):
             mask=mask_name
         )
 
-    def get_value(self) -> Optional[str]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[str]) -> None:
-        """Set the value with validation."""
-        self.value = value
 
 
 class IvkFluxReduxConditioningField(BaseModel, IvkField[dict[str, Any]]):
@@ -261,13 +247,6 @@ class IvkFluxReduxConditioningField(BaseModel, IvkField[dict[str, Any]]):
             mask=mask_data.get("tensor_name") if isinstance(mask_data, dict) else None
         )
 
-    def get_value(self) -> Optional[dict[str, Any]]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[dict[str, Any]]) -> None:
-        """Set the value with validation."""
-        self.value = value
 
 
 class IvkFluxFillConditioningField(BaseModel, IvkField[dict[str, Any]]):
@@ -351,13 +330,6 @@ class IvkFluxFillConditioningField(BaseModel, IvkField[dict[str, Any]]):
             mask=mask_data.get("tensor_name") if isinstance(mask_data, dict) else None
         )
 
-    def get_value(self) -> Optional[dict[str, Any]]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[dict[str, Any]]) -> None:
-        """Set the value with validation."""
-        self.value = value
 
 
 class IvkFluxKontextConditioningField(BaseModel, IvkField[dict[str, Any]]):
@@ -431,13 +403,6 @@ class IvkFluxKontextConditioningField(BaseModel, IvkField[dict[str, Any]]):
             image=image_data.get("image_name") if isinstance(image_data, dict) else None
         )
 
-    def get_value(self) -> Optional[dict[str, Any]]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[dict[str, Any]]) -> None:
-        """Set the value with validation."""
-        self.value = value
 
 
 class IvkSD3ConditioningField(BaseModel, IvkField[str]):
@@ -499,13 +464,6 @@ class IvkSD3ConditioningField(BaseModel, IvkField[str]):
         conditioning_data = data.get("value", {})
         return cls(value=conditioning_data.get("conditioning_name"))
 
-    def get_value(self) -> Optional[str]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[str]) -> None:
-        """Set the value with validation."""
-        self.value = value
 
 
 class IvkCogView4ConditioningField(BaseModel, IvkField[str]):
@@ -567,10 +525,3 @@ class IvkCogView4ConditioningField(BaseModel, IvkField[str]):
         conditioning_data = data.get("value", {})
         return cls(value=conditioning_data.get("conditioning_name"))
 
-    def get_value(self) -> Optional[str]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[str]) -> None:
-        """Set the value with validation."""
-        self.value = value

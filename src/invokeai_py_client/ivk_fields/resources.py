@@ -91,13 +91,6 @@ class IvkImageField(BaseModel, IvkField[str], IvkImageFieldMixin):
             is_uploaded=data.get("is_uploaded", True)
         )
 
-    def get_value(self) -> Optional[str]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[str]) -> None:
-        """Set the value with validation."""
-        self.value = value
 
     async def upload(self, client: InvokeAIClient) -> str:
         """Upload the local image to the server."""
@@ -118,7 +111,7 @@ class IvkBoardField(BaseModel, IvkField[str]):
     --------
     >>> field = IvkBoardField()
     >>> field.value = "samples"
-    >>> print(field.get_value())
+    >>> print(field.value)
     """
 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
@@ -173,13 +166,6 @@ class IvkBoardField(BaseModel, IvkField[str]):
             
         return cls(value=board_id)
 
-    def get_value(self) -> Optional[str]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[str]) -> None:
-        """Set the value with validation."""
-        self.value = value
 
 
 class IvkLatentsField(BaseModel, IvkField[str]):
@@ -257,13 +243,6 @@ class IvkLatentsField(BaseModel, IvkField[str]):
         else:
             return cls(value=latents_data)
 
-    def get_value(self) -> Optional[str]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[str]) -> None:
-        """Set the value with validation."""
-        self.value = value
 
 
 class IvkTensorField(BaseModel, IvkField[str]):
@@ -330,13 +309,6 @@ class IvkTensorField(BaseModel, IvkField[str]):
             
         return cls(value=tensor_name)
 
-    def get_value(self) -> Optional[str]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[str]) -> None:
-        """Set the value with validation."""
-        self.value = value
 
 
 class IvkDenoiseMaskField(BaseModel, IvkField[dict[str, Any]]):
@@ -422,18 +394,6 @@ class IvkDenoiseMaskField(BaseModel, IvkField[dict[str, Any]]):
             gradient=mask_data.get("gradient", False)
         )
 
-    def get_value(self) -> Optional[dict[str, Any]]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[dict[str, Any]]) -> None:
-        """Set the value with validation."""
-        self.value = value
-        if value:
-            self.mask_name = value.get("mask_name")
-            self.masked_latents_name = value.get("masked_latents_name") 
-            self.gradient = value.get("gradient", False)
-
 
 class IvkMetadataField(BaseModel, IvkField[dict[str, Any]]):
     """
@@ -493,10 +453,3 @@ class IvkMetadataField(BaseModel, IvkField[dict[str, Any]]):
         """Create from API data."""
         return cls(value=data.get("value", {}))
 
-    def get_value(self) -> Optional[dict[str, Any]]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[dict[str, Any]]) -> None:
-        """Set the value with validation."""
-        self.value = value

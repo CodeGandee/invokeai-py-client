@@ -61,7 +61,7 @@ class IvkEnumField(BaseModel, IvkField[str]):
     --------
     >>> field = IvkEnumField(choices=["euler", "dpm++", "ddim"])
     >>> field.value = "euler"
-    >>> print(field.get_value())
+    >>> print(field.value)
     """
 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
@@ -135,16 +135,6 @@ class IvkEnumField(BaseModel, IvkField[str]):
             value=data.get("value"), 
             choices=data.get("choices", [])
         )
-
-    def get_value(self) -> Optional[str]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[str]) -> None:
-        """Set the value with validation."""
-        self.value = value
-        if value is not None:
-            self.validate_field()
 
     def get_choices(self) -> list[str]:
         """Get available choices."""
@@ -340,16 +330,6 @@ class IvkLiteralField(BaseModel, IvkField[str]):
             value=data.get("value"),
             literals=data.get("literals", [])
         )
-
-    def get_value(self) -> Optional[str]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[str]) -> None:
-        """Set the value with validation."""
-        self.value = value
-        if value is not None:
-            self.validate_field()
 
     def get_literals(self) -> list[str]:
         """Get available literal values."""

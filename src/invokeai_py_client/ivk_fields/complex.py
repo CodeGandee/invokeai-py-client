@@ -21,12 +21,15 @@ class IvkColorField(BaseModel, IvkField[dict[str, int]]):
     """
     Color field for RGBA color values.
     
-    Supports RGB and RGBA color formats with validation.
+    Corresponds to InvokeAI's ColorField type.
+    
+    This field represents color values directly through its RGBA components.
+    The field itself IS the color value.
     
     Examples
     --------
-    >>> field = IvkColorField()
-    >>> field.set_rgba(255, 128, 0, 255)  # Orange
+    >>> field = IvkColorField(r=255, g=128, b=0, a=255)  # Orange
+    >>> field.set_rgba(255, 128, 0, 255)
     >>> field.set_hex("#FF8000")
     >>> print(field.to_rgba())
     (255, 128, 0, 255)
@@ -34,49 +37,11 @@ class IvkColorField(BaseModel, IvkField[dict[str, int]]):
 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
 
-    value: Optional[dict[str, int]] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
+    # Color components ARE the value
     r: int = 0
     g: int = 0
     b: int = 0
     a: int = 255
-
-    def __init__(self, **data: Any) -> None:
-        """Initialize with Pydantic validation."""
-        # Extract fields
-        value = data.pop('value', None)
-        name = data.pop('name', None)
-        description = data.pop('description', None)
-        r = data.pop('r', 0)
-        g = data.pop('g', 0)
-        b = data.pop('b', 0)
-        a = data.pop('a', 255)
-
-        # Build value dict from components
-        if value is None:
-            value = {"r": r, "g": g, "b": b, "a": a}
-
-        # Initialize BaseModel
-        BaseModel.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description,
-            r=r,
-            g=g,
-            b=b,
-            a=a,
-            **data
-        )
-        
-        # Initialize IvkField
-        IvkField.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description
-        )
 
     @field_validator("r", "g", "b", "a")
     @classmethod
@@ -88,45 +53,27 @@ class IvkColorField(BaseModel, IvkField[dict[str, int]]):
 
     def validate_field(self) -> bool:
         """Validate color format."""
-        if self.value:
-            for component in ["r", "g", "b", "a"]:
-                if component in self.value:
-                    val = self.value[component]
-                    if not (0 <= val <= 255):
-                        raise ValueError(f"Color component {component}={val} must be between 0 and 255")
+        # Validation is handled by field_validator
         return True
 
     def to_api_format(self) -> dict[str, Any]:
-        """Convert to API format."""
+        """Convert to API format for InvokeAI ColorField."""
         return {
-            "value": self.value,
-            "type": "color"
+            "r": self.r,
+            "g": self.g,
+            "b": self.b,
+            "a": self.a
         }
 
     @classmethod
     def from_api_format(cls, data: dict[str, Any]) -> IvkColorField:
         """Create from API data."""
-        color_data = data.get("value", {})
         return cls(
-            value=color_data,
-            r=color_data.get("r", 0),
-            g=color_data.get("g", 0),
-            b=color_data.get("b", 0),
-            a=color_data.get("a", 255)
+            r=data.get("r", 0),
+            g=data.get("g", 0),
+            b=data.get("b", 0),
+            a=data.get("a", 255)
         )
-
-    def get_value(self) -> Optional[dict[str, int]]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[dict[str, int]]) -> None:
-        """Set the value with validation."""
-        self.value = value
-        if value:
-            self.r = value.get("r", 0)
-            self.g = value.get("g", 0)
-            self.b = value.get("b", 0)
-            self.a = value.get("a", 255)
 
     def set_rgba(self, r: int, g: int, b: int, a: int = 255) -> None:
         """Set color from RGBA components."""
@@ -134,7 +81,6 @@ class IvkColorField(BaseModel, IvkField[dict[str, int]]):
         self.g = g
         self.b = b
         self.a = a
-        self.value = {"r": r, "g": g, "b": b, "a": a}
 
     def set_hex(self, hex_color: str) -> None:
         """
@@ -200,11 +146,14 @@ class IvkBoundingBoxField(BaseModel, IvkField[dict[str, Any]]):
     """
     Bounding box field for region specifications.
     
-    Defines rectangular regions with optional confidence scores.
+    Corresponds to InvokeAI's BoundingBoxField type.
+    
+    This field represents a rectangular region directly through its coordinates.
+    The field itself IS the bounding box value.
     
     Examples
     --------
-    >>> field = IvkBoundingBoxField()
+    >>> field = IvkBoundingBoxField(x_min=100, x_max=400, y_min=50, y_max=300, score=0.95)
     >>> field.set_box(100, 400, 50, 300, 0.95)
     >>> print(field.get_box())
     (100, 400, 50, 300, 0.95)
@@ -212,124 +161,53 @@ class IvkBoundingBoxField(BaseModel, IvkField[dict[str, Any]]):
 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
 
-    value: Optional[dict[str, Any]] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
+    # Bounding box components ARE the value
     x_min: int = 0
     x_max: int = 0
     y_min: int = 0
     y_max: int = 0
     score: Optional[float] = None
 
-    def __init__(self, **data: Any) -> None:
-        """Initialize with Pydantic validation."""
-        # Extract fields
-        value = data.pop('value', None)
-        name = data.pop('name', None)
-        description = data.pop('description', None)
-        x_min = data.pop('x_min', 0)
-        x_max = data.pop('x_max', 0)
-        y_min = data.pop('y_min', 0)
-        y_max = data.pop('y_max', 0)
-        score = data.pop('score', None)
-
-        # Build value dict from components
-        if value is None:
-            value = {
-                "x_min": x_min,
-                "x_max": x_max,
-                "y_min": y_min,
-                "y_max": y_max
-            }
-            if score is not None:
-                value["score"] = score
-
-        # Initialize BaseModel
-        BaseModel.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description,
-            x_min=x_min,
-            x_max=x_max,
-            y_min=y_min,
-            y_max=y_max,
-            score=score,
-            **data
-        )
-        
-        # Initialize IvkField
-        IvkField.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description
-        )
-
     def validate_field(self) -> bool:
         """Validate bounding box coordinates."""
-        if self.value:
-            x_min = self.value.get("x_min", 0)
-            x_max = self.value.get("x_max", 0)
-            y_min = self.value.get("y_min", 0)
-            y_max = self.value.get("y_max", 0)
-            
-            if x_max <= x_min:
-                raise ValueError(f"x_max ({x_max}) must be greater than x_min ({x_min})")
-            if y_max <= y_min:
-                raise ValueError(f"y_max ({y_max}) must be greater than y_min ({y_min})")
-                
-            score = self.value.get("score")
-            if score is not None and not (0.0 <= score <= 1.0):
-                raise ValueError(f"Score {score} must be between 0.0 and 1.0")
+        if self.x_max <= self.x_min:
+            raise ValueError(f"x_max ({self.x_max}) must be greater than x_min ({self.x_min})")
+        if self.y_max <= self.y_min:
+            raise ValueError(f"y_max ({self.y_max}) must be greater than y_min ({self.y_min})")
+        if self.score is not None and not (0.0 <= self.score <= 1.0):
+            raise ValueError(f"Score {self.score} must be between 0.0 and 1.0")
         return True
 
     def to_api_format(self) -> dict[str, Any]:
-        """Convert to API format."""
-        return {
-            "value": self.value,
-            "type": "bounding_box"
+        """Convert to API format for InvokeAI BoundingBoxField."""
+        result: dict[str, Any] = {
+            "x_min": self.x_min,
+            "x_max": self.x_max,
+            "y_min": self.y_min,
+            "y_max": self.y_max
         }
+        if self.score is not None:
+            result["score"] = self.score
+        return result
 
     @classmethod
     def from_api_format(cls, data: dict[str, Any]) -> IvkBoundingBoxField:
         """Create from API data."""
-        bbox_data = data.get("value", {})
         return cls(
-            value=bbox_data,
-            x_min=bbox_data.get("x_min", 0),
-            x_max=bbox_data.get("x_max", 0),
-            y_min=bbox_data.get("y_min", 0),
-            y_max=bbox_data.get("y_max", 0),
-            score=bbox_data.get("score")
+            x_min=data.get("x_min", 0),
+            x_max=data.get("x_max", 0),
+            y_min=data.get("y_min", 0),
+            y_max=data.get("y_max", 0),
+            score=data.get("score")
         )
-
-    def get_value(self) -> Optional[dict[str, Any]]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[dict[str, Any]]) -> None:
-        """Set the value with validation."""
-        self.value = value
-        if value:
-            self.x_min = value.get("x_min", 0)
-            self.x_max = value.get("x_max", 0)
-            self.y_min = value.get("y_min", 0)
-            self.y_max = value.get("y_max", 0)
-            self.score = value.get("score")
 
     def set_box(self, x_min: int, x_max: int, y_min: int, y_max: int, score: Optional[float] = None) -> None:
         """Set bounding box coordinates."""
-        box_data: dict[str, Any] = {
-            "x_min": x_min,
-            "x_max": x_max,
-            "y_min": y_min,
-            "y_max": y_max
-        }
-        if score is not None:
-            box_data["score"] = score
-            
-        self.set_value(box_data)
+        self.x_min = x_min
+        self.x_max = x_max
+        self.y_min = y_min
+        self.y_max = y_max
+        self.score = score
 
     def get_box(self) -> tuple[int, int, int, int, Optional[float]]:
         """Get bounding box as tuple."""
@@ -352,62 +230,31 @@ class IvkCollectionField(BaseModel, IvkField[list[T]], IvkCollectionFieldMixin[T
     """
     Collection field for lists of values.
     
-    Supports collections with type validation and length constraints.
+    Corresponds to InvokeAI's collection types (e.g., list[ImageField], list[int]).
+    
+    Collections are primitive-like and keep a value field containing the list.
+    Supports type validation and length constraints.
     
     Examples
     --------
-    >>> field = IvkCollectionField[int]()
+    >>> field = IvkCollectionField[int](value=[])
     >>> field.append(1)
     >>> field.append(2) 
     >>> field.extend([3, 4, 5])
-    >>> print(field.get_value())
+    >>> print(field.value)
     [1, 2, 3, 4, 5]
     """
 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
 
-    value: Optional[list[T]] = Field(default_factory=list)
-    name: Optional[str] = None
-    description: Optional[str] = None
+    # Collections keep the value field since they wrap a list
+    value: list[T] = Field(default_factory=list)
     item_type: Optional[type[T]] = None
     min_length: Optional[int] = None
     max_length: Optional[int] = None
 
-    def __init__(self, **data: Any) -> None:
-        """Initialize with Pydantic validation."""
-        # Extract fields
-        value = data.pop('value', [])
-        name = data.pop('name', None)
-        description = data.pop('description', None)
-        item_type = data.pop('item_type', None)
-        min_length = data.pop('min_length', None)
-        max_length = data.pop('max_length', None)
-
-        # Initialize BaseModel
-        BaseModel.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description,
-            item_type=item_type,
-            min_length=min_length,
-            max_length=max_length,
-            **data
-        )
-        
-        # Initialize IvkField
-        IvkField.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description
-        )
-
     def validate_field(self) -> bool:
         """Validate collection constraints."""
-        if self.value is None:
-            return True
-            
         # Check length constraints
         length = len(self.value)
         if self.min_length is not None and length < self.min_length:
@@ -424,30 +271,16 @@ class IvkCollectionField(BaseModel, IvkField[list[T]], IvkCollectionFieldMixin[T
         return True
 
     def to_api_format(self) -> dict[str, Any]:
-        """Convert to API format."""
-        return {
-            "value": self.value,
-            "type": "collection"
-        }
+        """Convert to API format for InvokeAI collection types."""
+        return {"value": self.value}
 
     @classmethod
     def from_api_format(cls, data: dict[str, Any]) -> IvkCollectionField[T]:
         """Create from API data."""
         return cls(value=data.get("value", []))
 
-    def get_value(self) -> Optional[list[T]]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[list[T]]) -> None:
-        """Set the value with validation."""
-        self.value = value or []
-
     def append(self, item: T) -> None:
         """Add an item to the collection."""
-        if self.value is None:
-            self.value = []
-            
         # Check max length
         if self.max_length is not None and len(self.value) >= self.max_length:
             raise ValueError(f"Cannot add item: would exceed maximum length {self.max_length}")
@@ -460,9 +293,6 @@ class IvkCollectionField(BaseModel, IvkField[list[T]], IvkCollectionFieldMixin[T
 
     def remove(self, item: T) -> None:
         """Remove an item from the collection."""
-        if self.value is None:
-            raise ValueError("Cannot remove from empty collection")
-            
         # Check min length
         if self.min_length is not None and len(self.value) <= self.min_length:
             raise ValueError(f"Cannot remove item: would go below minimum length {self.min_length}")

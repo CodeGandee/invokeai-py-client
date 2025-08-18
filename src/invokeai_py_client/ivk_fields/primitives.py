@@ -18,53 +18,26 @@ class IvkStringField(BaseModel, IvkField[str]):
     """
     String field with Pydantic validation for workflow inputs.
     
+    Corresponds to InvokeAI's StringInvocation primitive type.
+    
     Supports length constraints and pattern validation.
+    Primitive string fields keep a `value` field to store the actual string data.
     
     Examples
     --------
-    >>> field = IvkStringField()
-    >>> field.value = "A beautiful landscape"
-    >>> print(field.get_value())
+    >>> field = IvkStringField(value="A beautiful landscape")
+    >>> field.value = "Updated prompt"
+    >>> print(field.value)
     """
 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
 
+    # Primitive types keep the value field
     value: Optional[str] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
+    # Optional metadata fields
     min_length: Optional[int] = None
     max_length: Optional[int] = None
     pattern: Optional[str] = None
-
-    def __init__(self, **data: Any) -> None:
-        """Initialize with Pydantic validation."""
-        # Extract fields
-        value = data.pop('value', None)
-        name = data.pop('name', None)
-        description = data.pop('description', None)
-        min_length = data.pop('min_length', None)
-        max_length = data.pop('max_length', None)
-        pattern = data.pop('pattern', None)
-
-        # Initialize BaseModel
-        BaseModel.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description,
-            min_length=min_length,
-            max_length=max_length,
-            pattern=pattern,
-            **data
-        )
-        
-        # Initialize IvkField
-        IvkField.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description
-        )
 
     @field_validator("value")
     @classmethod
@@ -89,86 +62,43 @@ class IvkStringField(BaseModel, IvkField[str]):
 
     def validate_field(self) -> bool:
         """Validate the string value."""
-        if self.value is None:
-            return True
-        return True  # Pydantic handles validation
+        # Pydantic handles validation through field_validator
+        return True
 
     def to_api_format(self) -> dict[str, Any]:
-        """Convert to API format."""
-        return {"value": self.value, "type": "string"}
+        """Convert to API format for InvokeAI StringInvocation."""
+        return {"value": self.value}
 
     @classmethod
     def from_api_format(cls, data: dict[str, Any]) -> IvkStringField:
         """Create from API data."""
         return cls(value=data.get("value"))
 
-    def get_value(self) -> Optional[str]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[str]) -> None:
-        """Set the value with validation."""
-        self.value = value
-
 
 class IvkIntegerField(BaseModel, IvkField[int]):
     """
     Integer field with Pydantic validation for workflow inputs.
     
+    Corresponds to InvokeAI's IntegerInvocation primitive type.
+    
     Supports min/max constraints and multiple-of validation.
+    Primitive integer fields keep a `value` field to store the actual integer data.
     
     Examples
     --------
-    >>> field = IvkIntegerField(minimum=64, maximum=2048, multiple_of=8)
-    >>> field.value = 512
-    >>> print(field.get_value())
+    >>> field = IvkIntegerField(value=512, minimum=64, maximum=2048, multiple_of=8)
+    >>> field.value = 1024
+    >>> print(field.value)
     """
 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
 
+    # Primitive types keep the value field
     value: Optional[int] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
+    # Optional constraint fields
     minimum: Optional[int] = None
     maximum: Optional[int] = None
     multiple_of: Optional[int] = None
-
-    def __init__(self, **data: Any) -> None:
-        """Initialize with Pydantic validation."""
-        # Extract and convert fields
-        value = data.pop('value', None)
-        # Convert string to int if needed
-        if value is not None and isinstance(value, str):
-            try:
-                value = int(value)
-            except (ValueError, TypeError):
-                pass
-
-        name = data.pop('name', None)
-        description = data.pop('description', None)
-        minimum = data.pop('minimum', None)
-        maximum = data.pop('maximum', None)
-        multiple_of = data.pop('multiple_of', None)
-
-        # Initialize BaseModel
-        BaseModel.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description,
-            minimum=minimum,
-            maximum=maximum,
-            multiple_of=multiple_of,
-            **data
-        )
-        
-        # Initialize IvkField
-        IvkField.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description
-        )
 
     @field_validator("value")
     @classmethod
@@ -198,91 +128,42 @@ class IvkIntegerField(BaseModel, IvkField[int]):
 
     def validate_field(self) -> bool:
         """Validate the integer value."""
-        if self.value is None:
-            return True
-        return True  # Pydantic handles validation
+        # Pydantic handles validation through field_validator
+        return True
 
     def to_api_format(self) -> dict[str, Any]:
-        """Convert to API format."""
-        return {"value": self.value, "type": "integer"}
+        """Convert to API format for InvokeAI IntegerInvocation."""
+        return {"value": self.value}
 
     @classmethod
     def from_api_format(cls, data: dict[str, Any]) -> IvkIntegerField:
         """Create from API data."""
         return cls(value=data.get("value"))
 
-    def get_value(self) -> Optional[int]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Any) -> None:
-        """Set the value with validation."""
-        # Convert string to int if needed
-        if value is not None and isinstance(value, str):
-            try:
-                converted_value = int(value)
-                self.value = converted_value
-                return
-            except (ValueError, TypeError):
-                pass
-        self.value = value
-
 
 class IvkFloatField(BaseModel, IvkField[float]):
     """
     Float field with Pydantic validation for workflow inputs.
     
+    Corresponds to InvokeAI's FloatInvocation primitive type.
+    
     Supports min/max constraints and decimal precision.
+    Primitive float fields keep a `value` field to store the actual float data.
     
     Examples
     --------
-    >>> field = IvkFloatField(minimum=0.0, maximum=1.0)
-    >>> field.value = 0.5
-    >>> print(field.get_value())
+    >>> field = IvkFloatField(value=0.5, minimum=0.0, maximum=1.0)
+    >>> field.value = 0.75
+    >>> print(field.value)
     """
 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
 
+    # Primitive types keep the value field
     value: Optional[float] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
+    # Optional constraint fields
     minimum: Optional[float] = None
     maximum: Optional[float] = None
-
-    def __init__(self, **data: Any) -> None:
-        """Initialize with Pydantic validation."""
-        # Extract and convert fields
-        value = data.pop('value', None)
-        # Convert string/int to float if needed
-        if value is not None and isinstance(value, (str, int)):
-            try:
-                value = float(value)
-            except (ValueError, TypeError):
-                pass
-
-        name = data.pop('name', None)
-        description = data.pop('description', None)
-        minimum = data.pop('minimum', None)
-        maximum = data.pop('maximum', None)
-
-        # Initialize BaseModel
-        BaseModel.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description,
-            minimum=minimum,
-            maximum=maximum,
-            **data
-        )
-        
-        # Initialize IvkField
-        IvkField.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description
-        )
 
     @field_validator("value")
     @classmethod
@@ -307,94 +188,49 @@ class IvkFloatField(BaseModel, IvkField[float]):
 
     def validate_field(self) -> bool:
         """Validate the float value."""
-        if self.value is None:
-            return True
+        # Pydantic handles validation through field_validator
         return True
 
     def to_api_format(self) -> dict[str, Any]:
-        """Convert to API format."""
-        return {"value": self.value, "type": "float"}
+        """Convert to API format for InvokeAI FloatInvocation."""
+        return {"value": self.value}
 
     @classmethod
     def from_api_format(cls, data: dict[str, Any]) -> IvkFloatField:
         """Create from API data."""
         return cls(value=data.get("value"))
 
-    def get_value(self) -> Optional[float]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Any) -> None:
-        """Set the value with validation."""
-        # Convert string/int to float if needed
-        if value is not None and isinstance(value, (str, int)):
-            try:
-                converted_value = float(value)
-                self.value = converted_value
-                return
-            except (ValueError, TypeError):
-                pass
-        self.value = value
-
 
 class IvkBooleanField(BaseModel, IvkField[bool]):
     """
     Boolean field with Pydantic validation for workflow inputs.
     
+    Corresponds to InvokeAI's BooleanInvocation primitive type.
+    
+    Primitive boolean fields keep a `value` field to store the actual boolean data.
+    
     Examples
     --------
-    >>> field = IvkBooleanField()
-    >>> field.value = True
-    >>> print(field.get_value())
+    >>> field = IvkBooleanField(value=True)
+    >>> field.value = False
+    >>> print(field.value)
     """
 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
 
+    # Primitive types keep the value field  
     value: Optional[bool] = None
-    name: Optional[str] = None
-    description: Optional[str] = None
-
-    def __init__(self, **data: Any) -> None:
-        """Initialize with Pydantic validation."""
-        # Extract fields
-        value = data.pop('value', None)
-        name = data.pop('name', None)
-        description = data.pop('description', None)
-
-        # Initialize BaseModel
-        BaseModel.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description,
-            **data
-        )
-        
-        # Initialize IvkField
-        IvkField.__init__(
-            self,
-            value=value,
-            name=name,
-            description=description
-        )
 
     def validate_field(self) -> bool:
         """Validate the boolean value."""
+        # Pydantic handles validation
         return True
 
     def to_api_format(self) -> dict[str, Any]:
-        """Convert to API format."""
-        return {"value": self.value, "type": "boolean"}
+        """Convert to API format for InvokeAI BooleanInvocation."""
+        return {"value": self.value}
 
     @classmethod
     def from_api_format(cls, data: dict[str, Any]) -> IvkBooleanField:
         """Create from API data."""
         return cls(value=data.get("value"))
-
-    def get_value(self) -> Optional[bool]:
-        """Get the current value."""
-        return self.value
-
-    def set_value(self, value: Optional[bool]) -> None:
-        """Set the value with validation."""
-        self.value = value

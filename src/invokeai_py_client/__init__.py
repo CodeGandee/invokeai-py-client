@@ -26,7 +26,7 @@ Basic usage:
 >>>
 >>> # Download generated image
 >>> image = results["output_image"]
->>> image_bytes = client.board_repo.download_image(image.get_value())
+>>> image_bytes = client.board_repo.download_image(image.value)
 >>> with open("output.png", "wb") as f:
 ...     f.write(image_bytes)
 
