@@ -135,6 +135,12 @@ ignore = [
     "E501",  # line too long, handled by black
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
+    "UP007", # allow use of typing.Union / Optional for py39 compatibility
+    "UP045", # allow use of typing.Optional[X] instead of X | None
+    "I001",  # ignore import sorting/formatting (isort) complaints
+    "W291",  # ignore trailing whitespace (optional stylistic)
+    "W292",  # ignore missing newline at EOF
+    "W293",  # ignore blank line contains whitespace
 ]
 
 [tool.ruff.format]

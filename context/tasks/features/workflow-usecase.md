@@ -47,8 +47,8 @@ Below we use `data\workflows\sdxl-flux-refine.json` as an example workflow defin
 **Code Example**:
 ```python
 from invokeai_py_client import InvokeAIClient
-from invokeai_py_client.workflow import WorkflowDefinition, WorkflowHandle, InkWorkflowInput
-from invokeai_py_client.fields import IvkField
+from invokeai_py_client.workflow import WorkflowDefinition, WorkflowHandle, IvkWorkflowInput
+from invokeai_py_client.ivk_fields import IvkField
 from typing import List, Optional
 
 # Initialize the client
@@ -74,18 +74,18 @@ print(f"Author: {workflow_handle.definition.author}")
 print()
 
 # List all configurable inputs (returns list ordered by input-index)
-inputs: List[InkWorkflowInput] = workflow_handle.list_inputs()
+inputs: List[IvkWorkflowInput] = workflow_handle.list_inputs()
 
 print(f"Total configurable inputs: {len(inputs)}")
 print("=" * 60)
 
 # Inputs are accessed by index (0-based) based on form tree traversal order
 for idx, input_info in enumerate(inputs):
-    # InkWorkflowInput has typed properties with IvkField base
+    # IvkWorkflowInput has typed properties with IvkField base
     print(f"\n[{idx}] {input_info.label}")
     print(f"  Node: {input_info.node_name} ({input_info.node_id})")
     print(f"  Field: {input_info.field_name}")
-    print(f"  Type: {type(input_info.field).__name__}")  # e.g., InkStringField (subclass of IvkField)
+    print(f"  Type: {type(input_info.field).__name__}")  # e.g., IvkStringField (subclass of IvkField)
     print(f"  Required: {input_info.required}")
     
     # Show current value if set (using IvkField's get_value() method)
@@ -94,10 +94,10 @@ for idx, input_info in enumerate(inputs):
         print(f"  Current Value: {current_value}")
 
 # Access inputs by index - the primary way to get/set inputs
-positive_prompt: InkWorkflowInput = workflow_handle.get_input(0)  # Index [0] is Positive Prompt
-negative_prompt: InkWorkflowInput = workflow_handle.get_input(1)  # Index [1] is Negative Prompt
-width_input: InkWorkflowInput = workflow_handle.get_input(2)      # Index [2] is Output Width
-height_input: InkWorkflowInput = workflow_handle.get_input(3)     # Index [3] is Output Height
+positive_prompt: IvkWorkflowInput = workflow_handle.get_input(0)  # Index [0] is Positive Prompt
+negative_prompt: IvkWorkflowInput = workflow_handle.get_input(1)  # Index [1] is Negative Prompt
+width_input: IvkWorkflowInput = workflow_handle.get_input(2)      # Index [2] is Output Width
+height_input: IvkWorkflowInput = workflow_handle.get_input(3)     # Index [3] is Output Height
 
 # Example: Print information about a specific input
 print(f"\nInput at index 0:")
@@ -106,12 +106,12 @@ print(f"  Node: {positive_prompt.node_name}")  # "Positive" (from node's label f
 print(f"  Field: {positive_prompt.field_name}")  # "value"
 
 # Get all inputs as an indexed list
-all_inputs: List[InkWorkflowInput] = workflow_handle.get_all_inputs()
+all_inputs: List[IvkWorkflowInput] = workflow_handle.get_all_inputs()
 # Returns ordered list where index matches input-index:
 # [
-#     InkWorkflowInput(...),  # [0] Positive Prompt with IvkField subclass
-#     InkWorkflowInput(...),  # [1] Negative Prompt with IvkField subclass
-#     InkWorkflowInput(...),  # [2] Output Width with IvkField subclass
+#     IvkWorkflowInput(...),  # [0] Positive Prompt with IvkField subclass
+#     IvkWorkflowInput(...),  # [1] Negative Prompt with IvkField subclass
+#     IvkWorkflowInput(...),  # [2] Output Width with IvkField subclass
 #     ...                      # up to [23] for this workflow
 # ]
 
@@ -158,39 +158,39 @@ Total configurable inputs: 24
 [0] Positive Prompt
   Node: Positive (0a167316-ba62-4218-9fcf-b3cff7963df8)
   Field: value
-  Type: InkStringField
+  Type: IvkStringField
   Required: True
 
 [1] Negative Prompt
   Node: Negative (1711c26d-e362-48fa-8f02-3e3e1a6010d4)
   Field: value
-  Type: InkStringField
+  Type: IvkStringField
   Required: True
 
 [2] Output Width
   Node: integer (8e860322-3d35-4013-ab38-29e41af698ed)
   Field: value
-  Type: InkIntegerField
+  Type: IvkIntegerField
   Required: False
   Current Value: 1024
 
 [3] Output Height
   Node: integer (3e13ab2d-7bd2-4303-b6c5-2c58c51bf2bb)
   Field: value
-  Type: InkIntegerField
+  Type: IvkIntegerField
   Required: False
   Current Value: 768
 
 [4] SDXL Model
   Node: sdxl_model_loader (fc066a36-5d48-4780-8c2b-d76c70ae0807)
   Field: model
-  Type: InkSDXLModelField
+  Type: IvkModelIdentifierField
   Required: True
 
 [5] Output Board
   Node: save_image (4414d4b5-82c3-4513-8c3f-86d88c24aadc)
   Field: board
-  Type: InkBoardField
+  Type: IvkBoardField
   Required: False
 
 ...
@@ -198,7 +198,7 @@ Total configurable inputs: 24
 [23] Noise Ratio
   Node: float_math (e6187b94-cd8a-4fa8-b020-c6c858dc43de)
   Field: value
-  Type: InkFloatField
+  Type: IvkFloatField
   Required: False
   Current Value: 0.8
 
@@ -234,12 +234,12 @@ Required inputs still needed at indices: [0, 1, 4, 11, 12, 13, 14, 19]
    - Follows same pattern as BoardRepository/BoardHandle for consistency
 
 2. **Data Model Hierarchy**:
-   - `InkWorkflowInput` - Typed data model containing:
+   - `IvkWorkflowInput` - Typed data model containing:
      - `label`: User-facing field label (e.g., "Positive Prompt")
      - `node_name`: Node's display name - uses node's "label" field if not empty, otherwise falls back to node's "type" (InvokeAI default)
      - `node_id`: UUID of the workflow node
      - `field_name`: Name of the field in the node (e.g., "value")
-     - `field`: IvkField subclass instance (`InkStringField`, `InkImageField`, etc.)
+     - `field`: IvkField subclass instance (`IvkStringField`, `IvkImageField`, etc.)
      - `required`: Boolean indicating if the input must be provided
    - All field types inherit from `IvkField` base class (renamed from `Field` to avoid conflicts)
 
@@ -251,8 +251,8 @@ Required inputs still needed at indices: [0, 1, 4, 11, 12, 13, 14, 19]
 
 4. **Type Safety with IvkField**: 
    - All field types are subclasses of `IvkField[T]` generic base
-   - `workflow_handle.list_inputs()` returns ordered `List[InkWorkflowInput]`
-   - `workflow_handle.get_input(idx)` returns `InkWorkflowInput` at that index
+   - `workflow_handle.list_inputs()` returns ordered `List[IvkWorkflowInput]`
+   - `workflow_handle.get_input(idx)` returns `IvkWorkflowInput` at that index
    - Field values accessed via `field.get_value()` and `field.set_value()` methods
    - Each field is a typed instance with proper validation
 
@@ -271,68 +271,71 @@ Required inputs still needed at indices: [0, 1, 4, 11, 12, 13, 14, 19]
 ```python
 # Continuing from Use Case 1, we have:
 # - client: InvokeAIClient instance
-# - workflow: Workflow instance with loaded sdxl-flux-refine definition
+# - workflow_handle: WorkflowHandle instance with loaded sdxl-flux-refine definition
 
-# Note: All field classes (InkModelIdentifierField, InkStringField, etc.) are Pydantic models
+# Note: All field classes (IvkModelIdentifierField, IvkStringField, etc.) are Pydantic models
 # with validate_assignment=True, providing automatic validation and type conversion
 
-# Set inputs by index - the primary way to configure workflow
-# Based on the form tree traversal order from Task 1.1
+# Method 1: Set inputs using the workflow handle's set_input() method
+# This is the recommended approach as it includes proper error handling
 
 # Set text prompts (indices 0 and 1)
-workflow.get_input(0).field.value = "A serene mountain landscape at sunset, photorealistic, high detail"
-workflow.get_input(1).field.value = "blurry, low quality, distorted"
+workflow_handle.set_input(0, "A serene mountain landscape at sunset, photorealistic, high detail")
+workflow_handle.set_input(1, "blurry, low quality, distorted")
 
 # Set dimensions (indices 2 and 3) - automatic type conversion
-workflow.get_input(2).field.value = "1024"  # String converted to int
-workflow.get_input(3).field.value = 768     # Int stays int
+workflow_handle.set_input(2, "1024")  # String converted to int
+workflow_handle.set_input(3, 768)     # Int stays int
 
 # Set SDXL model (index 4) - can pass dict, Pydantic validates and converts
-workflow.get_input(4).field.value = {
+workflow_handle.set_input(4, {
     "key": "sdxl-model-key-123",
     "name": "SDXL 1.0",
     "base": "sdxl",
     "type": "main"
-}
+})
 
 # Set output board for SDXL stage (index 5)
-workflow.get_input(5).field.value = "samples"  # Board name or ID
+workflow_handle.set_input(5, "samples")  # Board name or ID
 
 # Set SDXL generation parameters (indices 6-8)
-workflow.get_input(6).field.value = "DPMSolverMultistep"  # scheduler
-workflow.get_input(7).field.value = 25                    # steps
-workflow.get_input(8).field.value = 7.5                   # cfg_scale
+workflow_handle.set_input(6, "DPMSolverMultistep")  # scheduler
+workflow_handle.set_input(7, 25)                    # steps
+workflow_handle.set_input(8, 7.5)                   # cfg_scale
 
-# Set Flux models (indices 11-14)
-workflow.get_input(11).field.value = {
+# Method 2: Direct field access via get_input()
+# You can also directly set the field value property
+
+# Set Flux models (indices 11-14) using direct field access
+workflow_handle.get_input(11).field.value = {
     "key": "flux-model-key-456",
     "name": "FLUX.1-schnell",
     "base": "flux",
     "type": "main"
 }
 
-workflow.get_input(12).field.value = {
+workflow_handle.get_input(12).field.value = {
     "key": "t5-encoder-key-789",
     "name": "T5 Encoder FLUX",
     "base": "flux",
     "type": "t5_encoder"
 }
 
-workflow.get_input(13).field.value = {
+workflow_handle.get_input(13).field.value = {
     "key": "clip-embed-key-012",
     "name": "CLIP-L Encoder",
     "base": "flux",
     "type": "clip_embed"
 }
 
-workflow.get_input(14).field.value = {
+workflow_handle.get_input(14).field.value = {
     "key": "vae-model-key-345",
     "name": "FLUX VAE",
     "base": "flux",
     "type": "vae"
 }
 
-# Alternative: Set multiple inputs using a loop
+# Method 3: Batch setting with a loop
 input_values = {
     15: "flux_outputs",     # Output board for Flux stage
     16: 0.7,                # Noise ratio
@@ -351,30 +354,31 @@ input_values = {
 }
 
 for idx, value in input_values.items():
-    workflow.get_input(idx).field.value = value
+    workflow_handle.set_input(idx, value)
 
-# Example of per-field validation error handling
+# Example of validation error handling with set_input()
 try:
     # This will fail validation - steps must be positive integer
-    workflow.get_input(7).field.value = -5
+    workflow_handle.set_input(7, -5)
 except ValueError as e:
     print(f"Field validation error: {e}")
     # Set valid value
-    workflow.get_input(7).field.value = 25
+    workflow_handle.set_input(7, 25)
 
-# Batch set with validation
-def set_inputs_safely(workflow, input_map):
+# Helper function for batch setting with validation
+def set_inputs_safely(workflow_handle, input_map):
     """Helper to set multiple inputs with error handling."""
     errors = []
     for idx, value in input_map.items():
         try:
-            input_field = workflow.get_input(idx)
-            input_field.field.value = value
+            workflow_handle.set_input(idx, value)
+            input_field = workflow_handle.get_input(idx)
             print(f"✓ Set [{idx}] {input_field.label}")
         except ValueError as e:
+            input_field = workflow_handle.get_input(idx)
             errors.append(f"[{idx}] {input_field.label}: {e}")
-        except IndexError:
-            errors.append(f"[{idx}]: Invalid index")
+        except IndexError as e:
+            errors.append(f"[{idx}]: {e}")
     
     if errors:
         print("Errors setting inputs:")
@@ -383,21 +387,21 @@ def set_inputs_safely(workflow, input_map):
     return len(errors) == 0
 
 # Validate all inputs together
-validation_errors = workflow.validate_inputs()
+validation_errors = workflow_handle.validate_inputs()
 if validation_errors:
     print("Validation errors found:")
     for idx, errors in validation_errors.items():
-        input_info = workflow.get_input(idx)
+        input_info = workflow_handle.get_input(idx)
         print(f"  [{idx}] {input_info.label}: {', '.join(errors)}")
 else:
     print("All inputs are valid")
 
 # Check if all required inputs are set (returns list of indices)
-missing_indices = workflow.get_missing_required_input_indices()
+missing_indices = workflow_handle.get_missing_required_input_indices()
 if missing_indices:
     print(f"Still missing required inputs at indices: {missing_indices}")
     for idx in missing_indices:
-        input_info = workflow.get_input(idx)
+        input_info = workflow_handle.get_input(idx)
         print(f"  [{idx}] {input_info.label}")
 else:
     print("All required inputs are set, workflow ready for submission")
@@ -424,32 +428,36 @@ All required inputs are set, workflow ready for submission
 
 **Key Design Points**:
 
-1. **Index-Based Setting**:
-   - Access inputs directly by index: `workflow.get_input(idx)`
-   - Indices are stable and based on form tree traversal order
+1. **Multiple Input Setting Methods**:
+   - **Method 1**: `workflow_handle.set_input(index, value)` - Recommended approach with error handling
+   - **Method 2**: `workflow_handle.get_input(index).field.value = value` - Direct field access
+   - **Method 3**: Batch setting via loops for efficiency
+   - All methods benefit from Pydantic validation
+
+2. **Index-Based Access System**:
+   - Inputs accessed by stable 0-based indices from form tree traversal
+   - `workflow_handle.get_input(idx)` returns `IvkWorkflowInput` instance
+   - Each input has label, node info, field instance, and metadata
    - No naming conflicts or ambiguity
-   - Clear mapping from index to input field
 
-2. **Pydantic-Powered Field Models**:
-   - All `Ink*Field` classes are Pydantic models with `validate_assignment=True`
-   - Immediate validation when setting `.value` property
+3. **Pydantic-Powered Field Models**:
+   - All `Ivk*Field` classes inherit from both `BaseModel` and `IvkField[T]`
+   - `validate_assignment=True` ensures immediate validation
    - Type conversion handles common cases (string "1024" → int 1024)
-   - Per-field validation errors provide immediate feedback
+   - Both `.value` property and `set_value()`/`get_value()` methods supported
 
-3. **Flexible Input Formats**:
+4. **Flexible Input Formats**:
    - **Model fields**: Accept dict with key/name/base/type
    - **Board fields**: Accept board name or ID string
-   - **Primitive fields**: Automatic type coercion (strings to numbers when appropriate)
-   - **All fields**: Validated and converted via Pydantic models
+   - **Primitive fields**: Automatic type coercion via Pydantic
+   - **Enum fields**: Validated against allowed choices
+   - All validated and converted through Pydantic models
 
-4. **Two-Level Validation**:
-   - **Per-field validation**: Immediate feedback via Pydantic when setting values
-   - **Workflow-level validation**: `validate_inputs()` checks all inputs for inter-field dependencies
-   - Validation errors reported by index for precise identification
-
-5. **Pre-submission Checks**:
-   - `validate_inputs()` returns dict keyed by index with validation errors
-   - `get_missing_required_input_indices()` returns list of indices for missing required fields
+5. **Validation and Error Handling**:
+   - **Per-field validation**: Immediate feedback when setting values
+   - **Workflow-level validation**: `validate_inputs()` checks all inputs
+   - `get_missing_required_input_indices()` identifies incomplete required fields
+   - Validation errors include field index and descriptive messages
    - Clear workflow readiness status before submission
 
 ### Use case 3: submitting the workflow and tracking the job status
