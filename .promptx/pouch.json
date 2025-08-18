@@ -4,7 +4,7 @@
     {
       "from": "initial",
       "command": "init",
-      "timestamp": "2025-08-18T02:14:32.809Z",
+      "timestamp": "2025-08-18T16:48:59.846Z",
       "args": [
         {
           "workingDirectory": "D:\\code\\invokeai-py-client"
@@ -14,11 +14,11 @@
     {
       "from": "initialized",
       "command": "action",
-      "timestamp": "2025-08-18T02:14:57.334Z",
+      "timestamp": "2025-08-18T16:49:16.156Z",
       "args": [
         "webapi-expert"
       ]
     }
   ],
-  "lastUpdated": "2025-08-18T02:14:57.364Z"
+  "lastUpdated": "2025-08-18T16:49:16.193Z"
 }

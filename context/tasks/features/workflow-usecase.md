@@ -479,137 +479,71 @@ All required inputs are set, workflow ready for submission
 ```python
 # Continuing from Use Case 2, we have:
 # - client: InvokeAIClient instance  
-# - workflow: Workflow instance with all inputs configured
+# - workflow_handle: WorkflowHandle instance with all inputs configured
 
-import asyncio
-from typing import Optional, Callable
-from invokeai_py_client.models import SessionQueueItem, EnqueueBatchResult, JobStatus, SessionEvent
+import time
+from typing import Optional, Callable, Dict, Any
+from invokeai_py_client.models import JobStatus
 
-# Option 1: Synchronous submission with polling
+# Simple synchronous submission with polling
 def submit_and_track_sync():
     """Simple synchronous workflow submission with status polling."""
     
     # Submit workflow to default queue
-    result = workflow.submit_sync(
+    batch_result = workflow_handle.submit_sync(
         queue_id="default",  # Use default queue
         board_id="samples"   # Output images go to "samples" board
     )
     
-    print(f"Batch submitted: {result.batch_id}")
-    print(f"Items enqueued: {result.enqueued}/{result.requested}")
-    print(f"Item IDs: {result.item_ids}")
+    print(f"Batch submitted: {batch_result['batch_id']}")
+    print(f"Items enqueued: {batch_result['enqueued']}")
+    print(f"Item IDs: {batch_result['item_ids']}")
     
     # Get the queue item to track status
-    job = workflow.get_queue_item()
-    print(f"Session ID: {job.session_id}")
-    print(f"Status: {job.status}")
+    queue_item = workflow_handle.get_queue_item()
+    print(f"Session ID: {queue_item['session_id']}")
+    print(f"Status: {queue_item['status']}")
     
     # Poll for completion with timeout
     try:
         # Wait for completion (polls every 0.5s, timeout after 60s)
-        job = workflow.wait_for_completion_sync(
+        completed_item = workflow_handle.wait_for_completion_sync(
             poll_interval=0.5,
             timeout=60.0,
-            progress_callback=lambda j: print(f"  Status: {j.status} - Item {j.item_id}")
+            progress_callback=lambda item: print(f"  Status: {item['status']} - Item {item['item_id']}")
         )
         
         print(f"✅ Job completed successfully!")
-        print(f"  Execution time: {(job.completed_at - job.started_at).total_seconds()}s")
+        if 'completed_at' in completed_item and 'started_at' in completed_item:
+            # Calculate execution time if timestamps available
+            print(f"  Item ID: {completed_item['item_id']}")
         
-        return job
+        return completed_item
         
     except TimeoutError:
         print("❌ Job timed out")
-        workflow.cancel()
+        workflow_handle.cancel()
         raise
     except Exception as e:
         print(f"❌ Job failed: {e}")
         raise
 
 
-# Option 2: Asynchronous submission with real-time events
-async def submit_and_track_async():
-    """Advanced async workflow submission with Socket.IO event streaming."""
-    
-    # Define event handlers for real-time progress
-    def on_invocation_started(event: dict):
-        print(f"🔵 Node started: {event.get('node_id')} ({event.get('invocation_type')})")
-    
-    def on_invocation_progress(event: dict):
-        progress = event.get('progress')
-        if progress:
-            percentage = progress.get('percentage', 0)
-            message = progress.get('message', '')
-            print(f"⏳ Progress: {percentage}% - {message}")
-    
-    def on_invocation_complete(event: dict):
-        print(f"✅ Node complete: {event.get('node_id')}")
-        result = event.get('result')
-        if result and result.get('type') == 'image_output':
-            image = result.get('image', {})
-            print(f"   Generated image: {image.get('image_name')}")
-    
-    def on_invocation_error(event: dict):
-        print(f"❌ Node error: {event.get('node_id')} - {event.get('error', 'Unknown error')}")
-    
-    # Submit with event subscription
-    result = await workflow.submit(
-        queue_id="default",
-        board_id="samples",
-        # Subscribe to real-time events via Socket.IO
-        subscribe_events=True,
-        on_invocation_started=on_invocation_started,
-        on_invocation_progress=on_invocation_progress,
-        on_invocation_complete=on_invocation_complete,
-        on_invocation_error=on_invocation_error
-    )
-    
-    print(f"Batch submitted: {result.batch_id}")
-    print(f"Items enqueued: {result.enqueued}")
-    
-    # Get queue item for tracking
-    job = await workflow.get_queue_item()
-    print(f"Session ID: {job.session_id}")
-    print(f"Subscribed to queue events for session")
-    
-    # Wait for completion with live updates
-    try:
-        job = await workflow.wait_for_completion(timeout=60.0)
-        print(f"✅ Workflow completed successfully!")
-        return job
-    except asyncio.TimeoutError:
-        print("❌ Job timed out, cancelling...")
-        await workflow.cancel()
-        raise
-    except Exception as e:
-        print(f"❌ Job failed: {e}")
-        raise
-
-
-# Usage examples showing different approaches:
-
-# 1. Simple synchronous for basic needs
+# Usage example:
 print("=== Synchronous Submission ===")
-job = submit_and_track_sync()
+queue_item = submit_and_track_sync()
 
-# 2. Async with real-time events for rich feedback
-print("\n=== Async with Events ===")
-job = asyncio.run(submit_and_track_async())
-
-# Both methods return the same SessionQueueItem object with results
-print(f"\nFinal status: {job.status}")
-print(f"Session ID: {job.session_id}")
-print(f"Batch ID: {job.batch_id}")
-if job.completed_at and job.started_at:
-    elapsed = (job.completed_at - job.started_at).total_seconds()
-    print(f"Total execution time: {elapsed}s")
+# Check final status
+print(f"\nFinal status: {queue_item['status']}")
+print(f"Session ID: {queue_item['session_id']}")
+print(f"Batch ID: {queue_item['batch_id']}")
 ```
 
 **Expected Output**:
 ```
 === Synchronous Submission ===
 Batch submitted: batch_abc123
-Items enqueued: 1/1
+Items enqueued: 1
 Item IDs: [42]
 Session ID: session_789xyz
 Status: pending
@@ -620,58 +554,37 @@ Status: pending
   Status: in_progress - Item 42
   Status: completed - Item 42
 ✅ Job completed successfully!
-  Execution time: 18.234s
-
-=== Async with Events ===  
-Batch submitted: batch_def456
-Items enqueued: 1
-Session ID: session_456def
-Subscribed to queue events for session
-🔵 Node started: f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90 (flux_model_loader)
-✅ Node complete: f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90
-🔵 Node started: 01f674f8-b3d1-4df1-acac-6cb8e0bfb63c (flux_text_encoder)
-⏳ Progress: 50% - Encoding tokens
-✅ Node complete: 01f674f8-b3d1-4df1-acac-6cb8e0bfb63c
-🔵 Node started: 9c773392-5647-4f2b-958e-9da1707b6e6a (denoise_latents)
-⏳ Progress: 10% - Step 2/20
-⏳ Progress: 50% - Step 10/20
-⏳ Progress: 100% - Step 20/20
-✅ Node complete: 9c773392-5647-4f2b-958e-9da1707b6e6a
-🔵 Node started: vae_decode (l2i)
-✅ Node complete: vae_decode
-🔵 Node started: save_image (image)
-✅ Node complete: save_image
-   Generated image: abc123_mountain_landscape.png
-✅ Workflow completed successfully!
+  Item ID: 42
 
 Final status: completed
-Session ID: session_456def
-Batch ID: batch_def456
-Total execution time: 18.234s
+Session ID: session_789xyz
+Batch ID: batch_abc123
 ```
 
 **Key Design Points**:
 
-1. **Two Submission Patterns**:
-   - **Synchronous**: `submit_sync()` returns EnqueueBatchResult, then poll via API
-   - **Asynchronous**: `await submit()` with Socket.IO event streaming for real-time updates
+1. **Workflow Submission Process**:
+   - Convert workflow definition to API format (nodes dict, edges list)
+   - Submit to queue endpoint `/api/v1/queue/{queue_id}/enqueue_batch`
+   - Receive batch_id and item_ids for tracking
+   - Store queue item information for monitoring
 
-2. **Real-time Event System**:
-   - Socket.IO at `/ws/socket.io` endpoint for live updates
-   - Event types: InvocationStartedEvent, InvocationProgressEvent, InvocationCompleteEvent, InvocationErrorEvent
-   - Queue subscription via `subscribe_queue` event with queue_id
-   - Per-node granular updates with node_id and invocation_type
+2. **Status Polling System**:
+   - Poll queue item endpoint `/api/v1/queue/{queue_id}/i/{item_id}`
+   - Track status transitions: pending → in_progress → completed/failed/cancelled
+   - Configurable poll interval and timeout
+   - Optional progress callback for real-time updates
 
-3. **Job Tracking Information**:
-   - **SessionQueueItem** model contains execution metadata
-   - **EnqueueBatchResult** provides batch_id, item_ids, enqueued count
-   - Item status: pending, in_progress, completed, failed, canceled
-   - Timestamps: created_at, started_at, completed_at for timing
+3. **Queue Item Structure**:
+   - Contains session_id, batch_id, item_id for identification
+   - Status field indicates current execution state
+   - Timestamps for created_at, started_at, completed_at
+   - Results embedded in completed queue item
 
 4. **Error Handling & Cancellation**:
    - Timeout protection with automatic cancellation
+   - Cancel endpoint `/api/v1/queue/{queue_id}/i/{item_id}/cancel`
    - Graceful error propagation with detailed messages
-   - `workflow.cancel()` for user-initiated cancellation
    - Cleanup of partial results on failure
 
 ### Use case 4: retrieving outputs and cleaning up

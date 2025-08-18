@@ -7,6 +7,7 @@ of a workflow and manages input configuration, submission, and result retrieval.
 
 from __future__ import annotations
 
+import time
 from typing import TYPE_CHECKING, Any, Callable
 
 from pydantic import BaseModel, ConfigDict, PrivateAttr, model_validator
@@ -162,6 +163,11 @@ class WorkflowHandle:
         self.inputs: list[IvkWorkflowInput] = []
         self.job: IvkJob | None = None
         self.uploaded_assets: list[str] = []
+        
+        # Queue tracking
+        self.batch_id: str | None = None
+        self.item_id: int | None = None
+        self.session_id: str | None = None
 
         # Initialize inputs from the workflow definition
         self._initialize_inputs()
@@ -602,7 +608,7 @@ class WorkflowHandle:
         queue_id: str = "default",
         board_id: str | None = None,
         priority: int = 0,
-    ) -> Any:  # Would return EnqueueBatchResult
+    ) -> dict[str, Any]:
         """
         Submit the workflow for execution synchronously.
 
@@ -617,8 +623,8 @@ class WorkflowHandle:
 
         Returns
         -------
-        EnqueueBatchResult
-            The submission result with batch and item IDs.
+        dict[str, Any]
+            The submission result with batch_id, item_ids, and enqueued count.
 
         Raises
         ------
@@ -627,7 +633,65 @@ class WorkflowHandle:
         RuntimeError
             If submission fails.
         """
-        raise NotImplementedError
+        # Validate inputs first
+        validation_errors = self.validate_inputs()
+        if validation_errors:
+            error_msgs = []
+            for idx, errors in validation_errors.items():
+                input_info = self.inputs[idx]
+                error_msgs.append(f"[{idx}] {input_info.label}: {', '.join(errors)}")
+            raise ValueError(f"Input validation failed: {'; '.join(error_msgs)}")
+        
+        # Convert workflow to API format
+        api_graph = self._convert_to_api_format(board_id)
+        
+        # Prepare batch submission
+        batch_data = {
+            "prepend": priority > 0,  # Higher priority items go to front
+            "batch": {
+                "graph": api_graph,
+                "runs": 1
+            }
+        }
+        
+        # Submit to queue
+        url = f"/queue/{queue_id}/enqueue_batch"
+        try:
+            response = self.client._make_request("POST", url, json=batch_data)
+            result = response.json()
+            
+            # Extract batch information
+            batch_info = result.get("batch", {})
+            self.batch_id = batch_info.get("batch_id")
+            item_ids = result.get("item_ids", [])
+            
+            if not self.batch_id or not item_ids:
+                raise RuntimeError(f"Invalid submission response: {result}")
+            
+            # Store first item ID for tracking
+            self.item_id = item_ids[0]
+            
+            # Get session ID from queue item
+            queue_item = self._get_queue_item_by_id(queue_id, self.item_id)
+            if queue_item:
+                self.session_id = queue_item.get("session_id")
+            
+            return {
+                "batch_id": self.batch_id,
+                "item_ids": item_ids,
+                "enqueued": len(item_ids),
+                "session_id": self.session_id
+            }
+            
+        except Exception as e:
+            # Try to get error details from response
+            if hasattr(e, 'response') and e.response is not None:
+                try:
+                    error_detail = e.response.json()
+                    raise RuntimeError(f"Workflow submission failed: {error_detail}")
+                except:
+                    pass
+            raise RuntimeError(f"Workflow submission failed: {e}")
 
     async def submit(
         self,
@@ -673,8 +737,9 @@ class WorkflowHandle:
         self,
         poll_interval: float = 0.5,
         timeout: float = 60.0,
-        progress_callback: Callable[[IvkJob], None] | None = None,
-    ) -> IvkJob:
+        progress_callback: Callable[[dict[str, Any]], None] | None = None,
+        queue_id: str = "default"
+    ) -> dict[str, Any]:
         """
         Wait for workflow completion synchronously.
 
@@ -686,11 +751,13 @@ class WorkflowHandle:
             Maximum time to wait in seconds.
         progress_callback : Callable, optional
             Callback for progress updates.
+        queue_id : str
+            The queue ID to poll.
 
         Returns
         -------
-        IvkJob
-            The completed job.
+        dict[str, Any]
+            The completed queue item.
 
         Raises
         ------
@@ -699,7 +766,41 @@ class WorkflowHandle:
         RuntimeError
             If the job fails.
         """
-        raise NotImplementedError
+        if not self.item_id:
+            raise RuntimeError("No job submitted to wait for")
+        
+        start_time = time.time()
+        last_status = None
+        
+        while time.time() - start_time < timeout:
+            # Get current queue item status
+            queue_item = self._get_queue_item_by_id(queue_id, self.item_id)
+            
+            if not queue_item:
+                raise RuntimeError(f"Queue item {self.item_id} not found")
+            
+            current_status = queue_item.get("status")
+            
+            # Call progress callback if status changed
+            if current_status != last_status:
+                if progress_callback:
+                    progress_callback(queue_item)
+                last_status = current_status
+            
+            # Check if completed
+            if current_status == "completed":
+                return queue_item
+            elif current_status == "failed":
+                error_msg = queue_item.get("error", "Unknown error")
+                raise RuntimeError(f"Workflow execution failed: {error_msg}")
+            elif current_status == "canceled":
+                raise RuntimeError("Workflow execution was canceled")
+            
+            # Wait before next poll
+            time.sleep(poll_interval)
+        
+        # Timeout reached
+        raise TimeoutError(f"Workflow execution timed out after {timeout} seconds")
 
     async def wait_for_completion(self, timeout: float | None = None) -> IvkJob:
         """
@@ -724,20 +825,33 @@ class WorkflowHandle:
         """
         raise NotImplementedError
 
-    def get_queue_item(self) -> Any | None:  # Would return SessionQueueItem
+    def get_queue_item(self, queue_id: str = "default") -> dict[str, Any] | None:
         """
         Get the current queue item for tracking.
 
+        Parameters
+        ----------
+        queue_id : str
+            The queue ID to query.
+
         Returns
         -------
-        Optional[SessionQueueItem]
+        Optional[dict[str, Any]]
             The queue item if submitted, None otherwise.
         """
-        raise NotImplementedError
+        if not self.item_id:
+            return None
+        
+        return self._get_queue_item_by_id(queue_id, self.item_id)
 
-    def cancel(self) -> bool:
+    def cancel(self, queue_id: str = "default") -> bool:
         """
         Cancel the current workflow execution.
+
+        Parameters
+        ----------
+        queue_id : str
+            The queue ID.
 
         Returns
         -------
@@ -749,7 +863,15 @@ class WorkflowHandle:
         RuntimeError
             If no job is running or cancellation fails.
         """
-        raise NotImplementedError
+        if not self.item_id:
+            raise RuntimeError("No job to cancel")
+        
+        url = f"/queue/{queue_id}/i/{self.item_id}/cancel"
+        try:
+            response = self.client._make_request("DELETE", url)
+            return response.status_code == 200
+        except Exception as e:
+            raise RuntimeError(f"Failed to cancel job: {e}")
 
     def get_outputs(self) -> Any:  # Would return WorkflowOutput
         """
@@ -873,10 +995,147 @@ class WorkflowHandle:
 
         return data
 
+    def _convert_to_api_format(self, board_id: str | None = None) -> dict[str, Any]:
+        """
+        Convert workflow definition to API graph format.
+        
+        Parameters
+        ----------
+        board_id : str, optional
+            Default board for outputs.
+        
+        Returns
+        -------
+        dict[str, Any]
+            API-formatted graph structure.
+        """
+        # Get nodes and edges from definition
+        ui_nodes = self.definition.nodes
+        ui_edges = self.definition.edges
+        
+        # Build a set of fields that are connected via edges (these shouldn't be in the node)
+        connected_fields = set()
+        for edge in ui_edges:
+            target_node = edge.get("target")
+            target_field = edge.get("targetHandle")
+            if target_node and target_field:
+                connected_fields.add(f"{target_node}.{target_field}")
+        
+        # Convert nodes to API format
+        api_nodes = {}
+        for node in ui_nodes:
+            node_id = node.get("id")
+            node_data = node.get("data", {})
+            
+            # Create API node
+            api_node = {
+                "id": node_id,
+                "type": node_data.get("type"),
+                "is_intermediate": node_data.get("isIntermediate", True),
+                "use_cache": node_data.get("useCache", True)
+            }
+            
+            # Process inputs - merge current values from WorkflowHandle
+            node_inputs = node_data.get("inputs", {})
+            for field_name, field_data in node_inputs.items():
+                # Skip fields that are connected via edges
+                if f"{node_id}.{field_name}" in connected_fields:
+                    continue
+                
+                # Check if this field is exposed in our inputs
+                field_value = self._get_field_value_for_node(node_id, field_name, field_data)
+                # Only include the field if it has a non-None value
+                if field_value is not None:
+                    api_node[field_name] = field_value
+            
+            # Apply board_id to save_image nodes if provided
+            if board_id and node_data.get("type") == "save_image":
+                if "board" not in api_node or not api_node["board"]:
+                    api_node["board"] = {"board_id": board_id}
+            
+            api_nodes[node_id] = api_node
+        
+        # Convert edges to API format
+        api_edges = []
+        for edge in ui_edges:
+            api_edge = {
+                "source": {
+                    "node_id": edge.get("source"),
+                    "field": edge.get("sourceHandle")
+                },
+                "destination": {
+                    "node_id": edge.get("target"),
+                    "field": edge.get("targetHandle")
+                }
+            }
+            api_edges.append(api_edge)
+        
+        return {
+            "id": self.definition.id or "workflow",
+            "nodes": api_nodes,
+            "edges": api_edges
+        }
+    
+    def _get_field_value_for_node(
+        self, node_id: str, field_name: str, field_data: dict[str, Any]
+    ) -> Any:
+        """
+        Get the current field value for a node field.
+        
+        Checks if this field is exposed in our inputs and returns
+        the current value, otherwise returns the default from the definition.
+        """
+        # Look for this field in our exposed inputs
+        for inp in self.inputs:
+            if inp.node_id == node_id and inp.field_name == field_name:
+                # For primitive fields with value property, return just the value
+                # For complex fields, convert to API format
+                field = inp.field
+                if hasattr(field, 'value'):
+                    # Primitive field - return just the value
+                    return field.value
+                else:
+                    # Complex field - convert to API format
+                    return field.to_api_format()
+        
+        # Not exposed, use value from definition
+        if isinstance(field_data, dict) and "value" in field_data:
+            return field_data["value"]
+        return field_data
+    
+    def _get_queue_item_by_id(self, queue_id: str, item_id: int) -> dict[str, Any] | None:
+        """
+        Get a specific queue item by ID.
+        
+        Parameters
+        ----------
+        queue_id : str
+            The queue ID.
+        item_id : int
+            The item ID.
+        
+        Returns
+        -------
+        Optional[dict[str, Any]]
+            The queue item data or None if not found.
+        """
+        url = f"/queue/{queue_id}/i/{item_id}"
+        try:
+            response = self.client._make_request("GET", url)
+            return response.json()
+        except Exception:
+            return None
+    
     def __repr__(self) -> str:
         """String representation of the workflow handle."""
+        status = "none"
+        if self.batch_id:
+            status = "submitted"
+        elif self.job:
+            status = "pending"
+        
         return (
             f"WorkflowHandle(name='{self.definition.name}', "
             f"inputs={len(self.inputs)}, "
-            f"job={'pending' if self.job else 'none'})"
+            f"status={status})"
         )

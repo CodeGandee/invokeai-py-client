@@ -37,3 +37,48 @@ After this change, also modify the use case description in `context/tasks/featur
 # Task 3: revise use case 2 in `workflow-usecase.md`
 
 The new design of `IvkField` does not guarantee that the `value` property is always present, revise use case 2 to avoid using `value` directly, unless you are sure the `value` property is present. Also look at other aspects (like json conversion etc) and revise the use case description accordingly.
+
+# Task 4: revise `IvkModelIdentifierField`
+
+The `IvkModelIdentifierField` class should be revised to ensure it correctly maps the InvokeAI model identifier structure. You can see there is a difference. Also, note that typically our IvkField should not have a `value` property unless the corresponding InvokeAI field has a `value` property (typically for primitive types), and in our Ivk*Field structure docstring, we should mention which InvokeAI field it corresponds to.
+
+```python
+# Our model identifier field.
+# src\invokeai_py_client\ivk_fields\models.py
+class IvkModelIdentifierField(BaseModel, PydanticFieldMixin, IvkField[dict[str, str]]):
+    """
+    Model identifier field for DNN model references.
+    
+    Handles model references with key, name, base, and type attributes.
+    
+    Examples
+    --------
+    >>> field = IvkModelIdentifierField()
+    >>> field.value = {
+    ...     "key": "sdxl-model-key",
+    ...     "name": "SDXL 1.0",
+    ...     "base": "sdxl",
+    ...     "type": "main"
+    ... }
+    """
+
+    model_config = ConfigDict(validate_assignment=True, extra="allow")
+
+    value: Optional[dict[str, str]] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+```
+
+```python
+# InvokeAI's model identifier field.
+# context\refcode\InvokeAI\invokeai\app\invocations\model.py
+class ModelIdentifierField(BaseModel):
+    key: str = Field(description="The model's unique key")
+    hash: str = Field(description="The model's BLAKE3 hash")
+    name: str = Field(description="The model's name")
+    base: BaseModelType = Field(description="The model's base model type")
+    type: ModelType = Field(description="The model's type")
+    submodel_type: Optional[SubModelType] = Field(
+        description="The submodel to load, if this is a main model", default=None
+    )
+```
