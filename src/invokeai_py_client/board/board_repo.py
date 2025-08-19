@@ -198,10 +198,11 @@ class BoardRepository:
         >>> board_handle = board_repo.create_board("My Artwork")
         >>> board_handle.upload_image("art.png")
         """
-        data = {"board_name": name, "is_private": is_private}
+        # API expects these as query parameters, not JSON body
+        params = {"board_name": name, "is_private": is_private}
 
         try:
-            response = self._client._make_request("POST", "/boards/", json=data)
+            response = self._client._make_request("POST", "/boards/", params=params)
             board = Board(**response.json())
             return self.get_board_handle(board.board_id)
         except requests.HTTPError as e:

@@ -216,19 +216,30 @@ class BoardHandle:
         with open(file_path, "rb") as f:
             files = {"file": (file_path.name, f, self._get_mime_type(file_path))}
 
-            data = {
+            # API expects these as query parameters, not form data
+            params = {
                 "image_category": image_category.value,
-                "is_intermediate": str(is_intermediate).lower(),
+                "is_intermediate": is_intermediate,
                 "board_id": self.board_id,
             }
 
             if session_id:
-                data["session_id"] = session_id
+                params["session_id"] = session_id
 
-            response = self.client.session.post(
+            # Use plain requests.post for multipart upload to avoid session header conflicts
+            # The session's Content-Type: application/json breaks multipart uploads
+            import requests as req
+            
+            # Copy auth headers if present
+            headers = {}
+            if "Authorization" in self.client.session.headers:
+                headers["Authorization"] = self.client.session.headers["Authorization"]
+            
+            response = req.post(
                 f"{self.client.base_url}/images/upload",
                 files=files,
-                data=data,
+                params=params,
+                headers=headers,
                 timeout=self.client.timeout,
             )
 
@@ -284,22 +295,34 @@ class BoardHandle:
 
         # Create file-like object
         file_obj = BytesIO(image_data)
+        file_obj.seek(0)  # Ensure we're at the beginning of the buffer
 
         files = {"file": (filename, file_obj, mime_type)}
 
-        data = {
+        # API expects these as query parameters, not form data
+        params = {
             "image_category": image_category.value,
-            "is_intermediate": str(is_intermediate).lower(),
+            "is_intermediate": is_intermediate,
             "board_id": self.board_id,
         }
 
         if session_id:
-            data["session_id"] = session_id
+            params["session_id"] = session_id
 
-        response = self.client.session.post(
+        # Use plain requests.post for multipart upload to avoid session header conflicts
+        # The session's Content-Type: application/json breaks multipart uploads
+        import requests as req
+        
+        # Copy auth headers if present
+        headers = {}
+        if "Authorization" in self.client.session.headers:
+            headers["Authorization"] = self.client.session.headers["Authorization"]
+        
+        response = req.post(
             f"{self.client.base_url}/images/upload",
             files=files,
-            data=data,
+            params=params,
+            headers=headers,
             timeout=self.client.timeout,
         )
 

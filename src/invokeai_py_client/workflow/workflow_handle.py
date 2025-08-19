@@ -239,8 +239,9 @@ class WorkflowHandle:
                 )
 
                 # Calculate JSONPath expression for this field
-                # Using filter syntax to find the specific node by ID
-                jsonpath_expr = f"$.nodes[?(@.id='{node_id}')].data.inputs.{field_name}.value"
+                # Points to the entire field dict object (not just .value)
+                # We'll merge to_api_format() results with this dict
+                jsonpath_expr = f"$.nodes[?(@.id='{node_id}')].data.inputs.{field_name}"
 
                 # Create IvkWorkflowInput
                 workflow_input = IvkWorkflowInput(
@@ -1470,21 +1471,25 @@ class WorkflowHandle:
             # Parse the stored JSONPath expression
             jsonpath_expr = parse_jsonpath(inp.jsonpath)
             
-            # Get the field value
+            # Get the field's API format
             field = inp.field
-            if hasattr(field, 'value'):
-                field_value = field.value
-            else:
-                # Complex field - convert to API format
-                field_value = field.to_api_format()
+            api_format = field.to_api_format()
             
-            # Update the value in the workflow copy using JSONPath
-            if field_value is not None:
-                matches = jsonpath_expr.find(workflow_copy)
-                # Debug: uncomment to trace JSONPath updates
-                # print(f"Updating {inp.field_name} via JSONPath: found {len(matches)} matches")
-                for match in matches:
-                    match.full_path.update(workflow_copy, field_value)
+            # Find the target field dict in the workflow
+            matches = jsonpath_expr.find(workflow_copy)
+            for match in matches:
+                # Get the existing field dict
+                existing_dict = match.value
+                if not isinstance(existing_dict, dict):
+                    existing_dict = {}
+                
+                # Merge the API format data with existing dict
+                # This preserves keys like 'name', 'label', 'description'
+                # while updating/adding the 'value' and other keys from to_api_format()
+                merged_dict = {**existing_dict, **api_format}
+                
+                # Update the field dict in the workflow
+                match.full_path.update(workflow_copy, merged_dict)
         
         # Build a set of fields that are connected via edges.
         # Historically we attempted to REMOVE these fields from the serialized

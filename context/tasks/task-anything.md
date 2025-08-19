@@ -43,3 +43,12 @@ revise the implementation of relevant methods workflow subsystem.
 - useful references
 - - example workflow json: `data\workflows\sdxl-text-to-image.json`
 - - example query sent to the InvokeAI API: `data\api-calls\call-wf-sdxl-text-to-image.json` with the `workflow-inputs` filled in.
+
+# Task 2.1.2: test the `flux-image-to-image` workflow
+
+try this workflow `data\workflows\flux-image-to-image.json`, you need to:
+- create a test board, name whatever you like, do not conflict with existing boards
+- upload an image to the board
+- use the image as the input to the workflow
+- prepare all other inputs as required by the workflow
+- submit the workflow and wait until it is completed
