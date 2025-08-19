@@ -1,0 +1,1101 @@
+{
+  "prepend": false,
+  "batch": {
+    "graph": {
+      "id": "workflow",
+      "nodes": {
+        "2981a67c-480f-4237-9384-26b68dbf912b": {
+          "id": "2981a67c-480f-4237-9384-26b68dbf912b",
+          "type": "flux_vae_encode",
+          "is_intermediate": true,
+          "use_cache": true
+        },
+        "7e5172eb-48c1-44db-a770-8fd83e1435d1": {
+          "id": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+          "type": "flux_vae_decode",
+          "is_intermediate": true,
+          "use_cache": true
+        },
+        "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90": {
+          "id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+          "type": "flux_model_loader",
+          "is_intermediate": true,
+          "use_cache": true,
+          "model": {
+            "key": "bcc9c810-5cfd-418a-b7c1-42facca130b5",
+            "hash": "blake3:40ace2cf5d03a95ec710054ec5e4c8e864341a7ebfefe188ed750c41a0463795",
+            "name": "flux1-dev",
+            "base": "flux",
+            "type": "main",
+            "submodel_type": null
+          },
+          "t5_encoder_model": {
+            "key": "cc644930-283a-464f-b48f-831e6add8ed5",
+            "hash": "blake3:38aafa42899cf4fe8b1055d17de6e7fe15af104d193da4a320e34ca24db32754",
+            "name": "t5_bnb_int8_quantized_encoder",
+            "base": "any",
+            "type": "t5_encoder",
+            "submodel_type": null
+          },
+          "clip_embed_model": {
+            "key": "6fca3865-ce3f-45cd-a4d4-1086ea40504e",
+            "hash": "blake3:17c19f0ef941c3b7609a9c94a659ca5364de0be364a91d4179f0e39ba17c3b70",
+            "name": "clip-vit-large-patch14",
+            "base": "any",
+            "type": "clip_embed",
+            "submodel_type": null
+          },
+          "vae_model": {
+            "key": "53fdb8d0-6376-44b4-a02f-d25fdb375451",
+            "hash": "blake3:ce21cb76364aa6e2421311cf4a4b5eb052a76c4f1cd207b50703d8978198a068",
+            "name": "FLUX.1-schnell_ae",
+            "base": "flux",
+            "type": "vae",
+            "submodel_type": null
+          }
+        },
+        "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c": {
+          "id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+          "type": "flux_text_encoder",
+          "is_intermediate": true,
+          "use_cache": true
+        },
+        "4754c534-a5f3-4ad0-9382-7887985e668c": {
+          "id": "4754c534-a5f3-4ad0-9382-7887985e668c",
+          "type": "rand_int",
+          "is_intermediate": true,
+          "use_cache": false,
+          "low": 0,
+          "high": 2147483647
+        },
+        "e87ba3b6-c98f-4644-903a-e13c421f2add": {
+          "id": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+          "type": "flux_text_encoder",
+          "is_intermediate": true,
+          "use_cache": true
+        },
+        "f14341d4-34a5-42a5-8221-acf98d82add7": {
+          "id": "f14341d4-34a5-42a5-8221-acf98d82add7",
+          "type": "metadata_from_image",
+          "is_intermediate": true,
+          "use_cache": true
+        },
+        "9c773392-5647-4f2b-958e-9da1707b6e6a": {
+          "id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+          "type": "flux_denoise_meta",
+          "is_intermediate": true,
+          "use_cache": true,
+          "denoising_end": 1,
+          "add_noise": true,
+          "cfg_scale": 1,
+          "cfg_scale_start_step": 0,
+          "cfg_scale_end_step": -1,
+          "num_steps": 8,
+          "guidance": 4
+        },
+        "fc066a36-5d48-4780-8c2b-d76c70ae0807": {
+          "id": "fc066a36-5d48-4780-8c2b-d76c70ae0807",
+          "type": "sdxl_model_loader",
+          "is_intermediate": true,
+          "use_cache": true,
+          "model": {
+            "key": "40034797-106d-433b-984f-6de6a1518449",
+            "hash": "blake3:8be5050cb86a74487c6d034a1238020ea5855a19b11733813dd643c70e37f4fe",
+            "name": "AnythingXL_xl",
+            "base": "sdxl",
+            "type": "main",
+            "submodel_type": null
+          }
+        },
+        "0a167316-ba62-4218-9fcf-b3cff7963df8": {
+          "id": "0a167316-ba62-4218-9fcf-b3cff7963df8",
+          "type": "string",
+          "is_intermediate": true,
+          "use_cache": true,
+          "value": "A mystical forest with bioluminescent trees, ethereal floating lights, ancient stone ruins covered in glowing moss, moonlight streaming through the canopy, highly detailed fantasy artwork, professional photography"
+        },
+        "1711c26d-2b53-473c-aaf8-f600443d3c34": {
+          "id": "1711c26d-2b53-473c-aaf8-f600443d3c34",
+          "type": "string",
+          "is_intermediate": true,
+          "use_cache": true,
+          "value": "blurry, low quality, distorted, oversaturated, amateur, bad anatomy, text, watermark, signature"
+        },
+        "8ae2359e-61ff-4dcc-be33-4f0aa1e7272b": {
+          "id": "8ae2359e-61ff-4dcc-be33-4f0aa1e7272b",
+          "type": "rand_int",
+          "is_intermediate": true,
+          "use_cache": false,
+          "low": 0,
+          "high": 2147483647
+        },
+        "0960d680-c42d-4253-8a84-6205115722ca": {
+          "id": "0960d680-c42d-4253-8a84-6205115722ca",
+          "type": "noise",
+          "is_intermediate": true,
+          "use_cache": true,
+          "use_cpu": true
+        },
+        "f7a96570-59e0-400d-8fc9-889a438534c0": {
+          "id": "f7a96570-59e0-400d-8fc9-889a438534c0",
+          "type": "denoise_latents_meta",
+          "is_intermediate": true,
+          "use_cache": true,
+          "steps": 15,
+          "cfg_scale": 7.0,
+          "denoising_start": 0,
+          "denoising_end": 1,
+          "scheduler": "euler_a",
+          "cfg_rescale_multiplier": 0
+        },
+        "3f6b98e4-884d-414b-8b4c-c4be3ede7d17": {
+          "id": "3f6b98e4-884d-414b-8b4c-c4be3ede7d17",
+          "type": "sdxl_compel_prompt",
+          "is_intermediate": true,
+          "use_cache": true,
+          "original_width": 1024,
+          "original_height": 1024,
+          "crop_top": 0,
+          "crop_left": 0,
+          "target_width": 1024,
+          "target_height": 1024
+        },
+        "805b46c9-f930-4aba-8fda-542b8959c502": {
+          "id": "805b46c9-f930-4aba-8fda-542b8959c502",
+          "type": "sdxl_compel_prompt",
+          "is_intermediate": true,
+          "use_cache": true,
+          "original_width": 1024,
+          "original_height": 1024,
+          "crop_top": 0,
+          "crop_left": 0,
+          "target_width": 1024,
+          "target_height": 1024
+        },
+        "cf3922d2-e1bc-40cd-8fcd-2a93708d52c2": {
+          "id": "cf3922d2-e1bc-40cd-8fcd-2a93708d52c2",
+          "type": "l2i",
+          "is_intermediate": true,
+          "use_cache": true,
+          "tiled": false,
+          "tile_size": 0,
+          "fp32": true
+        },
+        "ff101be0-7d6f-4ff0-8256-eac926308d7a": {
+          "id": "ff101be0-7d6f-4ff0-8256-eac926308d7a",
+          "type": "notes",
+          "is_intermediate": true,
+          "use_cache": true
+        },
+        "4414d4b5-82c3-4513-8c3f-86d88c24aadc": {
+          "id": "4414d4b5-82c3-4513-8c3f-86d88c24aadc",
+          "type": "save_image",
+          "is_intermediate": false,
+          "use_cache": false,
+          "board": {
+            "board_id": "none"
+          }
+        },
+        "67e997b2-2d56-43f4-8d2e-886c04e18d9f": {
+          "id": "67e997b2-2d56-43f4-8d2e-886c04e18d9f",
+          "type": "save_image",
+          "is_intermediate": false,
+          "use_cache": true,
+          "board": {
+            "board_id": "none"
+          }
+        },
+        "db26ef3d-eb09-4a6c-b6cc-e1fd8f1b5bd0": {
+          "id": "db26ef3d-eb09-4a6c-b6cc-e1fd8f1b5bd0",
+          "type": "integer",
+          "is_intermediate": true,
+          "use_cache": true,
+          "value": 1024
+        },
+        "b3d2746d-483a-4133-a973-a780a97fcb1f": {
+          "id": "b3d2746d-483a-4133-a973-a780a97fcb1f",
+          "type": "integer",
+          "is_intermediate": true,
+          "use_cache": true,
+          "value": 1024
+        },
+        "2ebc24ee-2e21-4d32-b3d3-9b7025cc2045": {
+          "id": "2ebc24ee-2e21-4d32-b3d3-9b7025cc2045",
+          "type": "float_math",
+          "is_intermediate": true,
+          "use_cache": true,
+          "operation": "SUB",
+          "a": 1,
+          "b": 0.85
+        },
+        "276f9380-db99-44ea-80a7-98818466fd13": {
+          "id": "276f9380-db99-44ea-80a7-98818466fd13",
+          "type": "float_to_int",
+          "is_intermediate": true,
+          "use_cache": true,
+          "multiple": 16,
+          "method": "Nearest"
+        },
+        "8c3d3372-d44f-445b-a3e2-516517b166ae": {
+          "id": "8c3d3372-d44f-445b-a3e2-516517b166ae",
+          "type": "float_to_int",
+          "is_intermediate": true,
+          "use_cache": true,
+          "multiple": 16,
+          "method": "Nearest"
+        },
+        "79761768-7da0-425b-bffb-f6e892e1abd5": {
+          "id": "79761768-7da0-425b-bffb-f6e892e1abd5",
+          "type": "notes",
+          "is_intermediate": true,
+          "use_cache": true
+        },
+        "b04b5a75-3320-4fe1-8605-ed405ed1881e": {
+          "id": "b04b5a75-3320-4fe1-8605-ed405ed1881e",
+          "type": "flux_controlnet",
+          "is_intermediate": true,
+          "use_cache": true,
+          "control_weight": 0.3,
+          "begin_step_percent": 0,
+          "end_step_percent": 1,
+          "resize_mode": "just_resize",
+          "instantx_control_mode": -1
+        },
+        "22178496-503a-4087-80f2-7407538363df": {
+          "id": "22178496-503a-4087-80f2-7407538363df",
+          "type": "hed_edge_detection",
+          "is_intermediate": true,
+          "use_cache": true,
+          "scribble": false
+        },
+        "56fb09f9-0fdc-499e-9933-de31c3aa6e61": {
+          "id": "56fb09f9-0fdc-499e-9933-de31c3aa6e61",
+          "type": "flux_denoise_meta",
+          "is_intermediate": true,
+          "use_cache": true,
+          "denoising_end": 1,
+          "add_noise": true,
+          "cfg_scale": 1,
+          "cfg_scale_start_step": 0,
+          "cfg_scale_end_step": -1,
+          "num_steps": 12,
+          "guidance": 4,
+          "seed": 0
+        },
+        "7489c19d-d8cf-40f8-85bd-17e8dd05ac67": {
+          "id": "7489c19d-d8cf-40f8-85bd-17e8dd05ac67",
+          "type": "flux_vae_decode",
+          "is_intermediate": true,
+          "use_cache": true
+        },
+        "abc466fe-12eb-48a5-87d8-488c8bda180f": {
+          "id": "abc466fe-12eb-48a5-87d8-488c8bda180f",
+          "type": "save_image",
+          "is_intermediate": false,
+          "use_cache": true,
+          "board": {
+            "board_id": "none"
+          }
+        },
+        "55727cb5-6a2c-45ab-963d-ce9ed2e1471c": {
+          "id": "55727cb5-6a2c-45ab-963d-ce9ed2e1471c",
+          "type": "flux_model_loader",
+          "is_intermediate": true,
+          "use_cache": true,
+          "model": {
+            "key": "bcc9c810-5cfd-418a-b7c1-42facca130b5",
+            "hash": "blake3:40ace2cf5d03a95ec710054ec5e4c8e864341a7ebfefe188ed750c41a0463795",
+            "name": "flux1-dev",
+            "base": "flux",
+            "type": "main",
+            "submodel_type": null
+          },
+          "t5_encoder_model": {
+            "key": "cc644930-283a-464f-b48f-831e6add8ed5",
+            "hash": "blake3:38aafa42899cf4fe8b1055d17de6e7fe15af104d193da4a320e34ca24db32754",
+            "name": "t5_bnb_int8_quantized_encoder",
+            "base": "any",
+            "type": "t5_encoder"
+          },
+          "clip_embed_model": {
+            "key": "6fca3865-ce3f-45cd-a4d4-1086ea40504e",
+            "hash": "blake3:17c19f0ef941c3b7609a9c94a659ca5364de0be364a91d4179f0e39ba17c3b70",
+            "name": "clip-vit-large-patch14",
+            "base": "any",
+            "type": "clip_embed"
+          },
+          "vae_model": {
+            "key": "53fdb8d0-6376-44b4-a02f-d25fdb375451",
+            "hash": "blake3:ce21cb76364aa6e2421311cf4a4b5eb052a76c4f1cd207b50703d8978198a068",
+            "name": "FLUX.1-schnell_ae",
+            "base": "flux",
+            "type": "vae"
+          }
+        },
+        "2dbb5d27-e695-4e8d-8555-bff827d87173": {
+          "id": "2dbb5d27-e695-4e8d-8555-bff827d87173",
+          "type": "float_math",
+          "is_intermediate": true,
+          "use_cache": true,
+          "operation": "SUB",
+          "a": 1,
+          "b": 0.8
+        },
+        "39447df2-51ff-4664-8024-cc1e708f30d1": {
+          "id": "39447df2-51ff-4664-8024-cc1e708f30d1",
+          "type": "flux_controlnet",
+          "is_intermediate": true,
+          "use_cache": true,
+          "control_weight": 0.05,
+          "begin_step_percent": 0,
+          "end_step_percent": 1,
+          "resize_mode": "just_resize",
+          "instantx_control_mode": -1
+        },
+        "ed8e37b5-16a0-4df8-8f9b-690d8a9f6bc3": {
+          "id": "ed8e37b5-16a0-4df8-8f9b-690d8a9f6bc3",
+          "type": "string_join_three",
+          "is_intermediate": true,
+          "use_cache": true,
+          "string_middle": ",",
+          "string_right": "8k resolution, award-winning photograph, cinematic lighting, photorealistic, ultra detailed"
+        },
+        "5656de6d-73ce-42cb-bf43-f2dc0ae34bba": {
+          "id": "5656de6d-73ce-42cb-bf43-f2dc0ae34bba",
+          "type": "string_join_three",
+          "is_intermediate": true,
+          "use_cache": true,
+          "string_middle": ",",
+          "string_right": "jpeg artifacts, cropped, out of frame, duplicate, low resolution, morbid"
+        },
+        "ad05198a-7fb1-44a4-945b-ad17315f7471": {
+          "id": "ad05198a-7fb1-44a4-945b-ad17315f7471",
+          "type": "model_identifier",
+          "is_intermediate": true,
+          "use_cache": true,
+          "model": {
+            "key": "6acd79db-272e-42f7-8e70-875fd1e0aa6e",
+            "hash": "blake3:daa3d564791ad41ffca2425ebabe9dcac6a665ac29c78f3590073b3b69ed8d54",
+            "name": "FLUX.1-dev-Controlnet-Union",
+            "base": "flux",
+            "type": "controlnet",
+            "submodel_type": null
+          }
+        }
+      },
+      "edges": [
+        {
+          "source": {
+            "node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "field": "vae"
+          },
+          "destination": {
+            "node_id": "2981a67c-480f-4237-9384-26b68dbf912b",
+            "field": "vae"
+          }
+        },
+        {
+          "source": {
+            "node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "field": "vae"
+          },
+          "destination": {
+            "node_id": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+            "field": "vae"
+          }
+        },
+        {
+          "source": {
+            "node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "field": "max_seq_len"
+          },
+          "destination": {
+            "node_id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+            "field": "t5_max_seq_len"
+          }
+        },
+        {
+          "source": {
+            "node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "field": "t5_encoder"
+          },
+          "destination": {
+            "node_id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+            "field": "t5_encoder"
+          }
+        },
+        {
+          "source": {
+            "node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "field": "clip"
+          },
+          "destination": {
+            "node_id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+            "field": "clip"
+          }
+        },
+        {
+          "source": {
+            "node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "field": "clip"
+          },
+          "destination": {
+            "node_id": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+            "field": "clip"
+          }
+        },
+        {
+          "source": {
+            "node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "field": "t5_encoder"
+          },
+          "destination": {
+            "node_id": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+            "field": "t5_encoder"
+          }
+        },
+        {
+          "source": {
+            "node_id": "f14341d4-34a5-42a5-8221-acf98d82add7",
+            "field": "metadata"
+          },
+          "destination": {
+            "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "field": "metadata"
+          }
+        },
+        {
+          "source": {
+            "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "field": "metadata"
+          },
+          "destination": {
+            "node_id": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+            "field": "metadata"
+          }
+        },
+        {
+          "source": {
+            "node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "field": "transformer"
+          },
+          "destination": {
+            "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "field": "transformer"
+          }
+        },
+        {
+          "source": {
+            "node_id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+            "field": "conditioning"
+          },
+          "destination": {
+            "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "field": "positive_text_conditioning"
+          }
+        },
+        {
+          "source": {
+            "node_id": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+            "field": "conditioning"
+          },
+          "destination": {
+            "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "field": "negative_text_conditioning"
+          }
+        },
+        {
+          "source": {
+            "node_id": "4754c534-a5f3-4ad0-9382-7887985e668c",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "field": "seed"
+          }
+        },
+        {
+          "source": {
+            "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "field": "latents"
+          },
+          "destination": {
+            "node_id": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+            "field": "latents"
+          }
+        },
+        {
+          "source": {
+            "node_id": "8ae2359e-61ff-4dcc-be33-4f0aa1e7272b",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "0960d680-c42d-4253-8a84-6205115722ca",
+            "field": "seed"
+          }
+        },
+        {
+          "source": {
+            "node_id": "fc066a36-5d48-4780-8c2b-d76c70ae0807",
+            "field": "clip"
+          },
+          "destination": {
+            "node_id": "3f6b98e4-884d-414b-8b4c-c4be3ede7d17",
+            "field": "clip"
+          }
+        },
+        {
+          "source": {
+            "node_id": "fc066a36-5d48-4780-8c2b-d76c70ae0807",
+            "field": "clip2"
+          },
+          "destination": {
+            "node_id": "3f6b98e4-884d-414b-8b4c-c4be3ede7d17",
+            "field": "clip2"
+          }
+        },
+        {
+          "source": {
+            "node_id": "0a167316-ba62-4218-9fcf-b3cff7963df8",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "3f6b98e4-884d-414b-8b4c-c4be3ede7d17",
+            "field": "prompt"
+          }
+        },
+        {
+          "source": {
+            "node_id": "0a167316-ba62-4218-9fcf-b3cff7963df8",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "3f6b98e4-884d-414b-8b4c-c4be3ede7d17",
+            "field": "style"
+          }
+        },
+        {
+          "source": {
+            "node_id": "fc066a36-5d48-4780-8c2b-d76c70ae0807",
+            "field": "clip"
+          },
+          "destination": {
+            "node_id": "805b46c9-f930-4aba-8fda-542b8959c502",
+            "field": "clip"
+          }
+        },
+        {
+          "source": {
+            "node_id": "fc066a36-5d48-4780-8c2b-d76c70ae0807",
+            "field": "clip2"
+          },
+          "destination": {
+            "node_id": "805b46c9-f930-4aba-8fda-542b8959c502",
+            "field": "clip2"
+          }
+        },
+        {
+          "source": {
+            "node_id": "1711c26d-2b53-473c-aaf8-f600443d3c34",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "805b46c9-f930-4aba-8fda-542b8959c502",
+            "field": "prompt"
+          }
+        },
+        {
+          "source": {
+            "node_id": "1711c26d-2b53-473c-aaf8-f600443d3c34",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "805b46c9-f930-4aba-8fda-542b8959c502",
+            "field": "style"
+          }
+        },
+        {
+          "source": {
+            "node_id": "805b46c9-f930-4aba-8fda-542b8959c502",
+            "field": "conditioning"
+          },
+          "destination": {
+            "node_id": "f7a96570-59e0-400d-8fc9-889a438534c0",
+            "field": "negative_conditioning"
+          }
+        },
+        {
+          "source": {
+            "node_id": "3f6b98e4-884d-414b-8b4c-c4be3ede7d17",
+            "field": "conditioning"
+          },
+          "destination": {
+            "node_id": "f7a96570-59e0-400d-8fc9-889a438534c0",
+            "field": "positive_conditioning"
+          }
+        },
+        {
+          "source": {
+            "node_id": "0960d680-c42d-4253-8a84-6205115722ca",
+            "field": "noise"
+          },
+          "destination": {
+            "node_id": "f7a96570-59e0-400d-8fc9-889a438534c0",
+            "field": "noise"
+          }
+        },
+        {
+          "source": {
+            "node_id": "f7a96570-59e0-400d-8fc9-889a438534c0",
+            "field": "latents"
+          },
+          "destination": {
+            "node_id": "cf3922d2-e1bc-40cd-8fcd-2a93708d52c2",
+            "field": "latents"
+          }
+        },
+        {
+          "source": {
+            "node_id": "fc066a36-5d48-4780-8c2b-d76c70ae0807",
+            "field": "unet"
+          },
+          "destination": {
+            "node_id": "f7a96570-59e0-400d-8fc9-889a438534c0",
+            "field": "unet"
+          }
+        },
+        {
+          "source": {
+            "node_id": "fc066a36-5d48-4780-8c2b-d76c70ae0807",
+            "field": "vae"
+          },
+          "destination": {
+            "node_id": "cf3922d2-e1bc-40cd-8fcd-2a93708d52c2",
+            "field": "vae"
+          }
+        },
+        {
+          "source": {
+            "node_id": "f7a96570-59e0-400d-8fc9-889a438534c0",
+            "field": "metadata"
+          },
+          "destination": {
+            "node_id": "cf3922d2-e1bc-40cd-8fcd-2a93708d52c2",
+            "field": "metadata"
+          }
+        },
+        {
+          "source": {
+            "node_id": "cf3922d2-e1bc-40cd-8fcd-2a93708d52c2",
+            "field": "image"
+          },
+          "destination": {
+            "node_id": "4414d4b5-82c3-4513-8c3f-86d88c24aadc",
+            "field": "image"
+          }
+        },
+        {
+          "source": {
+            "node_id": "f7a96570-59e0-400d-8fc9-889a438534c0",
+            "field": "metadata"
+          },
+          "destination": {
+            "node_id": "4414d4b5-82c3-4513-8c3f-86d88c24aadc",
+            "field": "metadata"
+          }
+        },
+        {
+          "source": {
+            "node_id": "cf3922d2-e1bc-40cd-8fcd-2a93708d52c2",
+            "field": "image"
+          },
+          "destination": {
+            "node_id": "f14341d4-34a5-42a5-8221-acf98d82add7",
+            "field": "image"
+          }
+        },
+        {
+          "source": {
+            "node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "field": "max_seq_len"
+          },
+          "destination": {
+            "node_id": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+            "field": "t5_max_seq_len"
+          }
+        },
+        {
+          "source": {
+            "node_id": "cf3922d2-e1bc-40cd-8fcd-2a93708d52c2",
+            "field": "image"
+          },
+          "destination": {
+            "node_id": "2981a67c-480f-4237-9384-26b68dbf912b",
+            "field": "image"
+          }
+        },
+        {
+          "source": {
+            "node_id": "7e5172eb-48c1-44db-a770-8fd83e1435d1",
+            "field": "image"
+          },
+          "destination": {
+            "node_id": "67e997b2-2d56-43f4-8d2e-886c04e18d9f",
+            "field": "image"
+          }
+        },
+        {
+          "source": {
+            "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "field": "metadata"
+          },
+          "destination": {
+            "node_id": "67e997b2-2d56-43f4-8d2e-886c04e18d9f",
+            "field": "metadata"
+          }
+        },
+        {
+          "source": {
+            "node_id": "2ebc24ee-2e21-4d32-b3d3-9b7025cc2045",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "field": "denoising_start"
+          }
+        },
+        {
+          "source": {
+            "node_id": "cf3922d2-e1bc-40cd-8fcd-2a93708d52c2",
+            "field": "width"
+          },
+          "destination": {
+            "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "field": "width"
+          }
+        },
+        {
+          "source": {
+            "node_id": "cf3922d2-e1bc-40cd-8fcd-2a93708d52c2",
+            "field": "height"
+          },
+          "destination": {
+            "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "field": "height"
+          }
+        },
+        {
+          "source": {
+            "node_id": "db26ef3d-eb09-4a6c-b6cc-e1fd8f1b5bd0",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "276f9380-db99-44ea-80a7-98818466fd13",
+            "field": "value"
+          }
+        },
+        {
+          "source": {
+            "node_id": "276f9380-db99-44ea-80a7-98818466fd13",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "0960d680-c42d-4253-8a84-6205115722ca",
+            "field": "width"
+          }
+        },
+        {
+          "source": {
+            "node_id": "b3d2746d-483a-4133-a973-a780a97fcb1f",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "8c3d3372-d44f-445b-a3e2-516517b166ae",
+            "field": "value"
+          }
+        },
+        {
+          "source": {
+            "node_id": "8c3d3372-d44f-445b-a3e2-516517b166ae",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "0960d680-c42d-4253-8a84-6205115722ca",
+            "field": "height"
+          }
+        },
+        {
+          "source": {
+            "node_id": "cf3922d2-e1bc-40cd-8fcd-2a93708d52c2",
+            "field": "image"
+          },
+          "destination": {
+            "node_id": "22178496-503a-4087-80f2-7407538363df",
+            "field": "image"
+          }
+        },
+        {
+          "source": {
+            "node_id": "22178496-503a-4087-80f2-7407538363df",
+            "field": "image"
+          },
+          "destination": {
+            "node_id": "b04b5a75-3320-4fe1-8605-ed405ed1881e",
+            "field": "image"
+          }
+        },
+        {
+          "source": {
+            "node_id": "b04b5a75-3320-4fe1-8605-ed405ed1881e",
+            "field": "control"
+          },
+          "destination": {
+            "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "field": "control"
+          }
+        },
+        {
+          "source": {
+            "node_id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
+            "field": "vae"
+          },
+          "destination": {
+            "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "field": "controlnet_vae"
+          }
+        },
+        {
+          "source": {
+            "node_id": "f14341d4-34a5-42a5-8221-acf98d82add7",
+            "field": "metadata"
+          },
+          "destination": {
+            "node_id": "56fb09f9-0fdc-499e-9933-de31c3aa6e61",
+            "field": "metadata"
+          }
+        },
+        {
+          "source": {
+            "node_id": "22178496-503a-4087-80f2-7407538363df",
+            "field": "width"
+          },
+          "destination": {
+            "node_id": "56fb09f9-0fdc-499e-9933-de31c3aa6e61",
+            "field": "width"
+          }
+        },
+        {
+          "source": {
+            "node_id": "22178496-503a-4087-80f2-7407538363df",
+            "field": "height"
+          },
+          "destination": {
+            "node_id": "56fb09f9-0fdc-499e-9933-de31c3aa6e61",
+            "field": "height"
+          }
+        },
+        {
+          "source": {
+            "node_id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+            "field": "conditioning"
+          },
+          "destination": {
+            "node_id": "56fb09f9-0fdc-499e-9933-de31c3aa6e61",
+            "field": "positive_text_conditioning"
+          }
+        },
+        {
+          "source": {
+            "node_id": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+            "field": "conditioning"
+          },
+          "destination": {
+            "node_id": "56fb09f9-0fdc-499e-9933-de31c3aa6e61",
+            "field": "negative_text_conditioning"
+          }
+        },
+        {
+          "source": {
+            "node_id": "56fb09f9-0fdc-499e-9933-de31c3aa6e61",
+            "field": "latents"
+          },
+          "destination": {
+            "node_id": "7489c19d-d8cf-40f8-85bd-17e8dd05ac67",
+            "field": "latents"
+          }
+        },
+        {
+          "source": {
+            "node_id": "56fb09f9-0fdc-499e-9933-de31c3aa6e61",
+            "field": "metadata"
+          },
+          "destination": {
+            "node_id": "7489c19d-d8cf-40f8-85bd-17e8dd05ac67",
+            "field": "metadata"
+          }
+        },
+        {
+          "source": {
+            "node_id": "7489c19d-d8cf-40f8-85bd-17e8dd05ac67",
+            "field": "image"
+          },
+          "destination": {
+            "node_id": "abc466fe-12eb-48a5-87d8-488c8bda180f",
+            "field": "image"
+          }
+        },
+        {
+          "source": {
+            "node_id": "55727cb5-6a2c-45ab-963d-ce9ed2e1471c",
+            "field": "transformer"
+          },
+          "destination": {
+            "node_id": "56fb09f9-0fdc-499e-9933-de31c3aa6e61",
+            "field": "transformer"
+          }
+        },
+        {
+          "source": {
+            "node_id": "2dbb5d27-e695-4e8d-8555-bff827d87173",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "56fb09f9-0fdc-499e-9933-de31c3aa6e61",
+            "field": "denoising_start"
+          }
+        },
+        {
+          "source": {
+            "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "field": "latents"
+          },
+          "destination": {
+            "node_id": "56fb09f9-0fdc-499e-9933-de31c3aa6e61",
+            "field": "latents"
+          }
+        },
+        {
+          "source": {
+            "node_id": "22178496-503a-4087-80f2-7407538363df",
+            "field": "image"
+          },
+          "destination": {
+            "node_id": "39447df2-51ff-4664-8024-cc1e708f30d1",
+            "field": "image"
+          }
+        },
+        {
+          "source": {
+            "node_id": "55727cb5-6a2c-45ab-963d-ce9ed2e1471c",
+            "field": "vae"
+          },
+          "destination": {
+            "node_id": "7489c19d-d8cf-40f8-85bd-17e8dd05ac67",
+            "field": "vae"
+          }
+        },
+        {
+          "source": {
+            "node_id": "56fb09f9-0fdc-499e-9933-de31c3aa6e61",
+            "field": "metadata"
+          },
+          "destination": {
+            "node_id": "abc466fe-12eb-48a5-87d8-488c8bda180f",
+            "field": "metadata"
+          }
+        },
+        {
+          "source": {
+            "node_id": "55727cb5-6a2c-45ab-963d-ce9ed2e1471c",
+            "field": "vae"
+          },
+          "destination": {
+            "node_id": "56fb09f9-0fdc-499e-9933-de31c3aa6e61",
+            "field": "controlnet_vae"
+          }
+        },
+        {
+          "source": {
+            "node_id": "2981a67c-480f-4237-9384-26b68dbf912b",
+            "field": "latents"
+          },
+          "destination": {
+            "node_id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
+            "field": "latents"
+          }
+        },
+        {
+          "source": {
+            "node_id": "39447df2-51ff-4664-8024-cc1e708f30d1",
+            "field": "control"
+          },
+          "destination": {
+            "node_id": "56fb09f9-0fdc-499e-9933-de31c3aa6e61",
+            "field": "control"
+          }
+        },
+        {
+          "source": {
+            "node_id": "0a167316-ba62-4218-9fcf-b3cff7963df8",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "ed8e37b5-16a0-4df8-8f9b-690d8a9f6bc3",
+            "field": "string_left"
+          }
+        },
+        {
+          "source": {
+            "node_id": "ed8e37b5-16a0-4df8-8f9b-690d8a9f6bc3",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c",
+            "field": "prompt"
+          }
+        },
+        {
+          "source": {
+            "node_id": "1711c26d-2b53-473c-aaf8-f600443d3c34",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "5656de6d-73ce-42cb-bf43-f2dc0ae34bba",
+            "field": "string_left"
+          }
+        },
+        {
+          "source": {
+            "node_id": "5656de6d-73ce-42cb-bf43-f2dc0ae34bba",
+            "field": "value"
+          },
+          "destination": {
+            "node_id": "e87ba3b6-c98f-4644-903a-e13c421f2add",
+            "field": "prompt"
+          }
+        },
+        {
+          "source": {
+            "node_id": "ad05198a-7fb1-44a4-945b-ad17315f7471",
+            "field": "model"
+          },
+          "destination": {
+            "node_id": "b04b5a75-3320-4fe1-8605-ed405ed1881e",
+            "field": "control_model"
+          }
+        },
+        {
+          "source": {
+            "node_id": "ad05198a-7fb1-44a4-945b-ad17315f7471",
+            "field": "model"
+          },
+          "destination": {
+            "node_id": "39447df2-51ff-4664-8024-cc1e708f30d1",
+            "field": "control_model"
+          }
+        }
+      ]
+    },
+    "runs": 1
+  }
+}

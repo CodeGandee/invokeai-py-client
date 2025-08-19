@@ -8,6 +8,7 @@ of a workflow and manages input configuration, submission, and result retrieval.
 from __future__ import annotations
 
 import asyncio
+import os
 import time
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable
 
@@ -705,14 +706,23 @@ class WorkflowHandle:
             }
             
         except Exception as e:
-            # Try to get error details from response
-            if hasattr(e, 'response') and e.response is not None:
+            # Surface server validation errors (422) with as much context as possible
+            resp = getattr(e, 'response', None)
+            if resp is not None:
                 try:
-                    error_detail = e.response.json()
-                    raise RuntimeError(f"Workflow submission failed: {error_detail}")
-                except:
+                    detail_json = resp.json()
+                except Exception:  # pragma: no cover - fallback to text
+                    detail_json = {"non_json_response": resp.text[:2000]}
+                # Persist for offline diffing
+                try:
+                    with open("tmp/last_failed_submission_detail.json", "w", encoding="utf-8") as fh:
+                        json.dump({"status_code": resp.status_code, "detail": detail_json}, fh, indent=2)
+                except Exception:
                     pass
-            raise RuntimeError(f"Workflow submission failed: {e}")
+                raise RuntimeError(
+                    f"Workflow submission failed ({resp.status_code}): {detail_json}"
+                ) from e
+            raise RuntimeError(f"Workflow submission failed: {e}") from e
 
     async def submit(
         self,
@@ -1476,13 +1486,24 @@ class WorkflowHandle:
                 for match in matches:
                     match.full_path.update(workflow_copy, field_value)
         
-        # Build a set of fields that are connected via edges (these shouldn't be in the node)
-        connected_fields = set()
+        # Build a set of fields that are connected via edges.
+        # Historically we attempted to REMOVE these fields from the serialized
+        # API graph under the assumption that an edge-supplied value should not
+        # also appear inline on the destination node. However, the canonical
+        # GUI-generated payloads DO include these (eg. width/height/seed even
+        # when an edge provides a value). The server's pydantic schema also
+        # expects required parameters to be present – omitting them causes 422s.
+        #
+        # We therefore keep the set only for optional diagnostics and retain
+        # all fields (connected or not) when building the node payload. An env
+        # var can restore the pruning behaviour for experiments.
+        connected_fields: set[str] = set()
         for edge in workflow_copy.get("edges", []):
             target_node = edge.get("target")
             target_field = edge.get("targetHandle")
             if target_node and target_field:
                 connected_fields.add(f"{target_node}.{target_field}")
+        prune_connected = os.environ.get("INVOKEAI_PRUNE_CONNECTED_FIELDS") == "1"
         
         # Convert nodes to API format
         api_nodes = {}
@@ -1492,11 +1513,16 @@ class WorkflowHandle:
                 continue  # Skip nodes without ID
             
             node_data = node.get("data", {})
+            node_type = node_data.get("type")
+
+            # Skip non-executable/GUI-only helper nodes that the server schema doesn't accept
+            if node_type in {"notes"}:
+                continue
             
             # Create API node with basic fields
             api_node = {
                 "id": node_id,
-                "type": node_data.get("type"),
+                "type": node_type,
                 "is_intermediate": node_data.get("isIntermediate", True),
                 "use_cache": node_data.get("useCache", True)
             }
@@ -1505,8 +1531,8 @@ class WorkflowHandle:
             # (Note: JSONPath has already updated exposed fields in workflow_copy)
             node_inputs = node_data.get("inputs", {})
             for field_name, field_data in node_inputs.items():
-                # Skip fields that are connected via edges
-                if f"{node_id}.{field_name}" in connected_fields:
+                # Optionally skip connected fields only if pruning explicitly enabled
+                if prune_connected and f"{node_id}.{field_name}" in connected_fields:
                     continue
                 
                 # Get the value from the updated workflow_copy
@@ -1522,10 +1548,19 @@ class WorkflowHandle:
                     api_node[field_name] = field_value
             
             # Special handling for specific node types
+            # Normalize existing board field (GUI uses string like "auto" or board_id)
+            if "board" in api_node and isinstance(api_node["board"], str):
+                existing = api_node["board"]
+                # If GUI default 'auto', replace with provided board_id if any, else 'none'
+                normalized = board_id if (existing == "auto" and board_id) else existing
+                if normalized == "auto":  # still auto with no board_id provided
+                    normalized = "none"
+                api_node["board"] = {"board_id": normalized}
+
             if board_id:
-                # Apply board_id to save_image/l2i nodes
-                if node_data.get("type") in ["save_image", "l2i"]:
-                    if "board" not in api_node or not api_node["board"]:
+                # Apply/override board_id to standard output/image decode nodes where absent
+                if node_type in ["save_image", "l2i", "flux_vae_decode", "flux_vae_encode", "hed_edge_detection"]:
+                    if "board" not in api_node or not isinstance(api_node["board"], dict):
                         api_node["board"] = {"board_id": board_id}
             
             api_nodes[node_id] = api_node

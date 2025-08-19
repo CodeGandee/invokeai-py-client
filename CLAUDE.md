@@ -171,3 +171,7 @@ Images and models are handled by reference:
 - Example workflows: `data/workflows/` (SDXL, FLUX templates)
 - API call examples: `data/api-calls/` (request payloads)
 - Demo scripts: `examples/` (working API demonstrations)
+
+### Other Tools
+- you can use `jq` for JSON processing, `yq` for YAML processing
+- you can use `httpie` for a more user-friendly HTTP client

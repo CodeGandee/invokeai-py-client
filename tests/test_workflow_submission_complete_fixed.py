@@ -5,7 +5,6 @@ Tests both sync and async submission methods after refactoring _convert_to_api_f
 """
 
 import asyncio
-import json
 import time
 from pathlib import Path
 
@@ -15,7 +14,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from invokeai_py_client import InvokeAIClient
 from invokeai_py_client.workflow import WorkflowRepository
-from invokeai_py_client.dnn_model import DnnModelRepository
 from invokeai_py_client.ivk_fields.model_conversion import to_ivk_model_field
 
 
@@ -27,7 +25,8 @@ def test_sync_submission():
     
     # Initialize client
     print("\n[1] Initializing client...")
-    client = InvokeAIClient(base_url="http://127.0.0.1:9090")
+    # Use from_url helper so base_path is set to /api/v1 automatically
+    client = InvokeAIClient.from_url("http://127.0.0.1:9090")
     
     # Get model repository
     print("\n[2] Discovering SDXL models...")
@@ -70,13 +69,13 @@ def test_sync_submission():
     # Set prompts
     positive_field = workflow.get_input_value(1)
     if hasattr(positive_field, 'value'):
-        positive_field.value = "A majestic dragon flying over ancient castles during sunset, highly detailed fantasy art"
-    print(f"    Set positive prompt")
+        positive_field.value = "A majestic dragon flying over ancient castles during sunset, highly detailed fantasy art"  # type: ignore[attr-defined]
+    print("    Set positive prompt")
     
     negative_field = workflow.get_input_value(2)
     if hasattr(negative_field, 'value'):
-        negative_field.value = "blurry, low quality, distorted, bad anatomy"
-    print(f"    Set negative prompt")
+        negative_field.value = "blurry, low quality, distorted, bad anatomy"  # type: ignore[attr-defined]
+    print("    Set negative prompt")
     
     # Validate
     print("\n[5] Validating inputs...")
@@ -90,7 +89,8 @@ def test_sync_submission():
     print("\n[6] Submitting workflow (sync)...")
     try:
         result = workflow.submit_sync()
-        batch_id = result.get('batch', {}).get('batch_id')
+        # submit_sync returns a flat dict: {batch_id, item_ids, enqueued, session_id}
+        batch_id = result.get('batch_id')
         item_ids = result.get('item_ids', [])
         item_id = item_ids[0] if item_ids else None
         
@@ -146,7 +146,7 @@ async def test_async_submission():
     
     # Initialize client
     print("\n[1] Initializing client...")
-    client = InvokeAIClient(base_url="http://127.0.0.1:9090")
+    client = InvokeAIClient.from_url("http://127.0.0.1:9090")
     
     # Get model repository
     print("\n[2] Discovering SDXL models...")
@@ -188,13 +188,13 @@ async def test_async_submission():
     # Set prompts
     positive_field = workflow.get_input_value(1)
     if hasattr(positive_field, 'value'):
-        positive_field.value = "An underwater coral reef city inhabited by mermaids, bioluminescent lighting, photorealistic"
-    print(f"    Set positive prompt")
+        positive_field.value = "An underwater coral reef city inhabited by mermaids, bioluminescent lighting, photorealistic"  # type: ignore[attr-defined]
+    print("    Set positive prompt")
     
     negative_field = workflow.get_input_value(2)
     if hasattr(negative_field, 'value'):
-        negative_field.value = "blurry, low quality, distorted, oversaturated, amateur"
-    print(f"    Set negative prompt")
+        negative_field.value = "blurry, low quality, distorted, oversaturated, amateur"  # type: ignore[attr-defined]
+    print("    Set negative prompt")
     
     # Event tracking
     events_received = []
@@ -225,7 +225,6 @@ async def test_async_submission():
             on_invocation_complete=on_complete,
             on_invocation_error=on_error
         )
-        
         batch_id = result.get('batch_id')
         session_id = result.get('session_id')
         item_ids = result.get('item_ids', [])
