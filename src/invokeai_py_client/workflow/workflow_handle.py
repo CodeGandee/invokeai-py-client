@@ -869,7 +869,7 @@ class WorkflowHandle:
         url = f"/queue/{queue_id}/i/{self.item_id}/cancel"
         try:
             response = self.client._make_request("DELETE", url)
-            return response.status_code == 200
+            return bool(response.status_code == 200)
         except Exception as e:
             raise RuntimeError(f"Failed to cancel job: {e}")
 
@@ -1025,6 +1025,9 @@ class WorkflowHandle:
         api_nodes = {}
         for node in ui_nodes:
             node_id = node.get("id")
+            if not node_id:
+                continue  # Skip nodes without ID
+            
             node_data = node.get("data", {})
             
             # Create API node
@@ -1071,7 +1074,7 @@ class WorkflowHandle:
             api_edges.append(api_edge)
         
         return {
-            "id": self.definition.id or "workflow",
+            "id": "workflow",  # Default workflow ID
             "nodes": api_nodes,
             "edges": api_edges
         }
@@ -1099,7 +1102,8 @@ class WorkflowHandle:
                     return field.to_api_format()
         
         # Not exposed, use value from definition
-        if isinstance(field_data, dict) and "value" in field_data:
+        # At this point field_data should be a dict from workflow definition
+        if "value" in field_data:
             return field_data["value"]
         return field_data
     
@@ -1122,7 +1126,8 @@ class WorkflowHandle:
         url = f"/queue/{queue_id}/i/{item_id}"
         try:
             response = self.client._make_request("GET", url)
-            return response.json()
+            result: dict[str, Any] = response.json()
+            return result
         except Exception:
             return None
     

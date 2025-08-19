@@ -10,7 +10,7 @@ if you are not sure about the InvokeAI web APIs:
 - InvokeAI API list: `context\hints\invokeai-kb\invokeai-api-list.md`
 
 IMPORTANT:
-- the `workflow-usecase`: `context\tasks\features\workflow-usecase.md`, we are implementing the workflow subsystem based on this usecase.
+- the `workflow-usecase`: `context\tasks\features\usecase-workflow.md`, we are implementing the workflow subsystem based on this usecase.
 
 ## Task 1: implement workflow construction
 

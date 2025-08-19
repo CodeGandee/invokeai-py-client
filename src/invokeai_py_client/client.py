@@ -15,6 +15,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from invokeai_py_client.board import BoardRepository
+from invokeai_py_client.dnn_model import DnnModelRepository
 from invokeai_py_client.models import (
     IvkDnnModel,
     IvkJob,
@@ -129,6 +130,7 @@ class InvokeAIClient:
         # Initialize repositories
         self._board_repo: BoardRepository | None = None
         self._workflow_repo: WorkflowRepository | None = None
+        self._dnn_model_repo: DnnModelRepository | None = None
 
     @classmethod
     def from_url(cls, url: str, **kwargs: Any) -> InvokeAIClient:
@@ -268,6 +270,40 @@ class InvokeAIClient:
         if self._workflow_repo is None:
             self._workflow_repo = WorkflowRepository(self)
         return self._workflow_repo
+
+    @property
+    def dnn_model_repo(self) -> DnnModelRepository:
+        """
+        Get the DNN model repository instance for dnn-model operations.
+
+        The DnnModelRepository provides read-only access to DNN models:
+        - List all available models from InvokeAI system
+        - Get specific model details by key
+        - Stateless design - no caching, always fresh API calls
+
+        Returns
+        -------
+        DnnModelRepository
+            The DNN model repository instance.
+
+        Examples
+        --------
+        >>> # List all models (fresh API call)
+        >>> models = client.dnn_model_repo.list_models()
+        >>> print(f"Total models: {len(models)}")
+
+        >>> # User filters models by type
+        >>> from invokeai_py_client.dnn_model import DnnModelType
+        >>> main_models = [m for m in models if m.type == DnnModelType.Main]
+
+        >>> # Get specific model by key
+        >>> model = client.dnn_model_repo.get_model_by_key("model-key-123")
+        >>> if model:
+        ...     print(f"Found: {model.name} ({model.type.value})")
+        """
+        if self._dnn_model_repo is None:
+            self._dnn_model_repo = DnnModelRepository(self)
+        return self._dnn_model_repo
 
     def list_jobs(self, status: str | None = None, limit: int = 100) -> list[IvkJob]:
         """

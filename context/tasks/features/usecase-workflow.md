@@ -473,7 +473,11 @@ All required inputs are set, workflow ready for submission
 
 ### Use case 3: submitting the workflow and tracking the job status
 
-**Scenario**: After setting all inputs (from Use Case 2), the developer needs to submit the workflow for execution and track its progress through completion. The client library provides both synchronous and asynchronous submission methods.
+**Scenario**: After setting all inputs (from Use Case 2), the developer needs to submit the workflow for execution and track its progress through completion. The client library provides three different submission approaches to accommodate different use cases and architectural patterns.
+
+#### 3.1: Simple synchronous submission with polling
+
+**Approach**: Blocking submission with periodic status polling. Best for simple scripts, sequential workflows, and applications where simplicity is preferred over real-time updates.
 
 **Code Example**:
 ```python
@@ -482,11 +486,9 @@ All required inputs are set, workflow ready for submission
 # - workflow_handle: WorkflowHandle instance with all inputs configured
 
 import time
-import asyncio
 from typing import Optional, Callable, Dict, Any
 from invokeai_py_client.models import JobStatus, SessionEvent
 
-# Option 1: Simple synchronous submission with polling
 def submit_and_track_sync():
     """Simple synchronous workflow submission with status polling."""
     
@@ -528,7 +530,33 @@ def submit_and_track_sync():
     except Exception as e:
         print(f"❌ Job failed: {e}")
         raise
+```
 
+**Expected Output**:
+```
+Batch submitted: batch_abc123
+Items enqueued: 1
+Item IDs: [42]
+Session ID: session_789xyz
+Status: pending
+  Status: in_progress - Item 42
+  Status: in_progress - Item 42
+  Status: in_progress - Item 42
+  Status: in_progress - Item 42
+  Status: in_progress - Item 42
+  Status: completed - Item 42
+✅ Job completed successfully!
+  Item ID: 42
+```
+
+#### 3.2: Asynchronous submission with real-time events
+
+**Approach**: Non-blocking submission with Socket.IO event streaming. Best for interactive applications, dashboards, and scenarios requiring real-time progress updates and concurrent workflow execution.
+
+**Code Example**:
+
+```python
+import asyncio
 
 # Option 2: Asynchronous submission with real-time events via Socket.IO
 async def submit_and_track_async():
@@ -591,8 +619,41 @@ async def submit_and_track_async():
     except Exception as e:
         print(f"❌ Job failed: {e}")
         raise
+```
 
+**Expected Output**:
+```
+Batch submitted: batch_def456
+Session ID: session_456def
+Items enqueued: 1
+  ▶️ Node started: node_123 (string)
+  ✅ Node completed: node_123
+  ▶️ Node started: node_456 (sdxl_model_loader)
+  ✅ Node completed: node_456
+  ▶️ Node started: node_789 (denoise_latents)
+  ⏳ Progress: 25.0% - Denoising step 5/20
+  ⏳ Progress: 50.0% - Denoising step 10/20
+  ⏳ Progress: 75.0% - Denoising step 15/20
+  ⏳ Progress: 100.0% - Denoising step 20/20
+  ✅ Node completed: node_789
+     Output: latents
+  ▶️ Node started: node_abc (l2i)
+  ✅ Node completed: node_abc
+     Output: image
+  ▶️ Node started: node_def (save_image)
+  ✅ Node completed: node_def
+✅ Workflow completed!
+  Job ID: job_xyz789
+  Status: completed
+  Duration: 18.34s
+```
 
+#### 3.3: Hybrid approach - submit synchronously, monitor asynchronously
+
+**Approach**: Simple blocking submission combined with async event monitoring. Best for applications wanting simple submission APIs but rich monitoring capabilities, or transitioning from sync to async patterns.
+
+**Code Example**:
+```python
 # Option 3: Hybrid approach - submit sync, monitor async
 async def submit_sync_monitor_async():
     """Submit synchronously but monitor with async events."""
@@ -625,8 +686,30 @@ async def submit_sync_monitor_async():
     
     # Get final results
     return workflow_handle.get_queue_item()
+```
 
+**Expected Output**:
+```
+Submitted batch: batch_ghi789
+  ▶️ string started
+  ✅ string completed
+  ▶️ sdxl_model_loader started
+  ✅ sdxl_model_loader completed
+  ▶️ denoise_latents started
+  ✅ denoise_latents completed
+  ▶️ l2i started
+  ✅ l2i completed
+  ▶️ save_image started
+  ✅ save_image completed
+✅ Workflow completed!
+```
 
+#### Usage examples and comparison
+
+The three approaches offer different trade-offs for various application architectures:
+
+**Code Example**:
+```python
 # Usage examples:
 
 # Synchronous (blocking) - simplest approach
@@ -655,66 +738,6 @@ asyncio.run(main())
 # Hybrid approach - best of both worlds
 print("\n=== Hybrid Submission ===")
 asyncio.run(submit_sync_monitor_async())
-```
-
-**Expected Output**:
-```
-=== Synchronous Submission ===
-Batch submitted: batch_abc123
-Items enqueued: 1
-Item IDs: [42]
-Session ID: session_789xyz
-Status: pending
-  Status: in_progress - Item 42
-  Status: in_progress - Item 42
-  Status: in_progress - Item 42
-  Status: in_progress - Item 42
-  Status: in_progress - Item 42
-  Status: completed - Item 42
-✅ Job completed successfully!
-  Item ID: 42
-Final status: completed
-
-=== Asynchronous Submission ===
-Batch submitted: batch_def456
-Session ID: session_456def
-Items enqueued: 1
-  ▶️ Node started: node_123 (string)
-  ✅ Node completed: node_123
-  ▶️ Node started: node_456 (sdxl_model_loader)
-  ✅ Node completed: node_456
-  ▶️ Node started: node_789 (denoise_latents)
-  ⏳ Progress: 25.0% - Denoising step 5/20
-  ⏳ Progress: 50.0% - Denoising step 10/20
-  ⏳ Progress: 75.0% - Denoising step 15/20
-  ⏳ Progress: 100.0% - Denoising step 20/20
-  ✅ Node completed: node_789
-     Output: latents
-  ▶️ Node started: node_abc (l2i)
-  ✅ Node completed: node_abc
-     Output: image
-  ▶️ Node started: node_def (save_image)
-  ✅ Node completed: node_def
-✅ Workflow completed!
-  Job ID: job_xyz789
-  Status: completed
-  Duration: 18.34s
-Job completed: job_xyz789
-Completed 3 workflows concurrently
-
-=== Hybrid Submission ===
-Submitted batch: batch_ghi789
-  ▶️ string started
-  ✅ string completed
-  ▶️ sdxl_model_loader started
-  ✅ sdxl_model_loader completed
-  ▶️ denoise_latents started
-  ✅ denoise_latents completed
-  ▶️ l2i started
-  ✅ l2i completed
-  ▶️ save_image started
-  ✅ save_image completed
-✅ Workflow completed!
 ```
 
 **Key Design Points**:

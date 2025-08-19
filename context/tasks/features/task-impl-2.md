@@ -44,7 +44,7 @@ the current board subsystem should be refactored to follow similar pattern as th
 
 # Task 3: revise use case 2
 
-based on the recent changes of the workflow subsystem, we need to revise the use case 2 in `context\tasks\features\workflow-usecase.md`, note that you can refer to use case 1 which is already implemented. source code of workflow subsystem is in `src\invokeai_py_client\workflow`.
+based on the recent changes of the workflow subsystem, we need to revise the use case 2 in `context\tasks\features\usecase-workflow.md`, note that you can refer to use case 1 which is already implemented. source code of workflow subsystem is in `src\invokeai_py_client\workflow`.
 
 # Task 4: refactor the `ivk_fields` module
 
