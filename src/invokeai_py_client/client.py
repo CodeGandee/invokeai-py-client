@@ -6,11 +6,14 @@ This module provides the primary interface for interacting with an InvokeAI inst
 
 from __future__ import annotations
 
+import asyncio
+from contextlib import asynccontextmanager
 from types import TracebackType
-from typing import Any
+from typing import Any, AsyncGenerator
 from urllib.parse import urlparse
 
 import requests
+import socketio  # type: ignore[import-untyped]
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -131,6 +134,10 @@ class InvokeAIClient:
         self._board_repo: BoardRepository | None = None
         self._workflow_repo: WorkflowRepository | None = None
         self._dnn_model_repo: DnnModelRepository | None = None
+        
+        # Initialize Socket.IO client for async operations
+        self._sio: socketio.AsyncClient | None = None  # type: ignore[no-any-unimported]
+        self._sio_connected: bool = False
 
     @classmethod
     def from_url(cls, url: str, **kwargs: Any) -> InvokeAIClient:
@@ -418,6 +425,71 @@ class InvokeAIClient:
         except Exception:
             return False
 
+    async def connect_socketio(self) -> socketio.AsyncClient:  # type: ignore[no-any-unimported]
+        """
+        Connect to the InvokeAI Socket.IO server.
+        
+        Returns
+        -------
+        socketio.AsyncClient
+            The connected Socket.IO client.
+            
+        Raises
+        ------
+        RuntimeError
+            If connection fails.
+        """
+        if self._sio is None:
+            self._sio = socketio.AsyncClient()
+        
+        if not self._sio_connected:
+            # Build Socket.IO URL
+            scheme = "wss" if self.use_https else "ws"
+            socketio_url = f"{scheme}://{self.host}:{self.port}"
+            
+            try:
+                await self._sio.connect(
+                    socketio_url, 
+                    socketio_path="/ws/socket.io",
+                    transports=["websocket", "polling"]
+                )
+                self._sio_connected = True
+            except Exception as e:
+                raise RuntimeError(f"Failed to connect to Socket.IO: {e}")
+        
+        return self._sio
+    
+    async def disconnect_socketio(self) -> None:
+        """
+        Disconnect from the Socket.IO server.
+        """
+        if self._sio and self._sio_connected:
+            await self._sio.disconnect()
+            self._sio_connected = False
+    
+    @asynccontextmanager
+    async def socketio_session(self) -> AsyncGenerator[socketio.AsyncClient, None]:  # type: ignore[no-any-unimported]
+        """
+        Context manager for Socket.IO connections.
+        
+        Yields
+        ------
+        socketio.AsyncClient
+            The connected Socket.IO client.
+            
+        Examples
+        --------
+        >>> async with client.socketio_session() as sio:
+        ...     await sio.emit("subscribe_queue", {"queue_id": "default"})
+        """
+        sio = await self.connect_socketio()
+        try:
+            yield sio
+        finally:
+            # Keep connection alive for reuse - don't disconnect here
+            # User can manually disconnect if needed
+            pass
+    
     def close(self) -> None:
         """
         Close the client connection and clean up resources.
@@ -427,6 +499,15 @@ class InvokeAIClient:
         """
         if hasattr(self, "session"):
             self.session.close()
+        
+        # Close Socket.IO if connected
+        if self._sio and self._sio_connected:
+            # Use asyncio.run if not in async context
+            try:
+                asyncio.run(self.disconnect_socketio())
+            except RuntimeError:
+                # Already in async context or loop is running
+                pass
 
     def __enter__(self) -> InvokeAIClient:
         """Context manager entry."""

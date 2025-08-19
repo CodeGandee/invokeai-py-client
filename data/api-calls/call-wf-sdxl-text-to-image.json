@@ -1,52 +1,45 @@
 {
-    "item_id": 563,
+    "item_id": 121,
     "status": "completed",
     "priority": 0,
-    "batch_id": "e3270230-fc4e-4c3b-92a8-fa6d3f3e1807",
-    "origin": "canvas",
-    "destination": "generate",
-    "session_id": "042552fd-8dc5-42e8-b1c4-54975731923f",
-    "created_at": "2025-08-09 16:11:26.998",
-    "updated_at": "2025-08-09 16:11:35.625",
-    "started_at": "2025-08-09 16:11:27.004",
-    "completed_at": "2025-08-09 16:11:35.625",
+    "batch_id": "b819e389-9162-47a0-90bd-0d0e339c4365",
+    "origin": "workflows",
+    "destination": "gallery",
+    "session_id": "13af375b-d708-4f92-a252-8f9476344c2e",
+    "created_at": "2025-08-19 10:28:28.486",
+    "updated_at": "2025-08-19 10:28:41.622",
+    "started_at": "2025-08-19 10:28:28.510",
+    "completed_at": "2025-08-19 10:28:41.622",
     "queue_id": "default",
-    "field_values": [
-        {"node_path": "seed:RpiR4N9oZ9", "field_name": "value", "value": 3573534001},
-        {
-            "node_path" : "positive_prompt:VLX4x4tROA",
-            "field_name": "value",
-            "value"     : "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace"
-        }
-    ],
+    "field_values": [],
     "is_api_validation_run": false,
     "session": {
-        "id": "042552fd-8dc5-42e8-b1c4-54975731923f",
+        "id": "13af375b-d708-4f92-a252-8f9476344c2e",
         "graph": {
-            "id": "sdxl_graph:E52pKC4VWX",
+            "id": "9d50f79b-1257-48e7-a1fc-e30e57928f49",
             "nodes": {
-                "sdxl_model_loader:hTRtPGN2SC": {
-                    "id": "sdxl_model_loader:hTRtPGN2SC",
+                "sdxl_model_loader:PwBr7RXRsy": {
+                    "id": "sdxl_model_loader:PwBr7RXRsy",
                     "is_intermediate": true,
                     "use_cache": true,
                     "model": {
-                        "key" : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                        "hash": "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                        "name": "sdxlUnstableDiffusers_nihilmania",
+                        "key" : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                        "hash": "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                        "name": "albedobaseXL_v21",
                         "base": "sdxl",
                         "type": "main"
                     },
                     "type": "sdxl_model_loader"
                 },
-                "positive_prompt:VLX4x4tROA": {
-                    "id": "positive_prompt:VLX4x4tROA",
+                "positive_prompt:kjUMdcg0zO": {
+                    "id": "positive_prompt:kjUMdcg0zO",
                     "is_intermediate": true,
                     "use_cache": true,
-                    "value": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
+                    "value": "deep space, high quality, colorful",
                     "type": "string"
                 },
-                "pos_cond:vMiGRaL7ZV": {
-                    "id": "pos_cond:vMiGRaL7ZV",
+                "pos_cond:o9T4cKV8xt": {
+                    "id": "pos_cond:o9T4cKV8xt",
                     "is_intermediate": true,
                     "use_cache": true,
                     "prompt": "",
@@ -59,19 +52,19 @@
                     "target_height": 1024,
                     "type": "sdxl_compel_prompt"
                 },
-                "pos_cond_collect:q2Mrr3VgaM": {
-                    "id": "pos_cond_collect:q2Mrr3VgaM",
+                "pos_cond_collect:sles8A43dq": {
+                    "id": "pos_cond_collect:sles8A43dq",
                     "is_intermediate": true,
                     "use_cache": true,
                     "collection": [],
                     "type": "collect"
                 },
-                "neg_cond:VPsH7pE8u4": {
-                    "id": "neg_cond:VPsH7pE8u4",
+                "neg_cond:5ZtbrHJgrO": {
+                    "id": "neg_cond:5ZtbrHJgrO",
                     "is_intermediate": true,
                     "use_cache": true,
-                    "prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
-                    "style": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
+                    "prompt": "",
+                    "style": "",
                     "original_width": 1024,
                     "original_height": 1024,
                     "crop_top": 0,
@@ -80,193 +73,219 @@
                     "target_height": 1024,
                     "type": "sdxl_compel_prompt"
                 },
-                "neg_cond_collect:iOgNrfkjEw": {
-                    "id": "neg_cond_collect:iOgNrfkjEw",
+                "neg_cond_collect:XpoW9rXd61": {
+                    "id": "neg_cond_collect:XpoW9rXd61",
                     "is_intermediate": true,
                     "use_cache": true,
                     "collection": [],
                     "type": "collect"
                 },
-                "seed:RpiR4N9oZ9": {
-                    "id": "seed:RpiR4N9oZ9",
-                    "is_intermediate": true,
-                    "use_cache": true,
-                    "value": 3573534001,
-                    "type": "integer"
-                },
-                "noise:r4hTDusFvO": {
-                    "id": "noise:r4hTDusFvO",
+                "noise:f4Bv4UWa22": {
+                    "id": "noise:f4Bv4UWa22",
                     "is_intermediate": true,
                     "use_cache": true,
                     "seed": 0,
-                    "width": 960,
-                    "height": 1280,
+                    "width": 768,
+                    "height": 1024,
                     "use_cpu": true,
                     "type": "noise"
                 },
-                "denoise_latents:1pC1TPyIsz": {
-                    "id": "denoise_latents:1pC1TPyIsz",
+                "denoise_latents:TRC0Y88EWe": {
+                    "id": "denoise_latents:TRC0Y88EWe",
                     "is_intermediate": true,
                     "use_cache": true,
-                    "steps": 21,
+                    "steps": 30,
                     "cfg_scale": 7.5,
                     "denoising_start": 0,
                     "denoising_end": 1,
-                    "scheduler": "euler_a",
+                    "scheduler": "dpmpp_3m_k",
                     "cfg_rescale_multiplier": 0,
                     "type": "denoise_latents"
                 },
-                "core_metadata:oO2k36xZyg": {
-                    "id": "core_metadata:oO2k36xZyg",
+                "core_metadata:gSiDdR3ubW": {
+                    "id": "core_metadata:gSiDdR3ubW",
                     "is_intermediate": true,
                     "use_cache": true,
                     "generation_mode": "sdxl_txt2img",
-                    "negative_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
-                    "width": 960,
-                    "height": 1280,
                     "rand_device": "cpu",
                     "cfg_scale": 7.5,
                     "cfg_rescale_multiplier": 0,
-                    "steps": 21,
-                    "scheduler": "euler_a",
+                    "steps": 30,
+                    "scheduler": "dpmpp_3m_k",
                     "seamless_x": false,
                     "seamless_y": false,
-                    "model": {
-                        "key" : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                        "hash": "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                        "name": "sdxlUnstableDiffusers_nihilmania",
-                        "base": "sdxl",
-                        "type": "main"
-                    },
-                    "negative_style_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
-                    "type": "core_metadata",
-                    "ref_images": []
+                    "negative_style_prompt": "naked",
+                    "type": "core_metadata"
                 },
-                "canvas_output:94JBfO5C9c": {
-                    "id": "canvas_output:94JBfO5C9c",
+                "canvas_output:JbPTiAJ26r": {
+                    "board": {"board_id": "abf4afa1-5797-48a0-8e4c-f072b51f2151"},
+                    "id": "canvas_output:JbPTiAJ26r",
                     "is_intermediate": false,
                     "use_cache": false,
                     "tiled": false,
                     "tile_size": 0,
                     "fp32": true,
                     "type": "l2i"
+                },
+                "fe37ca02-b720-41f8-a10c-5ab7f110e336": {
+                    "id": "fe37ca02-b720-41f8-a10c-5ab7f110e336",
+                    "is_intermediate": true,
+                    "use_cache": false,
+                    "low": 0,
+                    "high": 2147483647,
+                    "type": "rand_int"
+                },
+                "484ecc77-b7a0-4e19-b793-cc313f20fbe6": {
+                    "id": "484ecc77-b7a0-4e19-b793-cc313f20fbe6",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "value": "earth, star war, blurry",
+                    "type": "string"
                 }
             },
             "edges": [
                 {
-                    "source"     : {"node_id": "sdxl_model_loader:hTRtPGN2SC", "field": "unet"},
-                    "destination": {"node_id": "denoise_latents:1pC1TPyIsz",   "field": "unet"}
+                    "source"     : {"node_id": "sdxl_model_loader:PwBr7RXRsy", "field": "unet"},
+                    "destination": {"node_id": "denoise_latents:TRC0Y88EWe",   "field": "unet"}
                 },
                 {
-                    "source"     : {"node_id": "sdxl_model_loader:hTRtPGN2SC", "field": "clip"},
-                    "destination": {"node_id": "pos_cond:vMiGRaL7ZV",          "field": "clip"}
+                    "source"     : {"node_id": "sdxl_model_loader:PwBr7RXRsy", "field": "clip"},
+                    "destination": {"node_id": "pos_cond:o9T4cKV8xt",          "field": "clip"}
                 },
                 {
-                    "source"     : {"node_id": "sdxl_model_loader:hTRtPGN2SC", "field": "clip"},
-                    "destination": {"node_id": "neg_cond:VPsH7pE8u4",          "field": "clip"}
+                    "source"     : {"node_id": "sdxl_model_loader:PwBr7RXRsy", "field": "clip"},
+                    "destination": {"node_id": "neg_cond:5ZtbrHJgrO",          "field": "clip"}
                 },
                 {
-                    "source"     : {"node_id": "sdxl_model_loader:hTRtPGN2SC", "field": "clip2"},
-                    "destination": {"node_id": "pos_cond:vMiGRaL7ZV",          "field": "clip2"}
+                    "source"     : {"node_id": "sdxl_model_loader:PwBr7RXRsy", "field": "clip2"},
+                    "destination": {"node_id": "pos_cond:o9T4cKV8xt",          "field": "clip2"}
                 },
                 {
-                    "source"     : {"node_id": "sdxl_model_loader:hTRtPGN2SC", "field": "clip2"},
-                    "destination": {"node_id": "neg_cond:VPsH7pE8u4",          "field": "clip2"}
+                    "source"     : {"node_id": "sdxl_model_loader:PwBr7RXRsy", "field": "clip2"},
+                    "destination": {"node_id": "neg_cond:5ZtbrHJgrO",          "field": "clip2"}
                 },
                 {
-                    "source"     : {"node_id": "positive_prompt:VLX4x4tROA", "field": "value" },
-                    "destination": {"node_id": "pos_cond:vMiGRaL7ZV",        "field": "prompt"}
+                    "source"     : {"node_id": "positive_prompt:kjUMdcg0zO", "field": "value" },
+                    "destination": {"node_id": "pos_cond:o9T4cKV8xt",        "field": "prompt"}
                 },
                 {
-                    "source"     : {"node_id": "pos_cond:vMiGRaL7ZV",         "field": "conditioning"},
-                    "destination": {"node_id": "pos_cond_collect:q2Mrr3VgaM", "field": "item"        }
+                    "source"     : {"node_id": "pos_cond:o9T4cKV8xt",         "field": "conditioning"},
+                    "destination": {"node_id": "pos_cond_collect:sles8A43dq", "field": "item"        }
                 },
                 {
-                    "source"     : {"node_id": "pos_cond_collect:q2Mrr3VgaM", "field": "collection"           },
-                    "destination": {"node_id": "denoise_latents:1pC1TPyIsz",  "field": "positive_conditioning"}
+                    "source"     : {"node_id": "pos_cond_collect:sles8A43dq", "field": "collection"           },
+                    "destination": {"node_id": "denoise_latents:TRC0Y88EWe",  "field": "positive_conditioning"}
                 },
                 {
-                    "source"     : {"node_id": "neg_cond:VPsH7pE8u4",         "field": "conditioning"},
-                    "destination": {"node_id": "neg_cond_collect:iOgNrfkjEw", "field": "item"        }
+                    "source"     : {"node_id": "neg_cond:5ZtbrHJgrO",         "field": "conditioning"},
+                    "destination": {"node_id": "neg_cond_collect:XpoW9rXd61", "field": "item"        }
                 },
                 {
-                    "source"     : {"node_id": "neg_cond_collect:iOgNrfkjEw", "field": "collection"           },
-                    "destination": {"node_id": "denoise_latents:1pC1TPyIsz",  "field": "negative_conditioning"}
+                    "source"     : {"node_id": "neg_cond_collect:XpoW9rXd61", "field": "collection"           },
+                    "destination": {"node_id": "denoise_latents:TRC0Y88EWe",  "field": "negative_conditioning"}
                 },
                 {
-                    "source"     : {"node_id": "seed:RpiR4N9oZ9",  "field": "value"},
-                    "destination": {"node_id": "noise:r4hTDusFvO", "field": "seed" }
+                    "source"     : {"node_id": "noise:f4Bv4UWa22",           "field": "noise"},
+                    "destination": {"node_id": "denoise_latents:TRC0Y88EWe", "field": "noise"}
                 },
                 {
-                    "source"     : {"node_id": "noise:r4hTDusFvO",           "field": "noise"},
-                    "destination": {"node_id": "denoise_latents:1pC1TPyIsz", "field": "noise"}
+                    "source"     : {"node_id": "denoise_latents:TRC0Y88EWe", "field": "latents"},
+                    "destination": {"node_id": "canvas_output:JbPTiAJ26r",   "field": "latents"}
                 },
                 {
-                    "source"     : {"node_id": "denoise_latents:1pC1TPyIsz", "field": "latents"},
-                    "destination": {"node_id": "canvas_output:94JBfO5C9c",   "field": "latents"}
+                    "source"     : {"node_id": "positive_prompt:kjUMdcg0zO", "field": "value"          },
+                    "destination": {"node_id": "core_metadata:gSiDdR3ubW",   "field": "positive_prompt"}
                 },
                 {
-                    "source"     : {"node_id": "seed:RpiR4N9oZ9",          "field": "value"},
-                    "destination": {"node_id": "core_metadata:oO2k36xZyg", "field": "seed" }
+                    "source"     : {"node_id": "positive_prompt:kjUMdcg0zO", "field": "value"},
+                    "destination": {"node_id": "pos_cond:o9T4cKV8xt",        "field": "style"}
                 },
                 {
-                    "source"     : {"node_id": "positive_prompt:VLX4x4tROA", "field": "value"          },
-                    "destination": {"node_id": "core_metadata:oO2k36xZyg",   "field": "positive_prompt"}
+                    "source"     : {"node_id": "positive_prompt:kjUMdcg0zO", "field": "value"                },
+                    "destination": {"node_id": "core_metadata:gSiDdR3ubW",   "field": "positive_style_prompt"}
                 },
                 {
-                    "source"     : {"node_id": "positive_prompt:VLX4x4tROA", "field": "value"},
-                    "destination": {"node_id": "pos_cond:vMiGRaL7ZV",        "field": "style"}
+                    "source"     : {"node_id": "sdxl_model_loader:PwBr7RXRsy", "field": "vae"},
+                    "destination": {"node_id": "canvas_output:JbPTiAJ26r",     "field": "vae"}
                 },
                 {
-                    "source"     : {"node_id": "positive_prompt:VLX4x4tROA", "field": "value"                },
-                    "destination": {"node_id": "core_metadata:oO2k36xZyg",   "field": "positive_style_prompt"}
+                    "source"     : {"node_id": "core_metadata:gSiDdR3ubW", "field": "metadata"},
+                    "destination": {"node_id": "canvas_output:JbPTiAJ26r", "field": "metadata"}
                 },
                 {
-                    "source"     : {"node_id": "sdxl_model_loader:hTRtPGN2SC", "field": "vae"},
-                    "destination": {"node_id": "canvas_output:94JBfO5C9c",     "field": "vae"}
+                    "source"     : {"node_id": "fe37ca02-b720-41f8-a10c-5ab7f110e336", "field": "value"},
+                    "destination": {"node_id": "core_metadata:gSiDdR3ubW",             "field": "seed" }
                 },
                 {
-                    "source"     : {"node_id": "core_metadata:oO2k36xZyg", "field": "metadata"},
-                    "destination": {"node_id": "canvas_output:94JBfO5C9c", "field": "metadata"}
+                    "source"     : {"node_id": "484ecc77-b7a0-4e19-b793-cc313f20fbe6", "field": "value" },
+                    "destination": {"node_id": "neg_cond:5ZtbrHJgrO",                  "field": "prompt"}
+                },
+                {
+                    "source"     : {"node_id": "484ecc77-b7a0-4e19-b793-cc313f20fbe6", "field": "value"},
+                    "destination": {"node_id": "neg_cond:5ZtbrHJgrO",                  "field": "style"}
+                },
+                {
+                    "source"     : {"node_id": "484ecc77-b7a0-4e19-b793-cc313f20fbe6", "field": "value"          },
+                    "destination": {"node_id": "core_metadata:gSiDdR3ubW",             "field": "negative_prompt"}
+                },
+                {
+                    "source"     : {"node_id": "noise:f4Bv4UWa22",         "field": "width"},
+                    "destination": {"node_id": "core_metadata:gSiDdR3ubW", "field": "width"}
+                },
+                {
+                    "source"     : {"node_id": "noise:f4Bv4UWa22",         "field": "height"},
+                    "destination": {"node_id": "core_metadata:gSiDdR3ubW", "field": "height"}
+                },
+                {
+                    "source"     : {"node_id": "fe37ca02-b720-41f8-a10c-5ab7f110e336", "field": "value"},
+                    "destination": {"node_id": "noise:f4Bv4UWa22",                     "field": "seed" }
                 }
             ]
         },
         "execution_graph": {
-            "id": "21c9478e-efd3-4c8b-853a-bba17eebbe38",
+            "id": "aa76b256-a8a2-4607-afda-b2c5be199faf",
             "nodes": {
-                "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5": {
-                    "id": "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5",
+                "fafd222a-316a-40e5-b0b2-296d2c9c636a": {
+                    "id": "fafd222a-316a-40e5-b0b2-296d2c9c636a",
                     "is_intermediate": true,
                     "use_cache": true,
                     "model": {
-                        "key" : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                        "hash": "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                        "name": "sdxlUnstableDiffusers_nihilmania",
+                        "key" : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                        "hash": "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                        "name": "albedobaseXL_v21",
                         "base": "sdxl",
                         "type": "main"
                     },
                     "type": "sdxl_model_loader"
                 },
-                "2de4c49e-b821-4ca3-b3b7-13f468961dd9": {
-                    "id": "2de4c49e-b821-4ca3-b3b7-13f468961dd9",
+                "880072b2-2f3f-4722-bf92-bbb53d8fd2af": {
+                    "id": "880072b2-2f3f-4722-bf92-bbb53d8fd2af",
                     "is_intermediate": true,
                     "use_cache": true,
-                    "value": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
+                    "value": "deep space, high quality, colorful",
                     "type": "string"
                 },
-                "bbc4b31e-411b-4b21-bdac-e3be833cd4ee": {
-                    "id": "bbc4b31e-411b-4b21-bdac-e3be833cd4ee",
+                "2c159334-1cff-4342-b6f7-13eede50c3ac": {
+                    "id": "2c159334-1cff-4342-b6f7-13eede50c3ac",
                     "is_intermediate": true,
-                    "use_cache": true,
-                    "value": 3573534001,
-                    "type": "integer"
+                    "use_cache": false,
+                    "low": 0,
+                    "high": 2147483647,
+                    "type": "rand_int"
                 },
-                "3d32582d-bff3-40ab-b6ca-ead67efeb423": {
-                    "id": "3d32582d-bff3-40ab-b6ca-ead67efeb423",
+                "cddd3aac-2f84-4efc-ac67-a29144aa1fa2": {
+                    "id": "cddd3aac-2f84-4efc-ac67-a29144aa1fa2",
                     "is_intermediate": true,
                     "use_cache": true,
-                    "prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
-                    "style": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
+                    "value": "earth, star war, blurry",
+                    "type": "string"
+                },
+                "716a36e8-e579-4548-afa1-13da3a5eb549": {
+                    "id": "716a36e8-e579-4548-afa1-13da3a5eb549",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "prompt": "deep space, high quality, colorful",
+                    "style": "deep space, high quality, colorful",
                     "original_width": 1024,
                     "original_height": 1024,
                     "crop_top": 0,
@@ -275,17 +294,17 @@
                     "target_height": 1024,
                     "clip": {
                         "tokenizer": {
-                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                            "name"         : "albedobaseXL_v21",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "tokenizer"
                         },
                         "text_encoder": {
-                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                            "name"         : "albedobaseXL_v21",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "text_encoder"
@@ -295,17 +314,17 @@
                     },
                     "clip2": {
                         "tokenizer": {
-                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                            "name"         : "albedobaseXL_v21",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "tokenizer_2"
                         },
                         "text_encoder": {
-                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                            "name"         : "albedobaseXL_v21",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "text_encoder_2"
@@ -315,146 +334,138 @@
                     },
                     "type": "sdxl_compel_prompt"
                 },
-                "30ceb5cd-5d35-4d34-956c-01197143febc": {
-                    "id": "30ceb5cd-5d35-4d34-956c-01197143febc",
+                "fa23b376-11ca-438f-b919-b1695ab42b36": {
+                    "id": "fa23b376-11ca-438f-b919-b1695ab42b36",
                     "is_intermediate": true,
                     "use_cache": true,
-                    "prompt": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
-                    "style": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
-                    "original_width": 1024,
-                    "original_height": 1024,
-                    "crop_top": 0,
-                    "crop_left": 0,
-                    "target_width": 1024,
-                    "target_height": 1024,
-                    "clip": {
-                        "tokenizer": {
-                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                            "name"         : "sdxlUnstableDiffusers_nihilmania",
-                            "base"         : "sdxl",
-                            "type"         : "main",
-                            "submodel_type": "tokenizer"
-                        },
-                        "text_encoder": {
-                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                            "name"         : "sdxlUnstableDiffusers_nihilmania",
-                            "base"         : "sdxl",
-                            "type"         : "main",
-                            "submodel_type": "text_encoder"
-                        },
-                        "skipped_layers": 0,
-                        "loras": []
-                    },
-                    "clip2": {
-                        "tokenizer": {
-                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                            "name"         : "sdxlUnstableDiffusers_nihilmania",
-                            "base"         : "sdxl",
-                            "type"         : "main",
-                            "submodel_type": "tokenizer_2"
-                        },
-                        "text_encoder": {
-                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                            "name"         : "sdxlUnstableDiffusers_nihilmania",
-                            "base"         : "sdxl",
-                            "type"         : "main",
-                            "submodel_type": "text_encoder_2"
-                        },
-                        "skipped_layers": 0,
-                        "loras": []
-                    },
-                    "type": "sdxl_compel_prompt"
-                },
-                "8423bc7f-3d1c-442b-83ad-1881af48427e": {
-                    "id": "8423bc7f-3d1c-442b-83ad-1881af48427e",
-                    "is_intermediate": true,
-                    "use_cache": true,
-                    "generation_mode": "sdxl_txt2img",
-                    "positive_prompt": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
-                    "negative_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
-                    "width": 960,
-                    "height": 1280,
-                    "seed": 3573534001,
-                    "rand_device": "cpu",
-                    "cfg_scale": 7.5,
-                    "cfg_rescale_multiplier": 0,
-                    "steps": 21,
-                    "scheduler": "euler_a",
-                    "seamless_x": false,
-                    "seamless_y": false,
-                    "model": {
-                        "key" : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                        "hash": "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                        "name": "sdxlUnstableDiffusers_nihilmania",
-                        "base": "sdxl",
-                        "type": "main"
-                    },
-                    "positive_style_prompt": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
-                    "negative_style_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
-                    "type": "core_metadata",
-                    "ref_images": []
-                },
-                "aa0af106-9562-484a-bdc1-abc512f4192e": {
-                    "id": "aa0af106-9562-484a-bdc1-abc512f4192e",
-                    "is_intermediate": true,
-                    "use_cache": true,
-                    "seed": 3573534001,
-                    "width": 960,
-                    "height": 1280,
+                    "seed": 1776185488,
+                    "width": 768,
+                    "height": 1024,
                     "use_cpu": true,
                     "type": "noise"
                 },
-                "c0290424-a3d6-4999-aefe-8f255fbf9283": {
-                    "id": "c0290424-a3d6-4999-aefe-8f255fbf9283",
+                "d648a095-508a-430c-ae35-5c36d4a48f6f": {
+                    "id": "d648a095-508a-430c-ae35-5c36d4a48f6f",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "prompt": "earth, star war, blurry",
+                    "style": "earth, star war, blurry",
+                    "original_width": 1024,
+                    "original_height": 1024,
+                    "crop_top": 0,
+                    "crop_left": 0,
+                    "target_width": 1024,
+                    "target_height": 1024,
+                    "clip": {
+                        "tokenizer": {
+                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                            "name"         : "albedobaseXL_v21",
+                            "base"         : "sdxl",
+                            "type"         : "main",
+                            "submodel_type": "tokenizer"
+                        },
+                        "text_encoder": {
+                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                            "name"         : "albedobaseXL_v21",
+                            "base"         : "sdxl",
+                            "type"         : "main",
+                            "submodel_type": "text_encoder"
+                        },
+                        "skipped_layers": 0,
+                        "loras": []
+                    },
+                    "clip2": {
+                        "tokenizer": {
+                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                            "name"         : "albedobaseXL_v21",
+                            "base"         : "sdxl",
+                            "type"         : "main",
+                            "submodel_type": "tokenizer_2"
+                        },
+                        "text_encoder": {
+                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                            "name"         : "albedobaseXL_v21",
+                            "base"         : "sdxl",
+                            "type"         : "main",
+                            "submodel_type": "text_encoder_2"
+                        },
+                        "skipped_layers": 0,
+                        "loras": []
+                    },
+                    "type": "sdxl_compel_prompt"
+                },
+                "69344e07-fd1a-4bfe-873b-b2ebd58e1836": {
+                    "id": "69344e07-fd1a-4bfe-873b-b2ebd58e1836",
                     "is_intermediate": true,
                     "use_cache": true,
                     "collection": [
-                        {"conditioning_name": "ConditioningFieldData_8bb1d2ea-c836-47cf-a939-ae10f970cd2b"}
+                        {"conditioning_name": "ConditioningFieldData_dc4e3768-d72b-4d1b-aa9a-94a9d8c48fb1"}
                     ],
                     "type": "collect"
                 },
-                "b3983cba-6fed-48b3-a39c-fb2f20fb147e": {
-                    "id": "b3983cba-6fed-48b3-a39c-fb2f20fb147e",
+                "76ac0d9c-8f92-46f7-a8f3-2ee694707767": {
+                    "id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767",
+                    "is_intermediate": true,
+                    "use_cache": true,
+                    "generation_mode": "sdxl_txt2img",
+                    "positive_prompt": "deep space, high quality, colorful",
+                    "negative_prompt": "earth, star war, blurry",
+                    "width": 768,
+                    "height": 1024,
+                    "seed": 1776185488,
+                    "rand_device": "cpu",
+                    "cfg_scale": 7.5,
+                    "cfg_rescale_multiplier": 0,
+                    "steps": 30,
+                    "scheduler": "dpmpp_3m_k",
+                    "seamless_x": false,
+                    "seamless_y": false,
+                    "positive_style_prompt": "deep space, high quality, colorful",
+                    "negative_style_prompt": "naked",
+                    "type": "core_metadata"
+                },
+                "03b476de-571f-4316-aae5-db885133c75d": {
+                    "id": "03b476de-571f-4316-aae5-db885133c75d",
                     "is_intermediate": true,
                     "use_cache": true,
                     "collection": [
-                        {"conditioning_name": "ConditioningFieldData_34e8902c-369f-4f7c-a2d4-ceb58cd79109"}
+                        {"conditioning_name": "ConditioningFieldData_d1dd7994-59cf-4d1b-be9c-a5fd22246014"}
                     ],
                     "type": "collect"
                 },
-                "2bddb043-414c-4e30-8991-3bd30dd8b562": {
-                    "id": "2bddb043-414c-4e30-8991-3bd30dd8b562",
+                "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1": {
+                    "id": "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1",
                     "is_intermediate": true,
                     "use_cache": true,
                     "positive_conditioning": [
-                        {"conditioning_name": "ConditioningFieldData_34e8902c-369f-4f7c-a2d4-ceb58cd79109"}
+                        {"conditioning_name": "ConditioningFieldData_dc4e3768-d72b-4d1b-aa9a-94a9d8c48fb1"}
                     ],
                     "negative_conditioning": [
-                        {"conditioning_name": "ConditioningFieldData_8bb1d2ea-c836-47cf-a939-ae10f970cd2b"}
+                        {"conditioning_name": "ConditioningFieldData_d1dd7994-59cf-4d1b-be9c-a5fd22246014"}
                     ],
-                    "noise": {"latents_name": "Tensor_7c1a7026-4422-4f1c-aafe-1e76de54c1f8", "seed": 3573534001},
-                    "steps": 21,
+                    "noise": {"latents_name": "Tensor_3a72469e-5b70-43bc-b12a-095077bb3c79", "seed": 1776185488},
+                    "steps": 30,
                     "cfg_scale": 7.5,
                     "denoising_start": 0,
                     "denoising_end": 1,
-                    "scheduler": "euler_a",
+                    "scheduler": "dpmpp_3m_k",
                     "unet": {
                         "unet": {
-                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                            "name"         : "albedobaseXL_v21",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "unet"
                         },
                         "scheduler": {
-                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                            "name"         : "albedobaseXL_v21",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "scheduler"
@@ -465,42 +476,35 @@
                     "cfg_rescale_multiplier": 0,
                     "type": "denoise_latents"
                 },
-                "6e4bed37-797c-4c48-a50d-7d78153bb04e": {
+                "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08": {
+                    "board": {"board_id": "abf4afa1-5797-48a0-8e4c-f072b51f2151"},
                     "metadata": {
                         "generation_mode": "sdxl_txt2img",
-                        "positive_prompt": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
-                        "negative_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
-                        "width": 960,
-                        "height": 1280,
-                        "seed": 3573534001,
+                        "positive_prompt": "deep space, high quality, colorful",
+                        "negative_prompt": "earth, star war, blurry",
+                        "width": 768,
+                        "height": 1024,
+                        "seed": 1776185488,
                         "rand_device": "cpu",
                         "cfg_scale": 7.5,
                         "cfg_rescale_multiplier": 0,
-                        "steps": 21,
-                        "scheduler": "euler_a",
+                        "steps": 30,
+                        "scheduler": "dpmpp_3m_k",
                         "seamless_x": false,
                         "seamless_y": false,
-                        "model": {
-                            "key" : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                            "hash": "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                            "name": "sdxlUnstableDiffusers_nihilmania",
-                            "base": "sdxl",
-                            "type": "main"
-                        },
-                        "positive_style_prompt": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
-                        "negative_style_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
-                        "ref_images": [],
+                        "positive_style_prompt": "deep space, high quality, colorful",
+                        "negative_style_prompt": "naked",
                         "app_version": "6.3.0"
                     },
-                    "id": "6e4bed37-797c-4c48-a50d-7d78153bb04e",
+                    "id": "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08",
                     "is_intermediate": false,
                     "use_cache": false,
-                    "latents": {"latents_name": "Tensor_44956f04-62a3-4810-b4f3-bde726c9c1fc"},
+                    "latents": {"latents_name": "Tensor_a7e6745a-49d1-44ff-95fe-54a03cd964c6"},
                     "vae": {
                         "vae": {
-                            "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                            "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                            "name"         : "sdxlUnstableDiffusers_nihilmania",
+                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                            "name"         : "albedobaseXL_v21",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "vae"
@@ -515,128 +519,158 @@
             },
             "edges": [
                 {
-                    "source"     : {"node_id": "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5", "field": "clip"},
-                    "destination": {"node_id": "3d32582d-bff3-40ab-b6ca-ead67efeb423", "field": "clip"}
+                    "source"     : {"node_id": "fafd222a-316a-40e5-b0b2-296d2c9c636a", "field": "clip"},
+                    "destination": {"node_id": "716a36e8-e579-4548-afa1-13da3a5eb549", "field": "clip"}
                 },
                 {
-                    "source"     : {"node_id": "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5", "field": "clip2"},
-                    "destination": {"node_id": "3d32582d-bff3-40ab-b6ca-ead67efeb423", "field": "clip2"}
+                    "source"     : {"node_id": "fafd222a-316a-40e5-b0b2-296d2c9c636a", "field": "clip2"},
+                    "destination": {"node_id": "716a36e8-e579-4548-afa1-13da3a5eb549", "field": "clip2"}
                 },
                 {
-                    "source"     : {"node_id": "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5", "field": "clip"},
-                    "destination": {"node_id": "30ceb5cd-5d35-4d34-956c-01197143febc", "field": "clip"}
+                    "source"     : {"node_id": "880072b2-2f3f-4722-bf92-bbb53d8fd2af", "field": "value" },
+                    "destination": {"node_id": "716a36e8-e579-4548-afa1-13da3a5eb549", "field": "prompt"}
                 },
                 {
-                    "source"     : {"node_id": "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5", "field": "clip2"},
-                    "destination": {"node_id": "30ceb5cd-5d35-4d34-956c-01197143febc", "field": "clip2"}
+                    "source"     : {"node_id": "880072b2-2f3f-4722-bf92-bbb53d8fd2af", "field": "value"},
+                    "destination": {"node_id": "716a36e8-e579-4548-afa1-13da3a5eb549", "field": "style"}
                 },
                 {
-                    "source"     : {"node_id": "2de4c49e-b821-4ca3-b3b7-13f468961dd9", "field": "value" },
-                    "destination": {"node_id": "30ceb5cd-5d35-4d34-956c-01197143febc", "field": "prompt"}
+                    "source"     : {"node_id": "2c159334-1cff-4342-b6f7-13eede50c3ac", "field": "value"},
+                    "destination": {"node_id": "fa23b376-11ca-438f-b919-b1695ab42b36", "field": "seed" }
                 },
                 {
-                    "source"     : {"node_id": "2de4c49e-b821-4ca3-b3b7-13f468961dd9", "field": "value"},
-                    "destination": {"node_id": "30ceb5cd-5d35-4d34-956c-01197143febc", "field": "style"}
+                    "source"     : {"node_id": "fafd222a-316a-40e5-b0b2-296d2c9c636a", "field": "clip"},
+                    "destination": {"node_id": "d648a095-508a-430c-ae35-5c36d4a48f6f", "field": "clip"}
                 },
                 {
-                    "source"     : {"node_id": "bbc4b31e-411b-4b21-bdac-e3be833cd4ee", "field": "value"},
-                    "destination": {"node_id": "8423bc7f-3d1c-442b-83ad-1881af48427e", "field": "seed" }
+                    "source"     : {"node_id": "fafd222a-316a-40e5-b0b2-296d2c9c636a", "field": "clip2"},
+                    "destination": {"node_id": "d648a095-508a-430c-ae35-5c36d4a48f6f", "field": "clip2"}
                 },
                 {
-                    "source"     : {"node_id": "2de4c49e-b821-4ca3-b3b7-13f468961dd9", "field": "value"          },
-                    "destination": {"node_id": "8423bc7f-3d1c-442b-83ad-1881af48427e", "field": "positive_prompt"}
+                    "source"     : {"node_id": "cddd3aac-2f84-4efc-ac67-a29144aa1fa2", "field": "value" },
+                    "destination": {"node_id": "d648a095-508a-430c-ae35-5c36d4a48f6f", "field": "prompt"}
                 },
                 {
-                    "source": {"node_id": "2de4c49e-b821-4ca3-b3b7-13f468961dd9", "field": "value"},
-                    "destination": {"node_id": "8423bc7f-3d1c-442b-83ad-1881af48427e", "field": "positive_style_prompt"}
+                    "source"     : {"node_id": "cddd3aac-2f84-4efc-ac67-a29144aa1fa2", "field": "value"},
+                    "destination": {"node_id": "d648a095-508a-430c-ae35-5c36d4a48f6f", "field": "style"}
                 },
                 {
-                    "source"     : {"node_id": "bbc4b31e-411b-4b21-bdac-e3be833cd4ee", "field": "value"},
-                    "destination": {"node_id": "aa0af106-9562-484a-bdc1-abc512f4192e", "field": "seed" }
+                    "source"     : {"node_id": "716a36e8-e579-4548-afa1-13da3a5eb549", "field": "conditioning"},
+                    "destination": {"node_id": "69344e07-fd1a-4bfe-873b-b2ebd58e1836", "field": "item"        }
                 },
                 {
-                    "source"     : {"node_id": "3d32582d-bff3-40ab-b6ca-ead67efeb423", "field": "conditioning"},
-                    "destination": {"node_id": "c0290424-a3d6-4999-aefe-8f255fbf9283", "field": "item"        }
+                    "source"     : {"node_id": "880072b2-2f3f-4722-bf92-bbb53d8fd2af", "field": "value"          },
+                    "destination": {"node_id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767", "field": "positive_prompt"}
                 },
                 {
-                    "source"     : {"node_id": "30ceb5cd-5d35-4d34-956c-01197143febc", "field": "conditioning"},
-                    "destination": {"node_id": "b3983cba-6fed-48b3-a39c-fb2f20fb147e", "field": "item"        }
+                    "source": {"node_id": "880072b2-2f3f-4722-bf92-bbb53d8fd2af", "field": "value"},
+                    "destination": {"node_id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767", "field": "positive_style_prompt"}
                 },
                 {
-                    "source"     : {"node_id": "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5", "field": "unet"},
-                    "destination": {"node_id": "2bddb043-414c-4e30-8991-3bd30dd8b562", "field": "unet"}
+                    "source"     : {"node_id": "2c159334-1cff-4342-b6f7-13eede50c3ac", "field": "value"},
+                    "destination": {"node_id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767", "field": "seed" }
                 },
                 {
-                    "source": {"node_id": "b3983cba-6fed-48b3-a39c-fb2f20fb147e", "field": "collection"},
-                    "destination": {"node_id": "2bddb043-414c-4e30-8991-3bd30dd8b562", "field": "positive_conditioning"}
+                    "source"     : {"node_id": "cddd3aac-2f84-4efc-ac67-a29144aa1fa2", "field": "value"          },
+                    "destination": {"node_id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767", "field": "negative_prompt"}
                 },
                 {
-                    "source": {"node_id": "c0290424-a3d6-4999-aefe-8f255fbf9283", "field": "collection"},
-                    "destination": {"node_id": "2bddb043-414c-4e30-8991-3bd30dd8b562", "field": "negative_conditioning"}
+                    "source"     : {"node_id": "fa23b376-11ca-438f-b919-b1695ab42b36", "field": "width"},
+                    "destination": {"node_id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767", "field": "width"}
                 },
                 {
-                    "source"     : {"node_id": "aa0af106-9562-484a-bdc1-abc512f4192e", "field": "noise"},
-                    "destination": {"node_id": "2bddb043-414c-4e30-8991-3bd30dd8b562", "field": "noise"}
+                    "source"     : {"node_id": "fa23b376-11ca-438f-b919-b1695ab42b36", "field": "height"},
+                    "destination": {"node_id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767", "field": "height"}
                 },
                 {
-                    "source"     : {"node_id": "2bddb043-414c-4e30-8991-3bd30dd8b562", "field": "latents"},
-                    "destination": {"node_id": "6e4bed37-797c-4c48-a50d-7d78153bb04e", "field": "latents"}
+                    "source"     : {"node_id": "d648a095-508a-430c-ae35-5c36d4a48f6f", "field": "conditioning"},
+                    "destination": {"node_id": "03b476de-571f-4316-aae5-db885133c75d", "field": "item"        }
                 },
                 {
-                    "source"     : {"node_id": "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5", "field": "vae"},
-                    "destination": {"node_id": "6e4bed37-797c-4c48-a50d-7d78153bb04e", "field": "vae"}
+                    "source"     : {"node_id": "fafd222a-316a-40e5-b0b2-296d2c9c636a", "field": "unet"},
+                    "destination": {"node_id": "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1", "field": "unet"}
                 },
                 {
-                    "source"     : {"node_id": "8423bc7f-3d1c-442b-83ad-1881af48427e", "field": "metadata"},
-                    "destination": {"node_id": "6e4bed37-797c-4c48-a50d-7d78153bb04e", "field": "metadata"}
+                    "source": {"node_id": "69344e07-fd1a-4bfe-873b-b2ebd58e1836", "field": "collection"},
+                    "destination": {"node_id": "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1", "field": "positive_conditioning"}
+                },
+                {
+                    "source": {"node_id": "03b476de-571f-4316-aae5-db885133c75d", "field": "collection"},
+                    "destination": {"node_id": "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1", "field": "negative_conditioning"}
+                },
+                {
+                    "source"     : {"node_id": "fa23b376-11ca-438f-b919-b1695ab42b36", "field": "noise"},
+                    "destination": {"node_id": "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1", "field": "noise"}
+                },
+                {
+                    "source"     : {"node_id": "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1", "field": "latents"},
+                    "destination": {"node_id": "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08", "field": "latents"}
+                },
+                {
+                    "source"     : {"node_id": "fafd222a-316a-40e5-b0b2-296d2c9c636a", "field": "vae"},
+                    "destination": {"node_id": "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08", "field": "vae"}
+                },
+                {
+                    "source"     : {"node_id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767", "field": "metadata"},
+                    "destination": {"node_id": "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08", "field": "metadata"}
                 }
             ]
         },
         "executed": [
-            "core_metadata:oO2k36xZyg",
-            "neg_cond_collect:iOgNrfkjEw",
-            "positive_prompt:VLX4x4tROA",
-            "canvas_output:94JBfO5C9c",
-            "neg_cond:VPsH7pE8u4",
-            "aa0af106-9562-484a-bdc1-abc512f4192e",
-            "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5",
-            "c0290424-a3d6-4999-aefe-8f255fbf9283",
-            "2de4c49e-b821-4ca3-b3b7-13f468961dd9",
-            "noise:r4hTDusFvO",
-            "pos_cond_collect:q2Mrr3VgaM",
-            "pos_cond:vMiGRaL7ZV",
-            "8423bc7f-3d1c-442b-83ad-1881af48427e",
-            "30ceb5cd-5d35-4d34-956c-01197143febc",
-            "bbc4b31e-411b-4b21-bdac-e3be833cd4ee",
-            "sdxl_model_loader:hTRtPGN2SC",
-            "denoise_latents:1pC1TPyIsz",
-            "b3983cba-6fed-48b3-a39c-fb2f20fb147e",
-            "seed:RpiR4N9oZ9",
-            "3d32582d-bff3-40ab-b6ca-ead67efeb423",
-            "2bddb043-414c-4e30-8991-3bd30dd8b562",
-            "6e4bed37-797c-4c48-a50d-7d78153bb04e"
+            "neg_cond_collect:XpoW9rXd61",
+            "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1",
+            "716a36e8-e579-4548-afa1-13da3a5eb549",
+            "pos_cond_collect:sles8A43dq",
+            "cddd3aac-2f84-4efc-ac67-a29144aa1fa2",
+            "denoise_latents:TRC0Y88EWe",
+            "fa23b376-11ca-438f-b919-b1695ab42b36",
+            "neg_cond:5ZtbrHJgrO",
+            "69344e07-fd1a-4bfe-873b-b2ebd58e1836",
+            "2c159334-1cff-4342-b6f7-13eede50c3ac",
+            "484ecc77-b7a0-4e19-b793-cc313f20fbe6",
+            "03b476de-571f-4316-aae5-db885133c75d",
+            "canvas_output:JbPTiAJ26r",
+            "fe37ca02-b720-41f8-a10c-5ab7f110e336",
+            "880072b2-2f3f-4722-bf92-bbb53d8fd2af",
+            "positive_prompt:kjUMdcg0zO",
+            "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08",
+            "core_metadata:gSiDdR3ubW",
+            "d648a095-508a-430c-ae35-5c36d4a48f6f",
+            "fafd222a-316a-40e5-b0b2-296d2c9c636a",
+            "sdxl_model_loader:PwBr7RXRsy",
+            "pos_cond:o9T4cKV8xt",
+            "noise:f4Bv4UWa22",
+            "76ac0d9c-8f92-46f7-a8f3-2ee694707767"
         ],
         "executed_history": [
-            "sdxl_model_loader:hTRtPGN2SC", "neg_cond:VPsH7pE8u4",          "neg_cond_collect:iOgNrfkjEw",
-            "positive_prompt:VLX4x4tROA",   "pos_cond:vMiGRaL7ZV",          "pos_cond_collect:q2Mrr3VgaM",
-            "seed:RpiR4N9oZ9",              "core_metadata:oO2k36xZyg",     "noise:r4hTDusFvO",
-            "denoise_latents:1pC1TPyIsz",   "canvas_output:94JBfO5C9c"
+            "sdxl_model_loader:PwBr7RXRsy",
+            "positive_prompt:kjUMdcg0zO",
+            "pos_cond:o9T4cKV8xt",
+            "pos_cond_collect:sles8A43dq",
+            "fe37ca02-b720-41f8-a10c-5ab7f110e336",
+            "noise:f4Bv4UWa22",
+            "484ecc77-b7a0-4e19-b793-cc313f20fbe6",
+            "neg_cond:5ZtbrHJgrO",
+            "neg_cond_collect:XpoW9rXd61",
+            "denoise_latents:TRC0Y88EWe",
+            "core_metadata:gSiDdR3ubW",
+            "canvas_output:JbPTiAJ26r"
         ],
         "results": {
-            "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5": {
+            "fafd222a-316a-40e5-b0b2-296d2c9c636a": {
                 "unet": {
                     "unet": {
-                        "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                        "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                        "name"         : "sdxlUnstableDiffusers_nihilmania",
+                        "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                        "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                        "name"         : "albedobaseXL_v21",
                         "base"         : "sdxl",
                         "type"         : "main",
                         "submodel_type": "unet"
                     },
                     "scheduler": {
-                        "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                        "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                        "name"         : "sdxlUnstableDiffusers_nihilmania",
+                        "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                        "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                        "name"         : "albedobaseXL_v21",
                         "base"         : "sdxl",
                         "type"         : "main",
                         "submodel_type": "scheduler"
@@ -646,17 +680,17 @@
                 },
                 "clip": {
                     "tokenizer": {
-                        "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                        "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                        "name"         : "sdxlUnstableDiffusers_nihilmania",
+                        "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                        "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                        "name"         : "albedobaseXL_v21",
                         "base"         : "sdxl",
                         "type"         : "main",
                         "submodel_type": "tokenizer"
                     },
                     "text_encoder": {
-                        "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                        "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                        "name"         : "sdxlUnstableDiffusers_nihilmania",
+                        "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                        "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                        "name"         : "albedobaseXL_v21",
                         "base"         : "sdxl",
                         "type"         : "main",
                         "submodel_type": "text_encoder"
@@ -666,17 +700,17 @@
                 },
                 "clip2": {
                     "tokenizer": {
-                        "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                        "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                        "name"         : "sdxlUnstableDiffusers_nihilmania",
+                        "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                        "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                        "name"         : "albedobaseXL_v21",
                         "base"         : "sdxl",
                         "type"         : "main",
                         "submodel_type": "tokenizer_2"
                     },
                     "text_encoder": {
-                        "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                        "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                        "name"         : "sdxlUnstableDiffusers_nihilmania",
+                        "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                        "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                        "name"         : "albedobaseXL_v21",
                         "base"         : "sdxl",
                         "type"         : "main",
                         "submodel_type": "text_encoder_2"
@@ -686,9 +720,9 @@
                 },
                 "vae": {
                     "vae": {
-                        "key"          : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                        "hash"         : "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                        "name"         : "sdxlUnstableDiffusers_nihilmania",
+                        "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                        "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                        "name"         : "albedobaseXL_v21",
                         "base"         : "sdxl",
                         "type"         : "main",
                         "submodel_type": "vae"
@@ -697,101 +731,752 @@
                 },
                 "type": "sdxl_model_loader_output"
             },
-            "3d32582d-bff3-40ab-b6ca-ead67efeb423": {
-                "conditioning": {"conditioning_name": "ConditioningFieldData_8bb1d2ea-c836-47cf-a939-ae10f970cd2b"},
-                "type": "conditioning_output"
-            },
-            "c0290424-a3d6-4999-aefe-8f255fbf9283": {
-                "collection": [ {"conditioning_name": "ConditioningFieldData_8bb1d2ea-c836-47cf-a939-ae10f970cd2b"} ],
-                "type": "collect_output"
-            },
-            "2de4c49e-b821-4ca3-b3b7-13f468961dd9": {
-                "value": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
+            "880072b2-2f3f-4722-bf92-bbb53d8fd2af": {
+                "value": "deep space, high quality, colorful",
                 "type" : "string_output"
             },
-            "30ceb5cd-5d35-4d34-956c-01197143febc": {
-                "conditioning": {"conditioning_name": "ConditioningFieldData_34e8902c-369f-4f7c-a2d4-ceb58cd79109"},
+            "716a36e8-e579-4548-afa1-13da3a5eb549": {
+                "conditioning": {"conditioning_name": "ConditioningFieldData_dc4e3768-d72b-4d1b-aa9a-94a9d8c48fb1"},
                 "type": "conditioning_output"
             },
-            "b3983cba-6fed-48b3-a39c-fb2f20fb147e": {
-                "collection": [ {"conditioning_name": "ConditioningFieldData_34e8902c-369f-4f7c-a2d4-ceb58cd79109"} ],
+            "69344e07-fd1a-4bfe-873b-b2ebd58e1836": {
+                "collection": [ {"conditioning_name": "ConditioningFieldData_dc4e3768-d72b-4d1b-aa9a-94a9d8c48fb1"} ],
                 "type": "collect_output"
             },
-            "bbc4b31e-411b-4b21-bdac-e3be833cd4ee": {"value": 3573534001, "type": "integer_output"},
-            "8423bc7f-3d1c-442b-83ad-1881af48427e": {
+            "2c159334-1cff-4342-b6f7-13eede50c3ac": {"value": 1776185488, "type": "integer_output"},
+            "fa23b376-11ca-438f-b919-b1695ab42b36": {
+                "noise": {"latents_name": "Tensor_3a72469e-5b70-43bc-b12a-095077bb3c79", "seed": 1776185488},
+                "width": 768,
+                "height": 1024,
+                "type": "noise_output"
+            },
+            "cddd3aac-2f84-4efc-ac67-a29144aa1fa2": {"value": "earth, star war, blurry", "type": "string_output"},
+            "d648a095-508a-430c-ae35-5c36d4a48f6f": {
+                "conditioning": {"conditioning_name": "ConditioningFieldData_d1dd7994-59cf-4d1b-be9c-a5fd22246014"},
+                "type": "conditioning_output"
+            },
+            "03b476de-571f-4316-aae5-db885133c75d": {
+                "collection": [ {"conditioning_name": "ConditioningFieldData_d1dd7994-59cf-4d1b-be9c-a5fd22246014"} ],
+                "type": "collect_output"
+            },
+            "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1": {
+                "latents": {"latents_name": "Tensor_a7e6745a-49d1-44ff-95fe-54a03cd964c6"},
+                "width": 768,
+                "height": 1024,
+                "type": "latents_output"
+            },
+            "76ac0d9c-8f92-46f7-a8f3-2ee694707767": {
                 "metadata": {
                     "generation_mode": "sdxl_txt2img",
-                    "positive_prompt": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
-                    "negative_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
-                    "width": 960,
-                    "height": 1280,
-                    "seed": 3573534001,
+                    "positive_prompt": "deep space, high quality, colorful",
+                    "negative_prompt": "earth, star war, blurry",
+                    "width": 768,
+                    "height": 1024,
+                    "seed": 1776185488,
                     "rand_device": "cpu",
                     "cfg_scale": 7.5,
                     "cfg_rescale_multiplier": 0,
-                    "steps": 21,
-                    "scheduler": "euler_a",
+                    "steps": 30,
+                    "scheduler": "dpmpp_3m_k",
                     "seamless_x": false,
                     "seamless_y": false,
-                    "model": {
-                        "key" : "e18f296d-e9e7-46d8-8de7-c4807a717fe2",
-                        "hash": "blake3:0e6d208d504410ceaf290d43411f86f90aa8b5bc095dabfee2027f896df47448",
-                        "name": "sdxlUnstableDiffusers_nihilmania",
-                        "base": "sdxl",
-                        "type": "main"
-                    },
-                    "positive_style_prompt": "attractive young teen girl, bar, outdoor, waitress--, sexy, short skirt, lace",
-                    "negative_style_prompt": "naked, no person, white dress, day, sunny, smile, makeup, shirt",
-                    "ref_images": [],
+                    "positive_style_prompt": "deep space, high quality, colorful",
+                    "negative_style_prompt": "naked",
                     "app_version": "6.3.0"
                 },
                 "type": "metadata_output"
             },
-            "aa0af106-9562-484a-bdc1-abc512f4192e": {
-                "noise": {"latents_name": "Tensor_7c1a7026-4422-4f1c-aafe-1e76de54c1f8", "seed": 3573534001},
-                "width": 960,
-                "height": 1280,
-                "type": "noise_output"
-            },
-            "2bddb043-414c-4e30-8991-3bd30dd8b562": {
-                "latents": {"latents_name": "Tensor_44956f04-62a3-4810-b4f3-bde726c9c1fc"},
-                "width": 960,
-                "height": 1280,
-                "type": "latents_output"
-            },
-            "6e4bed37-797c-4c48-a50d-7d78153bb04e": {
-                "image": {"image_name": "daf74141-3df9-4751-8c8e-5d1f66f975cb.png"},
-                "width": 960,
-                "height": 1280,
+            "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08": {
+                "image": {"image_name": "e90ee7ec-2cb8-473d-b02c-f3b2f4bc9bda.png"},
+                "width": 768,
+                "height": 1024,
                 "type": "image_output"
             }
         },
         "errors": {},
         "prepared_source_mapping": {
-            "7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5": "sdxl_model_loader:hTRtPGN2SC",
-            "2de4c49e-b821-4ca3-b3b7-13f468961dd9": "positive_prompt:VLX4x4tROA",
-            "bbc4b31e-411b-4b21-bdac-e3be833cd4ee": "seed:RpiR4N9oZ9",
-            "3d32582d-bff3-40ab-b6ca-ead67efeb423": "neg_cond:VPsH7pE8u4",
-            "30ceb5cd-5d35-4d34-956c-01197143febc": "pos_cond:vMiGRaL7ZV",
-            "8423bc7f-3d1c-442b-83ad-1881af48427e": "core_metadata:oO2k36xZyg",
-            "aa0af106-9562-484a-bdc1-abc512f4192e": "noise:r4hTDusFvO",
-            "c0290424-a3d6-4999-aefe-8f255fbf9283": "neg_cond_collect:iOgNrfkjEw",
-            "b3983cba-6fed-48b3-a39c-fb2f20fb147e": "pos_cond_collect:q2Mrr3VgaM",
-            "2bddb043-414c-4e30-8991-3bd30dd8b562": "denoise_latents:1pC1TPyIsz",
-            "6e4bed37-797c-4c48-a50d-7d78153bb04e": "canvas_output:94JBfO5C9c"
+            "fafd222a-316a-40e5-b0b2-296d2c9c636a": "sdxl_model_loader:PwBr7RXRsy",
+            "880072b2-2f3f-4722-bf92-bbb53d8fd2af": "positive_prompt:kjUMdcg0zO",
+            "2c159334-1cff-4342-b6f7-13eede50c3ac": "fe37ca02-b720-41f8-a10c-5ab7f110e336",
+            "cddd3aac-2f84-4efc-ac67-a29144aa1fa2": "484ecc77-b7a0-4e19-b793-cc313f20fbe6",
+            "716a36e8-e579-4548-afa1-13da3a5eb549": "pos_cond:o9T4cKV8xt",
+            "fa23b376-11ca-438f-b919-b1695ab42b36": "noise:f4Bv4UWa22",
+            "d648a095-508a-430c-ae35-5c36d4a48f6f": "neg_cond:5ZtbrHJgrO",
+            "69344e07-fd1a-4bfe-873b-b2ebd58e1836": "pos_cond_collect:sles8A43dq",
+            "76ac0d9c-8f92-46f7-a8f3-2ee694707767": "core_metadata:gSiDdR3ubW",
+            "03b476de-571f-4316-aae5-db885133c75d": "neg_cond_collect:XpoW9rXd61",
+            "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1": "denoise_latents:TRC0Y88EWe",
+            "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08": "canvas_output:JbPTiAJ26r"
         },
         "source_prepared_mapping": {
-            "sdxl_model_loader:hTRtPGN2SC": ["7fd9281a-23d3-4ad6-ae4c-1cc8e8cce9a5"],
-            "positive_prompt:VLX4x4tROA"  : ["2de4c49e-b821-4ca3-b3b7-13f468961dd9"],
-            "seed:RpiR4N9oZ9"             : ["bbc4b31e-411b-4b21-bdac-e3be833cd4ee"],
-            "neg_cond:VPsH7pE8u4"         : ["3d32582d-bff3-40ab-b6ca-ead67efeb423"],
-            "pos_cond:vMiGRaL7ZV"         : ["30ceb5cd-5d35-4d34-956c-01197143febc"],
-            "core_metadata:oO2k36xZyg"    : ["8423bc7f-3d1c-442b-83ad-1881af48427e"],
-            "noise:r4hTDusFvO"            : ["aa0af106-9562-484a-bdc1-abc512f4192e"],
-            "neg_cond_collect:iOgNrfkjEw" : ["c0290424-a3d6-4999-aefe-8f255fbf9283"],
-            "pos_cond_collect:q2Mrr3VgaM" : ["b3983cba-6fed-48b3-a39c-fb2f20fb147e"],
-            "denoise_latents:1pC1TPyIsz"  : ["2bddb043-414c-4e30-8991-3bd30dd8b562"],
-            "canvas_output:94JBfO5C9c"    : ["6e4bed37-797c-4c48-a50d-7d78153bb04e"]
+            "sdxl_model_loader:PwBr7RXRsy"        : ["fafd222a-316a-40e5-b0b2-296d2c9c636a"],
+            "positive_prompt:kjUMdcg0zO"          : ["880072b2-2f3f-4722-bf92-bbb53d8fd2af"],
+            "fe37ca02-b720-41f8-a10c-5ab7f110e336": ["2c159334-1cff-4342-b6f7-13eede50c3ac"],
+            "484ecc77-b7a0-4e19-b793-cc313f20fbe6": ["cddd3aac-2f84-4efc-ac67-a29144aa1fa2"],
+            "pos_cond:o9T4cKV8xt"                 : ["716a36e8-e579-4548-afa1-13da3a5eb549"],
+            "noise:f4Bv4UWa22"                    : ["fa23b376-11ca-438f-b919-b1695ab42b36"],
+            "neg_cond:5ZtbrHJgrO"                 : ["d648a095-508a-430c-ae35-5c36d4a48f6f"],
+            "pos_cond_collect:sles8A43dq"         : ["69344e07-fd1a-4bfe-873b-b2ebd58e1836"],
+            "core_metadata:gSiDdR3ubW"            : ["76ac0d9c-8f92-46f7-a8f3-2ee694707767"],
+            "neg_cond_collect:XpoW9rXd61"         : ["03b476de-571f-4316-aae5-db885133c75d"],
+            "denoise_latents:TRC0Y88EWe"          : ["6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1"],
+            "canvas_output:JbPTiAJ26r"            : ["1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08"]
+        }
+    },
+    "workflow": {
+        "name": "sdxl-text-to-image",
+        "author": "",
+        "description": "",
+        "version": "",
+        "contact": "",
+        "tags": "",
+        "notes": "",
+        "exposedFields": [],
+        "meta": {"version": "3.0.0", "category": "user"},
+        "nodes": [
+            {
+                "id": "sdxl_model_loader:PwBr7RXRsy",
+                "type": "invocation",
+                "data": {
+                    "id": "sdxl_model_loader:PwBr7RXRsy",
+                    "version": "1.0.4",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "sdxl_model_loader",
+                    "inputs": {
+                        "model": {
+                            "name": "model",
+                            "label": "",
+                            "description": "",
+                            "value": {
+                                "key" : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
+                                "hash": "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
+                                "name": "albedobaseXL_v21",
+                                "base": "sdxl",
+                                "type": "main"
+                            }
+                        }
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": -44.736128881125765, "y": 44.736128881125765}
+            },
+            {
+                "id": "positive_prompt:kjUMdcg0zO",
+                "type": "invocation",
+                "data": {
+                    "id": "positive_prompt:kjUMdcg0zO",
+                    "version": "1.0.1",
+                    "nodePack": "invokeai",
+                    "label": "Positive Prompt",
+                    "notes": "",
+                    "type": "string",
+                    "inputs": {
+                        "value": {
+                            "name"       : "value",
+                            "label"      : "positive prompt",
+                            "description": "",
+                            "value"      : "deep space, high quality, colorful"
+                        }
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": -119.85609886870043, "y": 760.1327667729312}
+            },
+            {
+                "id": "pos_cond:o9T4cKV8xt",
+                "type": "invocation",
+                "data": {
+                    "id": "pos_cond:o9T4cKV8xt",
+                    "version": "1.2.1",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "sdxl_compel_prompt",
+                    "inputs": {
+                        "prompt"         : {"name": "prompt",          "label": "", "description": "", "value": ""  },
+                        "style"          : {"name": "style",           "label": "", "description": "", "value": ""  },
+                        "original_width" : {"name": "original_width",  "label": "", "description": "", "value": 1024},
+                        "original_height": {"name": "original_height", "label": "", "description": "", "value": 1024},
+                        "crop_top"       : {"name": "crop_top",        "label": "", "description": "", "value": 0   },
+                        "crop_left"      : {"name": "crop_left",       "label": "", "description": "", "value": 0   },
+                        "target_width"   : {"name": "target_width",    "label": "", "description": "", "value": 1024},
+                        "target_height"  : {"name": "target_height",   "label": "", "description": "", "value": 1024},
+                        "clip"           : {"name": "clip",            "label": "", "description": ""               },
+                        "clip2"          : {"name": "clip2",           "label": "", "description": ""               },
+                        "mask"           : {"name": "mask",            "label": "", "description": ""               }
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": 426, "y": 133.5}
+            },
+            {
+                "id": "pos_cond_collect:sles8A43dq",
+                "type": "invocation",
+                "data": {
+                    "id": "pos_cond_collect:sles8A43dq",
+                    "version": "1.0.0",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "collect",
+                    "inputs": { "item": {"name": "item", "label": "", "description": ""} },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": 848.7979233854301, "y": 235.03354833376108}
+            },
+            {
+                "id": "neg_cond:5ZtbrHJgrO",
+                "type": "invocation",
+                "data": {
+                    "id": "neg_cond:5ZtbrHJgrO",
+                    "version": "1.2.1",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "sdxl_compel_prompt",
+                    "inputs": {
+                        "prompt"         : {"name": "prompt", "label": "", "description": "", "value": "naked"},
+                        "style"          : {"name": "style", "label": "", "description": "", "value": "naked"},
+                        "original_width" : {"name": "original_width", "label": "", "description": "", "value": 1024},
+                        "original_height": {"name": "original_height", "label": "", "description": "", "value": 1024},
+                        "crop_top"       : {"name": "crop_top", "label": "", "description": "", "value": 0},
+                        "crop_left"      : {"name": "crop_left", "label": "", "description": "", "value": 0},
+                        "target_width"   : {"name": "target_width", "label": "", "description": "", "value": 1024},
+                        "target_height"  : {"name": "target_height", "label": "", "description": "", "value": 1024},
+                        "clip"           : {"name": "clip", "label": "", "description": ""},
+                        "clip2"          : {"name": "clip2", "label": "", "description": ""},
+                        "mask"           : {"name": "mask", "label": "", "description": ""}
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": 426, "y": 665.5}
+            },
+            {
+                "id": "neg_cond_collect:XpoW9rXd61",
+                "type": "invocation",
+                "data": {
+                    "id": "neg_cond_collect:XpoW9rXd61",
+                    "version": "1.0.0",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "collect",
+                    "inputs": { "item": {"name": "item", "label": "", "description": ""} },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": 852, "y": 929.5}
+            },
+            {
+                "id": "noise:f4Bv4UWa22",
+                "type": "invocation",
+                "data": {
+                    "id": "noise:f4Bv4UWa22",
+                    "version": "1.0.3",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "noise",
+                    "inputs": {
+                        "seed"   : {"name": "seed",    "label": "", "description": "", "value": 0   },
+                        "width"  : {"name": "width",   "label": "", "description": "", "value": 768 },
+                        "height" : {"name": "height",  "label": "", "description": "", "value": 1024},
+                        "use_cpu": {"name": "use_cpu", "label": "", "description": "", "value": true}
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": 852, "y": 1053.5}
+            },
+            {
+                "id": "denoise_latents:TRC0Y88EWe",
+                "type": "invocation",
+                "data": {
+                    "id": "denoise_latents:TRC0Y88EWe",
+                    "version": "1.5.4",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "denoise_latents",
+                    "inputs": {
+                        "positive_conditioning": {"name": "positive_conditioning", "label": "", "description": ""},
+                        "negative_conditioning": {"name": "negative_conditioning", "label": "", "description": ""},
+                        "noise": {"name": "noise", "label": "", "description": ""},
+                        "steps": {"name": "steps", "label": "", "description": "", "value": 30},
+                        "cfg_scale": {"name": "cfg_scale", "label": "", "description": "", "value": 7.5},
+                        "denoising_start": {"name": "denoising_start", "label": "", "description": "", "value": 0},
+                        "denoising_end": {"name": "denoising_end", "label": "", "description": "", "value": 1},
+                        "scheduler": {"name": "scheduler", "label": "", "description": "", "value": "dpmpp_3m_k"},
+                        "unet": {"name": "unet", "label": "", "description": ""},
+                        "control": {"name": "control", "label": "", "description": ""},
+                        "ip_adapter": {"name": "ip_adapter", "label": "", "description": ""},
+                        "t2i_adapter": {"name": "t2i_adapter", "label": "", "description": ""},
+                        "cfg_rescale_multiplier": {
+                            "name": "cfg_rescale_multiplier",
+                            "label": "",
+                            "description": "",
+                            "value": 0
+                        },
+                        "latents": {"name": "latents", "label": "", "description": ""},
+                        "denoise_mask": {"name": "denoise_mask", "label": "", "description": ""}
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": 1278, "y": 86}
+            },
+            {
+                "id": "core_metadata:gSiDdR3ubW",
+                "type": "invocation",
+                "data": {
+                    "id": "core_metadata:gSiDdR3ubW",
+                    "version": "2.0.0",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "core_metadata",
+                    "inputs": {
+                        "generation_mode": {
+                            "name"       : "generation_mode",
+                            "label"      : "",
+                            "description": "",
+                            "value"      : "sdxl_txt2img"
+                        },
+                        "positive_prompt": {"name": "positive_prompt", "label": "", "description": ""},
+                        "negative_prompt": {
+                            "name"       : "negative_prompt",
+                            "label"      : "",
+                            "description": "",
+                            "value"      : "naked"
+                        },
+                        "width": {"name": "width", "label": "", "description": "", "value": 768},
+                        "height": {"name": "height", "label": "", "description": "", "value": 1024},
+                        "seed": {"name": "seed", "label": "", "description": ""},
+                        "rand_device": {"name": "rand_device", "label": "", "description": "", "value": "cpu"},
+                        "cfg_scale": {"name": "cfg_scale", "label": "", "description": "", "value": 7.5},
+                        "cfg_rescale_multiplier": {
+                            "name": "cfg_rescale_multiplier",
+                            "label": "",
+                            "description": "",
+                            "value": 0
+                        },
+                        "steps": {"name": "steps", "label": "", "description": "", "value": 30},
+                        "scheduler": {"name": "scheduler", "label": "", "description": "", "value": "dpmpp_3m_k"},
+                        "seamless_x": {"name": "seamless_x", "label": "", "description": "", "value": false},
+                        "seamless_y": {"name": "seamless_y", "label": "", "description": "", "value": false},
+                        "clip_skip": {"name": "clip_skip", "label": "", "description": ""},
+                        "model": {"name": "model", "label": "", "description": ""},
+                        "controlnets": {"name": "controlnets", "label": "", "description": ""},
+                        "ipAdapters": {"name": "ipAdapters", "label": "", "description": ""},
+                        "t2iAdapters": {"name": "t2iAdapters", "label": "", "description": ""},
+                        "loras": {"name": "loras", "label": "", "description": ""},
+                        "strength": {"name": "strength", "label": "", "description": ""},
+                        "init_image": {"name": "init_image", "label": "", "description": ""},
+                        "vae": {"name": "vae", "label": "", "description": ""},
+                        "hrf_enabled": {"name": "hrf_enabled", "label": "", "description": ""},
+                        "hrf_method": {"name": "hrf_method", "label": "", "description": ""},
+                        "hrf_strength": {"name": "hrf_strength", "label": "", "description": ""},
+                        "positive_style_prompt": {"name": "positive_style_prompt", "label": "", "description": ""},
+                        "negative_style_prompt": {
+                            "name"       : "negative_style_prompt",
+                            "label"      : "",
+                            "description": "",
+                            "value"      : "naked"
+                        },
+                        "refiner_model": {"name": "refiner_model", "label": "", "description": ""},
+                        "refiner_cfg_scale": {"name": "refiner_cfg_scale", "label": "", "description": ""},
+                        "refiner_steps": {"name": "refiner_steps", "label": "", "description": ""},
+                        "refiner_scheduler": {"name": "refiner_scheduler", "label": "", "description": ""},
+                        "refiner_positive_aesthetic_score": {
+                            "name"       : "refiner_positive_aesthetic_score",
+                            "label"      : "",
+                            "description": ""
+                        },
+                        "refiner_negative_aesthetic_score": {
+                            "name"       : "refiner_negative_aesthetic_score",
+                            "label"      : "",
+                            "description": ""
+                        },
+                        "refiner_start": {"name": "refiner_start", "label": "", "description": ""}
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": 1278, "y": 1443.5}
+            },
+            {
+                "id": "canvas_output:JbPTiAJ26r",
+                "type": "invocation",
+                "data": {
+                    "id": "canvas_output:JbPTiAJ26r",
+                    "version": "1.3.2",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "l2i",
+                    "inputs": {
+                        "board"    : {"name": "board",     "label": "", "description": ""                },
+                        "metadata" : {"name": "metadata",  "label": "", "description": ""                },
+                        "latents"  : {"name": "latents",   "label": "", "description": ""                },
+                        "vae"      : {"name": "vae",       "label": "", "description": ""                },
+                        "tiled"    : {"name": "tiled",     "label": "", "description": "", "value": false},
+                        "tile_size": {"name": "tile_size", "label": "", "description": "", "value": 0    },
+                        "fp32"     : {"name": "fp32",      "label": "", "description": "", "value": true }
+                    },
+                    "isOpen": true,
+                    "isIntermediate": false,
+                    "useCache": false
+                },
+                "position": {"x": 1704, "y": 1254}
+            },
+            {
+                "id": "fe37ca02-b720-41f8-a10c-5ab7f110e336",
+                "type": "invocation",
+                "data": {
+                    "id": "fe37ca02-b720-41f8-a10c-5ab7f110e336",
+                    "version": "1.0.1",
+                    "nodePack": "invokeai",
+                    "label": "",
+                    "notes": "",
+                    "type": "rand_int",
+                    "inputs": {
+                        "low" : {"name": "low",  "label": "", "description": "", "value":          0},
+                        "high": {"name": "high", "label": "", "description": "", "value": 2147483647}
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": false
+                },
+                "position": {"x": 352.6461670157057, "y": 1382.2238109237367}
+            },
+            {
+                "id": "484ecc77-b7a0-4e19-b793-cc313f20fbe6",
+                "type": "invocation",
+                "data": {
+                    "id": "484ecc77-b7a0-4e19-b793-cc313f20fbe6",
+                    "version": "1.0.1",
+                    "nodePack": "invokeai",
+                    "label": "Negative Prompt",
+                    "notes": "",
+                    "type": "string",
+                    "inputs": {
+                        "value": {
+                            "name"       : "value",
+                            "label"      : "negative prompt",
+                            "description": "",
+                            "value"      : "earth, star war, blurry"
+                        }
+                    },
+                    "isOpen": true,
+                    "isIntermediate": true,
+                    "useCache": true
+                },
+                "position": {"x": -119.4583147926377, "y": 1024.3931848367542}
+            }
+        ],
+        "edges": [
+            {
+                "id"          : "83cad135-18e1-4d33-9d25-253e6933d6d7",
+                "source"      : "sdxl_model_loader:PwBr7RXRsy",
+                "target"      : "denoise_latents:TRC0Y88EWe",
+                "type"        : "default",
+                "sourceHandle": "unet",
+                "targetHandle": "unet"
+            },
+            {
+                "id"          : "29d3a879-65ce-4b57-ba5f-bf80b95f77d8",
+                "source"      : "sdxl_model_loader:PwBr7RXRsy",
+                "target"      : "pos_cond:o9T4cKV8xt",
+                "type"        : "default",
+                "sourceHandle": "clip",
+                "targetHandle": "clip"
+            },
+            {
+                "id"          : "b0513880-828e-4c01-bb53-70411c0e43be",
+                "source"      : "sdxl_model_loader:PwBr7RXRsy",
+                "target"      : "neg_cond:5ZtbrHJgrO",
+                "type"        : "default",
+                "sourceHandle": "clip",
+                "targetHandle": "clip"
+            },
+            {
+                "id"          : "f2e724bd-84c6-41f4-9675-7db604f926f9",
+                "source"      : "sdxl_model_loader:PwBr7RXRsy",
+                "target"      : "pos_cond:o9T4cKV8xt",
+                "type"        : "default",
+                "sourceHandle": "clip2",
+                "targetHandle": "clip2"
+            },
+            {
+                "id"          : "08fba76c-b85c-481e-b3cb-9c35bc489152",
+                "source"      : "sdxl_model_loader:PwBr7RXRsy",
+                "target"      : "neg_cond:5ZtbrHJgrO",
+                "type"        : "default",
+                "sourceHandle": "clip2",
+                "targetHandle": "clip2"
+            },
+            {
+                "id"          : "daff9766-3b3e-4e50-b10b-baa0efab5fa4",
+                "source"      : "positive_prompt:kjUMdcg0zO",
+                "target"      : "pos_cond:o9T4cKV8xt",
+                "type"        : "default",
+                "sourceHandle": "value",
+                "targetHandle": "prompt"
+            },
+            {
+                "id"          : "55eaab71-3f72-46d8-8240-f98584403ec5",
+                "source"      : "pos_cond:o9T4cKV8xt",
+                "target"      : "pos_cond_collect:sles8A43dq",
+                "type"        : "default",
+                "sourceHandle": "conditioning",
+                "targetHandle": "item"
+            },
+            {
+                "id"          : "f42f1aac-59c7-488b-80b4-7f020ad559d9",
+                "source"      : "pos_cond_collect:sles8A43dq",
+                "target"      : "denoise_latents:TRC0Y88EWe",
+                "type"        : "default",
+                "sourceHandle": "collection",
+                "targetHandle": "positive_conditioning"
+            },
+            {
+                "id"          : "255cc2fe-cadc-49b5-958c-94011029c1d7",
+                "source"      : "neg_cond:5ZtbrHJgrO",
+                "target"      : "neg_cond_collect:XpoW9rXd61",
+                "type"        : "default",
+                "sourceHandle": "conditioning",
+                "targetHandle": "item"
+            },
+            {
+                "id"          : "b28768f4-be07-4c5c-9405-3acd75fc6919",
+                "source"      : "neg_cond_collect:XpoW9rXd61",
+                "target"      : "denoise_latents:TRC0Y88EWe",
+                "type"        : "default",
+                "sourceHandle": "collection",
+                "targetHandle": "negative_conditioning"
+            },
+            {
+                "id"          : "3deca257-e660-40f1-b287-c0d0d7ce6685",
+                "source"      : "noise:f4Bv4UWa22",
+                "target"      : "denoise_latents:TRC0Y88EWe",
+                "type"        : "default",
+                "sourceHandle": "noise",
+                "targetHandle": "noise"
+            },
+            {
+                "id"          : "369b8eb5-1f40-4923-af96-cb9fb4f7d43a",
+                "source"      : "denoise_latents:TRC0Y88EWe",
+                "target"      : "canvas_output:JbPTiAJ26r",
+                "type"        : "default",
+                "sourceHandle": "latents",
+                "targetHandle": "latents"
+            },
+            {
+                "id"          : "b8a61db3-ee88-4895-89dd-ad5ed538478c",
+                "source"      : "positive_prompt:kjUMdcg0zO",
+                "target"      : "core_metadata:gSiDdR3ubW",
+                "type"        : "default",
+                "sourceHandle": "value",
+                "targetHandle": "positive_prompt"
+            },
+            {
+                "id"          : "42cd2fc8-baf3-4e76-ab15-dfa9975b9b49",
+                "source"      : "positive_prompt:kjUMdcg0zO",
+                "target"      : "pos_cond:o9T4cKV8xt",
+                "type"        : "default",
+                "sourceHandle": "value",
+                "targetHandle": "style"
+            },
+            {
+                "id"          : "04814c73-4280-4863-9572-758f1fb2c6d3",
+                "source"      : "positive_prompt:kjUMdcg0zO",
+                "target"      : "core_metadata:gSiDdR3ubW",
+                "type"        : "default",
+                "sourceHandle": "value",
+                "targetHandle": "positive_style_prompt"
+            },
+            {
+                "id"          : "b84d310e-28e4-4258-927e-f6954b3ce883",
+                "source"      : "sdxl_model_loader:PwBr7RXRsy",
+                "target"      : "canvas_output:JbPTiAJ26r",
+                "type"        : "default",
+                "sourceHandle": "vae",
+                "targetHandle": "vae"
+            },
+            {
+                "id"          : "47b6060e-628c-4eb8-bead-8ed34f0a6f8f",
+                "source"      : "core_metadata:gSiDdR3ubW",
+                "target"      : "canvas_output:JbPTiAJ26r",
+                "type"        : "default",
+                "sourceHandle": "metadata",
+                "targetHandle": "metadata"
+            },
+            {
+                "id": "reactflow__edge-fe37ca02-b720-41f8-a10c-5ab7f110e336value-core_metadata:gSiDdR3ubWseed",
+                "source": "fe37ca02-b720-41f8-a10c-5ab7f110e336",
+                "target": "core_metadata:gSiDdR3ubW",
+                "type": "default",
+                "sourceHandle": "value",
+                "targetHandle": "seed"
+            },
+            {
+                "id"          : "reactflow__edge-484ecc77-b7a0-4e19-b793-cc313f20fbe6value-neg_cond:5ZtbrHJgrOprompt",
+                "source"      : "484ecc77-b7a0-4e19-b793-cc313f20fbe6",
+                "target"      : "neg_cond:5ZtbrHJgrO",
+                "type"        : "default",
+                "sourceHandle": "value",
+                "targetHandle": "prompt"
+            },
+            {
+                "id"          : "reactflow__edge-484ecc77-b7a0-4e19-b793-cc313f20fbe6value-neg_cond:5ZtbrHJgrOstyle",
+                "source"      : "484ecc77-b7a0-4e19-b793-cc313f20fbe6",
+                "target"      : "neg_cond:5ZtbrHJgrO",
+                "type"        : "default",
+                "sourceHandle": "value",
+                "targetHandle": "style"
+            },
+            {
+                "id": "reactflow__edge-484ecc77-b7a0-4e19-b793-cc313f20fbe6value-core_metadata:gSiDdR3ubWnegative_prompt",
+                "source": "484ecc77-b7a0-4e19-b793-cc313f20fbe6",
+                "target": "core_metadata:gSiDdR3ubW",
+                "type": "default",
+                "sourceHandle": "value",
+                "targetHandle": "negative_prompt"
+            },
+            {
+                "id"          : "reactflow__edge-noise:f4Bv4UWa22width-core_metadata:gSiDdR3ubWwidth",
+                "source"      : "noise:f4Bv4UWa22",
+                "target"      : "core_metadata:gSiDdR3ubW",
+                "type"        : "default",
+                "sourceHandle": "width",
+                "targetHandle": "width"
+            },
+            {
+                "id"          : "reactflow__edge-noise:f4Bv4UWa22height-core_metadata:gSiDdR3ubWheight",
+                "source"      : "noise:f4Bv4UWa22",
+                "target"      : "core_metadata:gSiDdR3ubW",
+                "type"        : "default",
+                "sourceHandle": "height",
+                "targetHandle": "height"
+            },
+            {
+                "id"          : "reactflow__edge-fe37ca02-b720-41f8-a10c-5ab7f110e336value-noise:f4Bv4UWa22seed",
+                "source"      : "fe37ca02-b720-41f8-a10c-5ab7f110e336",
+                "target"      : "noise:f4Bv4UWa22",
+                "type"        : "default",
+                "sourceHandle": "value",
+                "targetHandle": "seed"
+            }
+        ],
+        "form": {
+            "elements": {
+                "root": {
+                    "id": "root",
+                    "data": {
+                        "layout": "column",
+                        "children": [
+                            "node-field-evRPjpa27N", "node-field-pl5X3lkU3P", "node-field-H8rUUWYjSH",
+                            "node-field-9LuWurUcYe", "node-field-A4rGCtrNvu", "node-field-wm3QalQko4",
+                            "node-field-P6A77fMyN2", "node-field-i44ZkjITYG"
+                        ]
+                    },
+                    "type": "container"
+                },
+                "node-field-pl5X3lkU3P": {
+                    "id": "node-field-pl5X3lkU3P",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {"nodeId": "positive_prompt:kjUMdcg0zO", "fieldName": "value"},
+                        "showDescription": true,
+                        "settings": {"type": "string-field-config", "component": "input"}
+                    },
+                    "type": "node-field"
+                },
+                "node-field-H8rUUWYjSH": {
+                    "id": "node-field-H8rUUWYjSH",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {"nodeId": "484ecc77-b7a0-4e19-b793-cc313f20fbe6", "fieldName": "value"},
+                        "showDescription": true,
+                        "settings": {"type": "string-field-config", "component": "input"}
+                    },
+                    "type": "node-field"
+                },
+                "node-field-9LuWurUcYe": {
+                    "id": "node-field-9LuWurUcYe",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {"nodeId": "noise:f4Bv4UWa22", "fieldName": "width"},
+                        "showDescription": true,
+                        "settings": {"type": "integer-field-config", "component": "number-input"}
+                    },
+                    "type": "node-field"
+                },
+                "node-field-A4rGCtrNvu": {
+                    "id": "node-field-A4rGCtrNvu",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {"nodeId": "noise:f4Bv4UWa22", "fieldName": "height"},
+                        "showDescription": true,
+                        "settings": {"type": "integer-field-config", "component": "number-input"}
+                    },
+                    "type": "node-field"
+                },
+                "node-field-wm3QalQko4": {
+                    "id": "node-field-wm3QalQko4",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {"nodeId": "denoise_latents:TRC0Y88EWe", "fieldName": "steps"},
+                        "showDescription": true,
+                        "settings": {"type": "integer-field-config", "component": "number-input"}
+                    },
+                    "type": "node-field"
+                },
+                "node-field-P6A77fMyN2": {
+                    "id": "node-field-P6A77fMyN2",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {"nodeId": "denoise_latents:TRC0Y88EWe", "fieldName": "cfg_scale"},
+                        "showDescription": true
+                    },
+                    "type": "node-field"
+                },
+                "node-field-i44ZkjITYG": {
+                    "id": "node-field-i44ZkjITYG",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {"nodeId": "denoise_latents:TRC0Y88EWe", "fieldName": "scheduler"},
+                        "showDescription": true
+                    },
+                    "type": "node-field"
+                },
+                "node-field-evRPjpa27N": {
+                    "id": "node-field-evRPjpa27N",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {"nodeId": "sdxl_model_loader:PwBr7RXRsy", "fieldName": "model"},
+                        "showDescription": true
+                    },
+                    "type": "node-field"
+                }
+            },
+            "rootElementId": "root"
         }
     }
 }

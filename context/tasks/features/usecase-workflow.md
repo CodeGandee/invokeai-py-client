@@ -794,353 +794,135 @@ asyncio.run(submit_sync_monitor_async())
 
 ### Use case 4: retrieving outputs and cleaning up
 
-**Scenario**: After workflow execution completes (from Use Case 3), the developer needs to retrieve generated outputs from output-nodes (those with board field exposed in form), optionally access debug-nodes outputs, and clean up temporary resources.
+**Scenario**: After workflow execution completes (from Use Case 3), the developer needs to retrieve generated outputs and clean up resources. Note: Advanced output retrieval methods are planned but not yet implemented.
 
 **Code Example**:
 ```python
 # Continuing from Use Case 3, we have:
 # - client: InvokeAIClient instance
-# - workflow: Workflow instance with completed job
-# - job: SessionQueueItem with status='completed'
+# - workflow_handle: WorkflowHandle with completed execution
+# - Queue item has status='completed'
 
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from invokeai_py_client.models import (
-    WorkflowOutput, InkImageOutput, InkLatentsOutput, 
-    InkConditioningOutput, IvkImage, OutputNode, DebugNode
-)
+from invokeai_py_client.models import IvkImage
+from invokeai_py_client.board import BoardHandle
 
-# Step 1: Get workflow outputs (distinguishes output-nodes vs debug-nodes)
-outputs: WorkflowOutput = workflow.get_outputs()
+# Step 1: Verify workflow completion via queue item
+queue_item = workflow_handle.get_queue_item()
+if queue_item and queue_item['status'] == 'completed':
+    print(f"✅ Workflow completed successfully!")
+    print(f"   Session ID: {queue_item.get('session_id', 'N/A')}")
+    print(f"   Item ID: {queue_item.get('item_id', 'N/A')}")
+    
+    # Queue item contains session outputs
+    session_data = queue_item.get('session', {})
+    if session_data:
+        # Session may have status and results
+        print(f"   Session status: {session_data.get('status', 'unknown')}")
 
-print(f"✅ Workflow completed successfully!")
-print(f"   Session ID: {outputs.session_id}")
-print(f"   Batch ID: {outputs.batch_id}")
-print(f"   Execution time: {outputs.execution_time:.2f}s")
+# Step 2: Retrieve outputs using BoardHandle (current approach)
+# Since workflow.get_outputs() is not yet implemented, use board API directly
 
-# Step 2: Access outputs from TRUE OUTPUT-NODES (user-configurable boards)
-# Based on Task 1.3: Only nodes with board field exposed in form are output-nodes
-# For SDXL-FLUX workflow: indices [5], [15], [20]
-user_outputs: List[InkImageOutput] = outputs.get_user_outputs()
+# Get board handle for the output board we specified during submission
+board_id = "samples"  # The board we used in submit_sync(board_id="samples")
+board_handle: BoardHandle = client.board_repo.get_board_handle(board_id)
 
-print(f"\n🎯 User-Facing Outputs (from output-nodes):")
-print(f"   Total stages: {len(user_outputs)}")
+# List images that were generated (newest first)
+image_names = board_handle.list_images(limit=10, order_by="created_at")
+print(f"\n📸 Found {len(image_names)} images in '{board_id}' board")
 
-for idx, output in enumerate(user_outputs):
-    # Each output corresponds to an output-node with board field at specific index
-    print(f"\n   Stage {idx + 1}: {output.stage_name}")
-    print(f"   - Image: {output.image_name} ({output.width}x{output.height})")
-    print(f"   - Board: {output.board_id} (configured at input index [{output.input_index}])")
-    print(f"   - Node Type: {output.node_type}")  # e.g., save_image
-    print(f"   - Node ID: {output.node_id}")
+# Download the generated images
+output_dir = Path("./outputs") / workflow_handle.batch_id
+output_dir.mkdir(parents=True, exist_ok=True)
 
-# Step 3: Optionally access DEBUG-NODES outputs (not user-configurable)
-# Based on Task 1.3: Nodes with board capability but NOT exposed in form
-# For SDXL-FLUX: l2i and save_image nodes for internal processing
-debug_outputs: List[InkImageOutput] = outputs.get_debug_outputs()
+for idx, image_name in enumerate(image_names):
+    # Download image bytes directly from board
+    image_bytes = board_handle.download_image(image_name)
+    
+    # Save to disk
+    output_path = output_dir / f"output_{idx}_{image_name}"
+    output_path.write_bytes(image_bytes)
+    print(f"   Downloaded: {output_path.name} ({len(image_bytes)} bytes)")
 
-if debug_outputs:
-    print(f"\n🔧 Debug/Internal Outputs (from debug-nodes):")
-    for debug in debug_outputs:
-        print(f"   - {debug.image_name} from {debug.node_type}({debug.node_id})")
-        print(f"     Fixed board: {debug.board_id}")
-
-# Step 4: Retrieve outputs - Three different approaches
-
-# Approach 1: Load directly to memory as PIL Image (for immediate processing)
+# Step 3: Alternative - Process images directly with PIL
 from PIL import Image
 import io
 
-print("\n🖼️ Loading images to memory for processing:")
-for idx, output in enumerate(user_outputs):
-    # Get as PIL Image object - decoded and ready for processing
-    pil_image: Image.Image = workflow.get_image_as_pil(output)
-    print(f"   Stage {idx + 1}: {output.stage_name}")
-    print(f"   - Size: {pil_image.size}")
-    print(f"   - Mode: {pil_image.mode}")
-    print(f"   - Format: {pil_image.format}")
+# If you need to process images, download and decode them
+if image_names:
+    first_image_bytes = board_handle.download_image(image_names[0])
+    pil_image = Image.open(io.BytesIO(first_image_bytes))
+    print(f"\n🖼️ Loaded image: {pil_image.size} {pil_image.mode}")
     
-    # Now you can process the image in memory
+    # Process as needed
     # pil_image.thumbnail((256, 256))  # Create thumbnail
-    # pil_image.filter(ImageFilter.BLUR)  # Apply filter
-    # analysis = analyze_image(pil_image)  # Custom analysis
-    
-    # Optional: Save processed image
-    # pil_image.save(f"processed_{output.image_name}")
+    # pil_image.save("thumbnail.jpg")
 
-# Approach 2: Direct download to disk WITHOUT decoding (most efficient for storage)
-download_dir = Path("./outputs") / outputs.batch_id
+# Step 4: Track uploaded input assets (cleanup not yet implemented)
+uploaded_assets = workflow_handle.get_uploaded_assets()
+if uploaded_assets:
+    print(f"\n📎 Uploaded assets tracked: {len(uploaded_assets)}")
+    for asset in uploaded_assets:
+        print(f"   - {asset}")
+    # Note: workflow_handle.cleanup_inputs() not yet implemented
+    # Must manually delete using image API if needed
 
-print("\n💾 Direct download to disk (no decoding):")
-for idx, output in enumerate(user_outputs):
-    # Download raw bytes directly to file - no decode/re-encode overhead
-    stage_dir = download_dir / f"stage_{idx + 1}_{output.stage_name}"
-    local_path = workflow.download_image_raw(
-        image_output=output,
-        output_dir=stage_dir,
-        preserve_format=True  # Keep original format from server
-    )
-    print(f"   Stage {idx + 1} saved to: {local_path}")
-    # This is fastest for batch downloads - no CPU overhead
+# Step 5: Manual cleanup of generated outputs (if needed)
+print("\n🧹 Cleaning up outputs...")
 
-# Approach 3: Get raw bytes for flexible handling
-print("\n📦 Getting raw bytes for custom handling:")
-for idx, output in enumerate(user_outputs):
-    # Get raw image bytes - you decide what to do with them
-    image_bytes: bytes = workflow.get_image_bytes(output)
-    print(f"   Stage {idx + 1}: {len(image_bytes)} bytes")
-    
-    # Examples of what you can do with raw bytes:
-    # - Upload to S3/cloud storage without temp files
-    # - Stream to another service
-    # - Store in database BLOB
-    # - Custom image processing with other libraries
-    
-    # Example: Load to PIL if needed
-    # pil_image = Image.open(io.BytesIO(image_bytes))
-    
-    # Example: Direct save without processing
-    # with open(f"raw_{output.image_name}", "wb") as f:
-    #     f.write(image_bytes)
+# Delete images from board using BoardHandle
+for image_name in image_names[:3]:  # Example: delete first 3
+    success = board_handle.delete_image(image_name)
+    if success:
+        print(f"   ✅ Deleted: {image_name}")
+    else:
+        print(f"   ❌ Failed to delete: {image_name}")
 
-# Optional: Also handle debug outputs if needed
-if workflow.has_debug_outputs():
-    debug_outputs = outputs.get_debug_outputs()
-    for debug in debug_outputs:
-        # Debug outputs can also be retrieved as PIL or bytes
-        debug_pil = workflow.get_image_as_pil(debug)
-        # Or download raw
-        debug_path = workflow.download_image_raw(
-            debug, 
-            output_dir=download_dir / "debug",
-            preserve_format=True
-        )
+# Alternative: Move images to another board instead of deleting
+# board_handle.move_image_to(image_name, "archive_board_id")
 
-# Comparison of retrieval methods:
-# 
-# | Method               | Use Case                        | Performance | Memory Usage |
-# |---------------------|----------------------------------|-------------|--------------|
-# | get_image_as_pil()  | Image processing, analysis      | Slower      | High         |
-# | download_image_raw()| Archive, storage                | Fastest     | Low          |
-# | get_image_bytes()   | Cloud upload, streaming         | Fast        | Medium       |
-#
-# For real-time processing, use get_image_as_pil()
-# For archival/storage, use download_image_raw() 
-# For cloud storage, use get_image_bytes() to avoid temp files
+# Step 6: Cleanup limitations and future improvements
+# Note: The following methods are planned but not yet implemented:
+# - workflow_handle.get_outputs() - Will return structured WorkflowOutput
+# - workflow_handle.cleanup_inputs() - Will delete uploaded input assets
+# - workflow_handle.cleanup_outputs() - Will delete generated outputs
+# - workflow_handle.cleanup_queue_items() - Will prune queue items
 
-# Example: User-implemented batch download with progress
-def download_all_outputs(workflow, output_dir: Path):
-    """Example of user-implemented batch download."""
-    outputs = workflow.get_outputs()
-    user_outputs = outputs.get_user_outputs()
-    
-    for i, output in enumerate(user_outputs, 1):
-        print(f"Downloading {i}/{len(user_outputs)}: {output.image_name}")
-        path = workflow.download_image_raw(output, output_dir, preserve_format=True)
-        print(f"  → {path}")
-    
-    return len(user_outputs)
-
-# Step 5: Access other output types (latents, conditioning, etc.)
-# These may come from both output-nodes and debug-nodes
-latents_outputs: List[InkLatentsOutput] = outputs.latents
-conditioning_outputs: List[InkConditioningOutput] = outputs.conditioning
-
-if latents_outputs:
-    print(f"\n📦 Found {len(latents_outputs)} latent outputs:")
-    for latent in latents_outputs:
-        print(f"   - {latent.latents_name}")
-        print(f"     Shape: {latent.shape}")
-        print(f"     Node: {latent.node_id}")
-
-if conditioning_outputs:
-    print(f"\n🎨 Found {len(conditioning_outputs)} conditioning outputs:")
-    for cond in conditioning_outputs:
-        print(f"   - {cond.conditioning_name}")
-        print(f"     Node: {cond.node_id}")
-
-# Step 6: Clean up uploaded input assets
-print("\n🧹 Cleaning up temporary resources...")
-
-# Get list of assets that were uploaded for this workflow
-uploaded_assets = workflow.get_uploaded_assets()
-print(f"   Found {len(uploaded_assets)} uploaded assets to clean")
-
-# Clean up all uploaded inputs in one call
-cleanup_result = workflow.cleanup_inputs()
-print(f"   ✅ Deleted {cleanup_result.deleted_count} input assets")
-if cleanup_result.failed_deletions:
-    print(f"   ⚠️ Failed to delete {len(cleanup_result.failed_deletions)} assets:")
-    for asset_name, error in cleanup_result.failed_deletions.items():
-        print(f"      - {asset_name}: {error}")
-
-# Step 7: Optional - Clean up outputs after download
-if workflow.auto_cleanup_outputs:
-    # This is configured when creating the workflow
-    output_cleanup = workflow.cleanup_outputs(
-        delete_from_board=True,  # Remove from board
-        delete_images=True        # Actually delete image files
-    )
-    print(f"   ✅ Cleaned {output_cleanup.deleted_count} output images")
-
-# Step 8: Clean up completed queue items
-queue_cleanup = workflow.cleanup_queue_items()
-print(f"   ✅ Pruned {queue_cleanup.pruned_count} completed queue items")
-
-# Usage example with error handling
-try:
-    # Get outputs - raises if workflow not completed
-    outputs = workflow.get_outputs()
-    
-    # Choose retrieval method based on needs
-    for output in outputs.get_user_outputs():
-        try:
-            # For processing: Get as PIL
-            pil_img = workflow.get_image_as_pil(output)
-            # process_image(pil_img)
-        except ImageDecodeError as e:
-            print(f"Failed to decode image: {e}")
-            # Fall back to raw bytes
-            raw_bytes = workflow.get_image_bytes(output)
-    
-    # For storage: Iterate and download without decoding
-    for output in outputs.get_user_outputs():
-        path = workflow.download_image_raw(
-            output,
-            output_dir=Path("./outputs"),
-            preserve_format=True
-        )
-        print(f"Saved: {path}")
-    
-    # Cleanup with confirmation
-    if workflow.has_uploaded_assets():
-        cleanup = workflow.cleanup_inputs()
-        print(f"Cleaned up {cleanup.deleted_count} temporary assets")
-        
-except WorkflowNotCompletedError:
-    print("❌ Workflow not yet completed, cannot retrieve outputs")
-except DownloadError as e:
-    print(f"❌ Failed to download outputs: {e}")
-    # Outputs remain on server, can retry later
-except CleanupError as e:
-    print(f"⚠️ Cleanup partially failed: {e}")
-    # Some resources may remain, check error details
+# Current workaround: Track resources manually and use board/image APIs directly
+print("\n📝 Resource tracking summary:")
+print(f"   Batch ID: {workflow_handle.batch_id}")
+print(f"   Session ID: {workflow_handle.session_id}")
+print(f"   Uploaded assets: {len(uploaded_assets)}")
+print(f"   Generated images: {len(image_names)}")
 ```
 
 **Expected Output**:
 ```
 ✅ Workflow completed successfully!
    Session ID: session_456def
+   Item ID: 42
+
+📸 Found 3 images in 'samples' board
+
+   Downloaded: output_0_img_001.png (2457600 bytes)
+   Downloaded: output_1_img_002.png (2654208 bytes)
+   Downloaded: output_2_img_003.png (2789376 bytes)
+
+🖼️ Loaded image: (1024, 768) RGB
+
+📎 Uploaded assets tracked: 2
+   - uploaded_image_123.png
+   - uploaded_mask_456.png
+
+🧹 Cleaning up outputs...
+   ✅ Deleted: img_001.png
+   ✅ Deleted: img_002.png
+   ✅ Deleted: img_003.png
+
+📝 Resource tracking summary:
    Batch ID: batch_def456
-   Execution time: 18.23s
-
-🎯 User-Facing Outputs (from output-nodes):
-   Total stages: 3
-
-   Stage 1: SDXL Generation
-   - Image: sdxl_output_001.png (1024x768)
-   - Board: samples (configured at input index [5])
-   - Node Type: save_image
-   - Node ID: 4414d4b5-82c3-4513-8c3f-86d88c24aadc
-
-   Stage 2: Flux Domain Transfer
-   - Image: flux_transfer_002.png (1024x768)
-   - Board: flux_outputs (configured at input index [15])
-   - Node Type: save_image
-   - Node ID: 67e997b2-2d56-43f4-8d2e-886c04e18d9f
-
-   Stage 3: Flux Refinement
-   - Image: flux_refined_003.png (1024x768)
-   - Board: final_outputs (configured at input index [20])
-   - Node Type: save_image
-   - Node ID: abc466fe-12eb-48a5-87d8-488c8bda180f
-
-🔧 Debug/Internal Outputs (from debug-nodes):
-   - latents_intermediate.png from l2i(cf3922d2-e1bc-40cd-8fcd-2a93708d52c2)
-     Fixed board: __internal__
-   - hed_edges.png from save_image(bb95a42f-3f83-4a6f-8111-745fc1c653fa)
-     Fixed board: __debug__
-
-🖼️ Loading images to memory for processing:
-   Stage 1: SDXL Generation
-   - Size: (1024, 768)
-   - Mode: RGB
-   - Format: PNG
-   Stage 2: Flux Domain Transfer
-   - Size: (1024, 768)
-   - Mode: RGB
-   - Format: PNG
-   Stage 3: Flux Refinement
-   - Size: (1024, 768)
-   - Mode: RGB
-   - Format: PNG
-
-💾 Direct download to disk (no decoding):
-   Stage 1 saved to: outputs/batch_def456/stage_1_SDXL Generation/sdxl_output_001.png
-   Stage 2 saved to: outputs/batch_def456/stage_2_Flux Domain Transfer/flux_transfer_002.png
-   Stage 3 saved to: outputs/batch_def456/stage_3_Flux Refinement/flux_refined_003.png
-
-📦 Getting raw bytes for custom handling:
-   Stage 1: 2457600 bytes
-   Stage 2: 2654208 bytes
-   Stage 3: 2789376 bytes
-
-📦 Found 2 latent outputs:
-   - latents_sdxl_stage
-     Shape: [1, 4, 128, 96]
-     Node: denoise_latents_sdxl
-   - latents_flux_stage
-     Shape: [1, 16, 128, 128]
-     Node: flux_denoise_latents
-
-🧹 Cleaning up temporary resources...
-   Found 2 uploaded assets to clean
-   ✅ Deleted 2 input assets
-   ✅ Pruned 1 completed queue items
+   Session ID: session_456def
+   Uploaded assets: 2
+   Generated images: 3
 ```
-
-**Key Design Points**:
-
-1. **Output-Nodes vs Debug-Nodes Distinction** (from Task 1.3):
-   - **Output-nodes**: Nodes with WithBoard mixin AND board field exposed in form
-   - **Debug-nodes**: Nodes with WithBoard mixin but NOT exposed in form
-   - `outputs.get_user_outputs()` - Returns only user-configurable outputs (from output-nodes)
-   - `outputs.get_debug_outputs()` - Returns internal/debug outputs (from debug-nodes)
-   - Each output knows its input-index for board configuration (e.g., [5], [15], [20])
-
-2. **Multi-Stage Output Management**:
-   - Workflow outputs organized by stages (SDXL, Flux Domain Transfer, Flux Refinement)
-   - Each stage corresponds to an output-node with configurable board
-   - Stage outputs can be downloaded individually or as a batch
-   - Debug outputs kept separate from user-facing outputs
-
-3. **Pythonic Output Access**:
-   - `workflow.get_outputs()` returns `WorkflowOutput` data model
-   - Separates user outputs from debug outputs automatically
-   - All outputs wrapped in Pydantic models (`InkImageOutput`, `InkLatentsOutput`, etc.)
-   - Output metadata includes node type, stage name, and input-index
-
-4. **Three Image Retrieval Approaches**:
-   - **PIL Image to Memory**: `workflow.get_image_as_pil()` - Returns PIL Image object for immediate processing
-   - **Direct Download (No Decoding)**: `workflow.download_image_raw()` - Streams raw bytes to disk, most efficient for storage
-   - **Raw Bytes**: `workflow.get_image_bytes()` - Returns bytes for flexible handling (cloud upload, streaming, etc.)
-   - Choice depends on use case: processing vs storage vs streaming
-   - Users implement their own batch logic using these primitives
-
-5. **Managed Cleanup**:
-   - `workflow.cleanup_inputs()` - Delete uploaded assets
-   - `workflow.cleanup_outputs()` - Delete generated outputs (both user and debug)
-   - `workflow.cleanup_queue_items()` - Prune completed queue items
-   - Returns structured `CleanupResult` with success/failure details
-
-6. **Type Safety**:
-   - All outputs are typed Pydantic models
-   - `InkImageOutput` includes `input_index`, `stage_name`, `node_type` properties
-   - `WorkflowOutput` container with typed accessors for user vs debug outputs
-   - `OutputNode` and `DebugNode` models for clear distinction
-
-7. **Node Type Awareness**:
-   - `workflow.has_debug_outputs()` - Check if debug outputs exist
-   - Support for any node type with WithBoard mixin (save_image, l2i, etc.)
-   - Board configuration tracking via input indices
-   - Clear distinction between user-facing and internal outputs

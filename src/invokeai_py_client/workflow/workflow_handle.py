@@ -7,8 +7,9 @@ of a workflow and manages input configuration, submission, and result retrieval.
 
 from __future__ import annotations
 
+import asyncio
 import time
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable
 
 from pydantic import BaseModel, ConfigDict, PrivateAttr, model_validator
 
@@ -654,6 +655,17 @@ class WorkflowHandle:
             }
         }
         
+        # Debug: Print a sample of the batch data (only in debug mode)
+        import os
+        if os.environ.get("DEBUG_WORKFLOW"):
+            import json
+            # Save full batch data to file for inspection
+            with open("batch_data_debug.json", "w") as f:
+                json.dump(batch_data, f, indent=2)
+            print("\n[DEBUG] Batch data saved to batch_data_debug.json")
+            print("[DEBUG] Sample of batch data:")
+            print(json.dumps(batch_data, indent=2)[:1000])
+        
         # Submit to queue
         url = f"/queue/{queue_id}/enqueue_batch"
         try:
@@ -703,20 +715,157 @@ class WorkflowHandle:
         on_invocation_progress: Callable[[dict[str, Any]], None] | None = None,
         on_invocation_complete: Callable[[dict[str, Any]], None] | None = None,
         on_invocation_error: Callable[[dict[str, Any]], None] | None = None,
-    ) -> Any:  # Would return EnqueueBatchResult
+    ) -> dict[str, Any]:
         """
-        Submit the workflow for execution asynchronously.
+        Submit the workflow for execution asynchronously with real-time events.
+
+        This method provides non-blocking submission with optional Socket.IO event 
+        streaming for real-time progress monitoring. It's best suited for interactive 
+        applications, dashboards, and concurrent workflow execution.
 
         Parameters
         ----------
-        queue_id : str
-            The queue to submit to.
+        queue_id : str, optional
+            The queue to submit to (default: "default").
         board_id : str, optional
-            Default board for outputs.
-        priority : int
-            Job priority.
-        subscribe_events : bool
-            Whether to subscribe to Socket.IO events.
+            Default board for output images.
+        priority : int, optional
+            Job priority (higher values = higher priority).
+        subscribe_events : bool, optional
+            Whether to subscribe to Socket.IO events for real-time updates.
+        on_invocation_started : Callable, optional
+            Callback when a node starts executing. Receives event dict with:
+            - node_id: str
+            - node_type: str
+            - session_id: str
+        on_invocation_progress : Callable, optional
+            Callback for progress updates during node execution. Receives event dict with:
+            - node_id: str
+            - progress: float (0.0 to 1.0)
+            - message: str (optional progress message)
+        on_invocation_complete : Callable, optional
+            Callback when a node completes successfully. Receives event dict with:
+            - node_id: str
+            - outputs: dict (node output data)
+        on_invocation_error : Callable, optional
+            Callback when a node encounters an error. Receives event dict with:
+            - node_id: str
+            - error: str (error message)
+
+        Returns
+        -------
+        dict[str, Any]
+            Submission result with:
+            - batch_id: str
+            - session_id: str
+            - item_ids: List[int]
+            - enqueued: int (number of items enqueued)
+
+        Raises
+        ------
+        ValueError
+            If validation fails or required inputs are missing.
+        RuntimeError
+            If submission fails.
+
+        Examples
+        --------
+        >>> async def on_progress(event):
+        ...     print(f"Progress: {event['progress']*100:.0f}%")
+        >>> 
+        >>> result = await workflow.submit(
+        ...     board_id="my-outputs",
+        ...     subscribe_events=True,
+        ...     on_invocation_progress=on_progress
+        ... )
+        >>> print(f"Submitted: {result['batch_id']}")
+        """
+        # Validate inputs first
+        validation_errors = self.validate_inputs()
+        if validation_errors:
+            error_msgs = []
+            for idx, errors in validation_errors.items():
+                input_info = self.inputs[idx]
+                error_msgs.append(f"[{idx}] {input_info.label}: {', '.join(errors)}")
+            raise ValueError(f"Input validation failed: {'; '.join(error_msgs)}")
+        
+        # Convert workflow to API format
+        api_graph = self._convert_to_api_format(board_id)
+        
+        # Prepare batch submission
+        batch_data = {
+            "prepend": priority > 0,  # Higher priority items go to front
+            "batch": {
+                "graph": api_graph,
+                "runs": 1
+            }
+        }
+        
+        # Submit to queue asynchronously (still uses sync API endpoint)
+        url = f"/queue/{queue_id}/enqueue_batch"
+        try:
+            # Use sync request for submission (API doesn't have async endpoint)
+            response = self.client._make_request("POST", url, json=batch_data)
+            result = response.json()
+            
+            # Extract batch information
+            batch_info = result.get("batch", {})
+            self.batch_id = batch_info.get("batch_id")
+            item_ids = result.get("item_ids", [])
+            
+            if not self.batch_id or not item_ids:
+                raise RuntimeError(f"Invalid submission response: {result}")
+            
+            # Store first item ID for tracking
+            self.item_id = item_ids[0]
+            
+            # Get session ID from queue item
+            queue_item = self._get_queue_item_by_id(queue_id, self.item_id)
+            if queue_item:
+                self.session_id = queue_item.get("session_id")
+            
+            # Set up Socket.IO event subscriptions if requested
+            if subscribe_events and self.session_id:
+                await self._setup_event_subscriptions(
+                    queue_id,
+                    on_invocation_started,
+                    on_invocation_progress,
+                    on_invocation_complete,
+                    on_invocation_error
+                )
+            
+            return {
+                "batch_id": self.batch_id,
+                "session_id": self.session_id,
+                "item_ids": item_ids,
+                "enqueued": len(item_ids)
+            }
+            
+        except Exception as e:
+            # Try to get error details from response
+            if hasattr(e, 'response') and e.response is not None:
+                try:
+                    error_detail = e.response.json()
+                    raise RuntimeError(f"Workflow submission failed: {error_detail}")
+                except:
+                    pass
+            raise RuntimeError(f"Workflow submission failed: {e}")
+    
+    async def _setup_event_subscriptions(
+        self,
+        queue_id: str,
+        on_invocation_started: Callable[[dict[str, Any]], None] | None = None,
+        on_invocation_progress: Callable[[dict[str, Any]], None] | None = None,
+        on_invocation_complete: Callable[[dict[str, Any]], None] | None = None,
+        on_invocation_error: Callable[[dict[str, Any]], None] | None = None,
+    ) -> None:
+        """
+        Set up Socket.IO event subscriptions for workflow monitoring.
+        
+        Parameters
+        ----------
+        queue_id : str
+            The queue ID to subscribe to.
         on_invocation_started : Callable, optional
             Callback for node start events.
         on_invocation_progress : Callable, optional
@@ -725,13 +874,38 @@ class WorkflowHandle:
             Callback for node completion events.
         on_invocation_error : Callable, optional
             Callback for error events.
-
-        Returns
-        -------
-        EnqueueBatchResult
-            The submission result.
         """
-        raise NotImplementedError
+        # Connect to Socket.IO
+        sio = await self.client.connect_socketio()
+        
+        # Subscribe to queue room
+        await sio.emit("subscribe_queue", {"queue_id": queue_id})
+        
+        # Register event handlers based on InvokeAI's event types
+        if on_invocation_started:
+            @sio.on("invocation_started")  # type: ignore[misc]
+            async def handle_started(data: dict[str, Any]) -> None:
+                # Filter for our session
+                if data.get("session_id") == self.session_id:
+                    on_invocation_started(data)
+        
+        if on_invocation_progress:
+            @sio.on("invocation_progress")  # type: ignore[misc]
+            async def handle_progress(data: dict[str, Any]) -> None:
+                if data.get("session_id") == self.session_id:
+                    on_invocation_progress(data)
+        
+        if on_invocation_complete:
+            @sio.on("invocation_complete")  # type: ignore[misc]
+            async def handle_complete(data: dict[str, Any]) -> None:
+                if data.get("session_id") == self.session_id:
+                    on_invocation_complete(data)
+        
+        if on_invocation_error:
+            @sio.on("invocation_error")  # type: ignore[misc]
+            async def handle_error(data: dict[str, Any]) -> None:
+                if data.get("session_id") == self.session_id:
+                    on_invocation_error(data)
 
     def wait_for_completion_sync(
         self,
@@ -802,29 +976,260 @@ class WorkflowHandle:
         # Timeout reached
         raise TimeoutError(f"Workflow execution timed out after {timeout} seconds")
 
-    async def wait_for_completion(self, timeout: float | None = None) -> IvkJob:
+    async def wait_for_completion(
+        self, 
+        timeout: float | None = None,
+        queue_id: str = "default"
+    ) -> dict[str, Any]:
         """
-        Wait for workflow completion asynchronously.
+        Wait for workflow completion asynchronously with real-time events.
+
+        This method monitors the workflow execution via Socket.IO events,
+        providing real-time updates without polling overhead.
 
         Parameters
         ----------
         timeout : float, optional
-            Maximum time to wait in seconds.
+            Maximum time to wait in seconds. None for no timeout.
+        queue_id : str, optional
+            The queue ID to monitor (default: "default").
 
         Returns
         -------
-        IvkJob
-            The completed job.
+        dict[str, Any]
+            The completed queue item with status and results.
 
         Raises
         ------
         asyncio.TimeoutError
             If timeout is exceeded.
         RuntimeError
-            If the job fails.
-        """
-        raise NotImplementedError
+            If the job fails or no job is submitted.
 
+        Examples
+        --------
+        >>> result = await workflow.submit(subscribe_events=True)
+        >>> completed_item = await workflow.wait_for_completion(timeout=60.0)
+        >>> print(f"Status: {completed_item['status']}")
+        """
+        if not self.session_id:
+            raise RuntimeError("No job submitted to wait for")
+        
+        # Connect to Socket.IO and subscribe
+        sio = await self.client.connect_socketio()
+        await sio.emit("subscribe_queue", {"queue_id": queue_id})
+        
+        # Create a future to wait for completion
+        completion_future: asyncio.Future[dict[str, Any]] = asyncio.Future()
+        
+        # Handler for queue item status changes
+        @sio.on("queue_item_status_changed")  # type: ignore[misc]
+        async def handle_status_change(data: dict[str, Any]) -> None:
+            if data.get("session_id") != self.session_id:
+                return
+                
+            status = data.get("status")
+            if status == "completed":
+                # Get full queue item data
+                if self.item_id is not None:
+                    queue_item = self._get_queue_item_by_id(queue_id, self.item_id)
+                    if queue_item and not completion_future.done():
+                        completion_future.set_result(queue_item)
+            elif status == "failed":
+                error_msg = data.get("error", "Unknown error")
+                if not completion_future.done():
+                    completion_future.set_exception(
+                        RuntimeError(f"Workflow execution failed: {error_msg}")
+                    )
+            elif status == "canceled":
+                if not completion_future.done():
+                    completion_future.set_exception(
+                        RuntimeError("Workflow execution was canceled")
+                    )
+        
+        # Also handle graph completion event as backup
+        @sio.on("graph_complete")  # type: ignore[misc]
+        async def handle_graph_complete(data: dict[str, Any]) -> None:
+            if data.get("session_id") == self.session_id:
+                if self.item_id is not None:
+                    queue_item = self._get_queue_item_by_id(queue_id, self.item_id)
+                    if queue_item and not completion_future.done():
+                        completion_future.set_result(queue_item)
+        
+        # Wait with timeout
+        try:
+            if timeout:
+                result = await asyncio.wait_for(completion_future, timeout=timeout)
+            else:
+                result = await completion_future
+            
+            # Unsubscribe from queue
+            await sio.emit("unsubscribe_queue", {"queue_id": queue_id})
+            return result
+            
+        except asyncio.TimeoutError:
+            await sio.emit("unsubscribe_queue", {"queue_id": queue_id})
+            raise asyncio.TimeoutError(
+                f"Workflow execution timed out after {timeout} seconds"
+            )
+
+    async def submit_sync_monitor_async(
+        self,
+        queue_id: str = "default",
+        board_id: str | None = None,
+        priority: int = 0,
+    ) -> AsyncGenerator[dict[str, Any], None]:
+        """
+        Hybrid approach: Submit synchronously but monitor with async events.
+        
+        This method combines simple blocking submission with async event monitoring,
+        ideal for applications wanting simple submission APIs but rich monitoring 
+        capabilities, or transitioning from sync to async patterns.
+        
+        Parameters
+        ----------
+        queue_id : str, optional
+            The queue to submit to (default: "default").
+        board_id : str, optional
+            Default board for output images.
+        priority : int, optional
+            Job priority (higher values = higher priority).
+            
+        Yields
+        ------
+        dict[str, Any]
+            Event dictionaries as workflow executes:
+            - First yield: Submission result with batch_id, session_id
+            - Subsequent yields: Real-time events (invocation_started, progress, complete, error)
+            - Final yield: Completion event with final status
+            
+        Raises
+        ------
+        ValueError
+            If validation fails or required inputs are missing.
+        RuntimeError
+            If submission fails.
+            
+        Examples
+        --------
+        >>> async for event in workflow.submit_sync_monitor_async(board_id="outputs"):
+        ...     event_type = event.get("event_type")
+        ...     if event_type == "submission":
+        ...         print(f"Submitted: {event['batch_id']}")
+        ...     elif event_type == "invocation_started":
+        ...         print(f"Started: {event['node_type']}")
+        ...     elif event_type == "invocation_complete":
+        ...         print(f"Completed: {event['node_type']}")
+        ...     elif event_type == "graph_complete":
+        ...         print("Workflow finished!")
+        """
+        # Submit synchronously (simpler API)
+        batch_result = self.submit_sync(
+            queue_id=queue_id,
+            board_id=board_id,
+            priority=priority
+        )
+        
+        # Yield submission result first
+        yield {
+            "event_type": "submission",
+            "batch_id": batch_result["batch_id"],
+            "session_id": batch_result["session_id"],
+            "item_ids": batch_result["item_ids"],
+            "enqueued": batch_result["enqueued"]
+        }
+        
+        # Connect to Socket.IO for real-time monitoring
+        sio = await self.client.connect_socketio()
+        await sio.emit("subscribe_queue", {"queue_id": queue_id})
+        
+        # Track completion
+        is_complete = False
+        
+        # Set up event handlers that yield events
+        event_queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
+        
+        @sio.on("invocation_started")  # type: ignore[misc]
+        async def handle_started(data: dict[str, Any]) -> None:
+            if data.get("session_id") == self.session_id:
+                await event_queue.put({
+                    "event_type": "invocation_started",
+                    **data
+                })
+        
+        @sio.on("invocation_progress")  # type: ignore[misc]
+        async def handle_progress(data: dict[str, Any]) -> None:
+            if data.get("session_id") == self.session_id:
+                await event_queue.put({
+                    "event_type": "invocation_progress",
+                    **data
+                })
+        
+        @sio.on("invocation_complete")  # type: ignore[misc]
+        async def handle_complete(data: dict[str, Any]) -> None:
+            if data.get("session_id") == self.session_id:
+                await event_queue.put({
+                    "event_type": "invocation_complete",
+                    **data
+                })
+        
+        @sio.on("invocation_error")  # type: ignore[misc]
+        async def handle_error(data: dict[str, Any]) -> None:
+            if data.get("session_id") == self.session_id:
+                await event_queue.put({
+                    "event_type": "invocation_error",
+                    **data
+                })
+                # Mark as complete on error
+                nonlocal is_complete
+                is_complete = True
+        
+        @sio.on("graph_complete")  # type: ignore[misc]
+        async def handle_graph_complete(data: dict[str, Any]) -> None:
+            if data.get("session_id") == self.session_id:
+                await event_queue.put({
+                    "event_type": "graph_complete",
+                    **data
+                })
+                # Mark as complete
+                nonlocal is_complete
+                is_complete = True
+        
+        @sio.on("queue_item_status_changed")  # type: ignore[misc]
+        async def handle_status_change(data: dict[str, Any]) -> None:
+            if data.get("session_id") == self.session_id:
+                status = data.get("status")
+                if status in ["completed", "failed", "canceled"]:
+                    await event_queue.put({
+                        "event_type": "queue_item_status_changed",
+                        **data
+                    })
+                    nonlocal is_complete
+                    is_complete = True
+        
+        # Yield events as they come in
+        try:
+            while not is_complete:
+                try:
+                    # Wait for next event with a short timeout to check completion
+                    event = await asyncio.wait_for(event_queue.get(), timeout=0.5)
+                    yield event
+                except asyncio.TimeoutError:
+                    # Check if we should continue waiting
+                    continue
+            
+            # Drain any remaining events
+            while not event_queue.empty():
+                try:
+                    event = event_queue.get_nowait()
+                    yield event
+                except asyncio.QueueEmpty:
+                    break
+                    
+        finally:
+            # Clean up - unsubscribe from queue
+            await sio.emit("unsubscribe_queue", {"queue_id": queue_id})
+    
     def get_queue_item(self, queue_id: str = "default") -> dict[str, Any] | None:
         """
         Get the current queue item for tracking.
@@ -846,7 +1251,7 @@ class WorkflowHandle:
 
     def cancel(self, queue_id: str = "default") -> bool:
         """
-        Cancel the current workflow execution.
+        Cancel the current workflow execution synchronously.
 
         Parameters
         ----------
@@ -872,6 +1277,30 @@ class WorkflowHandle:
             return bool(response.status_code == 200)
         except Exception as e:
             raise RuntimeError(f"Failed to cancel job: {e}")
+    
+    async def cancel_async(self, queue_id: str = "default") -> bool:
+        """
+        Cancel the current workflow execution asynchronously.
+
+        Parameters
+        ----------
+        queue_id : str
+            The queue ID.
+
+        Returns
+        -------
+        bool
+            True if cancellation was successful.
+
+        Raises
+        ------
+        RuntimeError
+            If no job is running or cancellation fails.
+        """
+        # Just wrap the sync version in an async executor
+        return await asyncio.get_event_loop().run_in_executor(
+            None, self.cancel, queue_id
+        )
 
     def get_outputs(self) -> Any:  # Would return WorkflowOutput
         """
@@ -999,6 +1428,9 @@ class WorkflowHandle:
         """
         Convert workflow definition to API graph format.
         
+        Uses the original workflow JSON and only modifies fields that have been
+        set through the WorkflowHandle inputs.
+        
         Parameters
         ----------
         board_id : str, optional
@@ -1009,13 +1441,14 @@ class WorkflowHandle:
         dict[str, Any]
             API-formatted graph structure.
         """
-        # Get nodes and edges from definition
-        ui_nodes = self.definition.nodes
-        ui_edges = self.definition.edges
+        import copy
+        
+        # Start with a deep copy of the original workflow JSON
+        workflow_copy = copy.deepcopy(self.definition.raw_data)
         
         # Build a set of fields that are connected via edges (these shouldn't be in the node)
         connected_fields = set()
-        for edge in ui_edges:
+        for edge in workflow_copy.get("edges", []):
             target_node = edge.get("target")
             target_field = edge.get("targetHandle")
             if target_node and target_field:
@@ -1023,14 +1456,14 @@ class WorkflowHandle:
         
         # Convert nodes to API format
         api_nodes = {}
-        for node in ui_nodes:
+        for node in workflow_copy.get("nodes", []):
             node_id = node.get("id")
             if not node_id:
                 continue  # Skip nodes without ID
             
             node_data = node.get("data", {})
             
-            # Create API node
+            # Create API node with basic fields
             api_node = {
                 "id": node_id,
                 "type": node_data.get("type"),
@@ -1038,29 +1471,49 @@ class WorkflowHandle:
                 "use_cache": node_data.get("useCache", True)
             }
             
-            # Process inputs - merge current values from WorkflowHandle
+            # Process inputs - only include fields with values
             node_inputs = node_data.get("inputs", {})
             for field_name, field_data in node_inputs.items():
                 # Skip fields that are connected via edges
                 if f"{node_id}.{field_name}" in connected_fields:
                     continue
                 
-                # Check if this field is exposed in our inputs
-                field_value = self._get_field_value_for_node(node_id, field_name, field_data)
+                # Check if this field is exposed in our inputs and get updated value
+                field_value = None
+                for inp in self.inputs:
+                    if inp.node_id == node_id and inp.field_name == field_name:
+                        # Found an exposed field - get its current value
+                        field = inp.field
+                        if hasattr(field, 'value'):
+                            field_value = field.value
+                        else:
+                            # Complex field - convert to API format
+                            field_value = field.to_api_format()
+                        break
+                else:
+                    # Not exposed - use value from original workflow if present
+                    if isinstance(field_data, dict) and "value" in field_data:
+                        field_value = field_data["value"]
+                    elif not isinstance(field_data, dict):
+                        # Sometimes the field_data is the value itself
+                        field_value = field_data
+                
                 # Only include the field if it has a non-None value
                 if field_value is not None:
                     api_node[field_name] = field_value
             
-            # Apply board_id to save_image nodes if provided
-            if board_id and node_data.get("type") == "save_image":
-                if "board" not in api_node or not api_node["board"]:
-                    api_node["board"] = {"board_id": board_id}
+            # Special handling for specific node types
+            if board_id:
+                # Apply board_id to save_image/l2i nodes
+                if node_data.get("type") in ["save_image", "l2i"]:
+                    if "board" not in api_node or not api_node["board"]:
+                        api_node["board"] = {"board_id": board_id}
             
             api_nodes[node_id] = api_node
         
         # Convert edges to API format
         api_edges = []
-        for edge in ui_edges:
+        for edge in workflow_copy.get("edges", []):
             api_edge = {
                 "source": {
                     "node_id": edge.get("source"),
@@ -1079,33 +1532,6 @@ class WorkflowHandle:
             "edges": api_edges
         }
     
-    def _get_field_value_for_node(
-        self, node_id: str, field_name: str, field_data: dict[str, Any]
-    ) -> Any:
-        """
-        Get the current field value for a node field.
-        
-        Checks if this field is exposed in our inputs and returns
-        the current value, otherwise returns the default from the definition.
-        """
-        # Look for this field in our exposed inputs
-        for inp in self.inputs:
-            if inp.node_id == node_id and inp.field_name == field_name:
-                # For primitive fields with value property, return just the value
-                # For complex fields, convert to API format
-                field = inp.field
-                if hasattr(field, 'value'):
-                    # Primitive field - return just the value
-                    return field.value
-                else:
-                    # Complex field - convert to API format
-                    return field.to_api_format()
-        
-        # Not exposed, use value from definition
-        # At this point field_data should be a dict from workflow definition
-        if "value" in field_data:
-            return field_data["value"]
-        return field_data
     
     def _get_queue_item_by_id(self, queue_id: str, item_id: int) -> dict[str, Any] | None:
         """
