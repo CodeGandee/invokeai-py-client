@@ -11,6 +11,7 @@ import asyncio
 import time
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable
 
+from jsonpath_ng.ext import parse as parse_jsonpath  # type: ignore[import-untyped]
 from pydantic import BaseModel, ConfigDict, PrivateAttr, model_validator
 
 from invokeai_py_client.ivk_fields import (
@@ -51,6 +52,8 @@ class IvkWorkflowInput(BaseModel):
         Whether this input must be provided.
     input_index : int
         0-based index from form tree traversal.
+    jsonpath : str
+        JSONPath expression to locate this field in the workflow JSON.
 
     Field Type Immutability
     -----------------------
@@ -71,6 +74,7 @@ class IvkWorkflowInput(BaseModel):
     field: IvkField[Any]  # Base class for all field types
     required: bool
     input_index: int
+    jsonpath: str  # JSONPath expression for efficient field location
 
     # Private attribute to remember the concrete type of `field` after first initialization.
     _field_type: type[IvkField[Any]] | None = PrivateAttr(default=None)
@@ -233,6 +237,10 @@ class WorkflowHandle:
                     node_data, field_name, field_info
                 )
 
+                # Calculate JSONPath expression for this field
+                # Using filter syntax to find the specific node by ID
+                jsonpath_expr = f"$.nodes[?(@.id='{node_id}')].data.inputs.{field_name}.value"
+
                 # Create IvkWorkflowInput
                 workflow_input = IvkWorkflowInput(
                     label=field_label,
@@ -241,7 +249,8 @@ class WorkflowHandle:
                     field_name=field_name,
                     field=field_instance,
                     required=required,
-                    input_index=input_index
+                    input_index=input_index,
+                    jsonpath=jsonpath_expr
                 )
 
                 self.inputs.append(workflow_input)
@@ -1428,8 +1437,8 @@ class WorkflowHandle:
         """
         Convert workflow definition to API graph format.
         
-        Uses the original workflow JSON and only modifies fields that have been
-        set through the WorkflowHandle inputs.
+        Uses the original workflow JSON and JSONPath expressions to efficiently 
+        update only the fields that have been set through the WorkflowHandle inputs.
         
         Parameters
         ----------
@@ -1445,6 +1454,27 @@ class WorkflowHandle:
         
         # Start with a deep copy of the original workflow JSON
         workflow_copy = copy.deepcopy(self.definition.raw_data)
+        
+        # Update exposed fields using JSONPath expressions
+        for inp in self.inputs:
+            # Parse the stored JSONPath expression
+            jsonpath_expr = parse_jsonpath(inp.jsonpath)
+            
+            # Get the field value
+            field = inp.field
+            if hasattr(field, 'value'):
+                field_value = field.value
+            else:
+                # Complex field - convert to API format
+                field_value = field.to_api_format()
+            
+            # Update the value in the workflow copy using JSONPath
+            if field_value is not None:
+                matches = jsonpath_expr.find(workflow_copy)
+                # Debug: uncomment to trace JSONPath updates
+                # print(f"Updating {inp.field_name} via JSONPath: found {len(matches)} matches")
+                for match in matches:
+                    match.full_path.update(workflow_copy, field_value)
         
         # Build a set of fields that are connected via edges (these shouldn't be in the node)
         connected_fields = set()
@@ -1472,31 +1502,20 @@ class WorkflowHandle:
             }
             
             # Process inputs - only include fields with values
+            # (Note: JSONPath has already updated exposed fields in workflow_copy)
             node_inputs = node_data.get("inputs", {})
             for field_name, field_data in node_inputs.items():
                 # Skip fields that are connected via edges
                 if f"{node_id}.{field_name}" in connected_fields:
                     continue
                 
-                # Check if this field is exposed in our inputs and get updated value
+                # Get the value from the updated workflow_copy
                 field_value = None
-                for inp in self.inputs:
-                    if inp.node_id == node_id and inp.field_name == field_name:
-                        # Found an exposed field - get its current value
-                        field = inp.field
-                        if hasattr(field, 'value'):
-                            field_value = field.value
-                        else:
-                            # Complex field - convert to API format
-                            field_value = field.to_api_format()
-                        break
-                else:
-                    # Not exposed - use value from original workflow if present
-                    if isinstance(field_data, dict) and "value" in field_data:
-                        field_value = field_data["value"]
-                    elif not isinstance(field_data, dict):
-                        # Sometimes the field_data is the value itself
-                        field_value = field_data
+                if isinstance(field_data, dict) and "value" in field_data:
+                    field_value = field_data["value"]
+                elif not isinstance(field_data, dict):
+                    # Sometimes the field_data is the value itself
+                    field_value = field_data
                 
                 # Only include the field if it has a non-None value
                 if field_value is not None:
