@@ -28,8 +28,9 @@ if you are not sure about the InvokeAI web APIs:
 
 - user configures the inputs of the workflow using `WorkflowHandle.set_input_value()`, which will modify a copy of the `original_workflow_json` to fill in the inputs.
 - - IMPORTANT: in this process, you NEVER modify the keys of the `original_workflow_json`, you only modify the values of the fields.
+- - NOTE ON EDGE-CONNECTED INPUTS: The client API retains all literal input values in the final submission payload, even if they are also supplied by an incoming edge. This matches the behavior of the InvokeAI GUI and is required for server-side validation.
 
-- craft a request based on the updated `WorkflowHandle.raw_data` and submit it to the InvokeAI API.
+- craft a request based on the updated `WorkflowHandle.raw_data and submit it to the InvokeAI API.
 
 - wait for the workflow to complete, and retrieve the results.
 

@@ -39,11 +39,11 @@ class IvkModelIdentifierField(BaseModel, PydanticFieldMixin, IvkField[dict[str, 
     model_config = ConfigDict(validate_assignment=True, extra="allow")
 
     # Direct fields matching InvokeAI's ModelIdentifierField
-    key: str = Field(description="The model's unique key")
-    hash: str = Field(description="The model's BLAKE3 hash")
-    name: str = Field(description="The model's name")
-    base: str = Field(description="The model's base model type (e.g., 'sdxl', 'flux', 'sd-1', 'sd-2')")
-    type: str = Field(description="The model's type (e.g., 'main', 'vae', 'lora', 'controlnet')")
+    key: str = Field(default="", description="The model's unique key")
+    hash: str = Field(default="", description="The model's BLAKE3 hash")
+    name: str = Field(default="", description="The model's name")
+    base: str = Field(default="any", description="The model's base model type (e.g., 'sdxl', 'flux', 'sd-1', 'sd-2')")
+    type: str = Field(default="main", description="The model's type (e.g., 'main', 'vae', 'lora', 'controlnet')")
     submodel_type: Optional[str] = Field(
         default=None,
         description="The submodel to load, if this is a main model"
