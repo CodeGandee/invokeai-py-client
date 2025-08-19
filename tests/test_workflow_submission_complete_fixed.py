@@ -70,12 +70,12 @@ def test_sync_submission():
     # Set prompts
     positive_field = workflow.get_input_value(1)
     if hasattr(positive_field, 'value'):
-        positive_field.value = "A beautiful landscape with mountains and lakes"
+        positive_field.value = "A majestic dragon flying over ancient castles during sunset, highly detailed fantasy art"
     print(f"    Set positive prompt")
     
     negative_field = workflow.get_input_value(2)
     if hasattr(negative_field, 'value'):
-        negative_field.value = "blurry, low quality"
+        negative_field.value = "blurry, low quality, distorted, bad anatomy"
     print(f"    Set negative prompt")
     
     # Validate
@@ -188,12 +188,12 @@ async def test_async_submission():
     # Set prompts
     positive_field = workflow.get_input_value(1)
     if hasattr(positive_field, 'value'):
-        positive_field.value = "A futuristic city at night with neon lights"
+        positive_field.value = "An underwater coral reef city inhabited by mermaids, bioluminescent lighting, photorealistic"
     print(f"    Set positive prompt")
     
     negative_field = workflow.get_input_value(2)
     if hasattr(negative_field, 'value'):
-        negative_field.value = "blurry, low quality, distorted"
+        negative_field.value = "blurry, low quality, distorted, oversaturated, amateur"
     print(f"    Set negative prompt")
     
     # Event tracking
