@@ -36,42 +36,6 @@
     </content>
     <tags>#其他</tags>
   </item>
-  <item id="mem_1754773163373_efwsmgu59" time="2025/08/10 04:59">
-    <content>
-      Task 2 completed: InvokeAI latest image download from board. Key API endpoints: GET /api/v1/images/names?board_id={id}&amp;order_dir=DESC gets ordered image names (most recent first), GET /api/v1/images/i/{name}/metadata gets generation details, GET /api/v1/images/i/{name}/full downloads full resolution image. Successfully downloaded latest image from &#x27;probe&#x27; board (ad7ae269-135e-4432-ac9a-db349cae64d2.png, 1.83MB, SDXL txt2img) to ./tmp/downloads/. API response format: {image_names: [string], total_count: int, starred_count: int}.
-    </content>
-    <tags>#其他</tags>
-  </item>
-  <item id="mem_1754773327802_rdmwxhwmh" time="2025/08/10 05:02">
-    <content>
-      Corrected Task 2: InvokeAI latest image detection requires actual timestamp sorting, not board ordering. Critical fix: Use POST /api/v1/images/images_by_names with all board image names to get ImageDTOs containing created_at timestamps, then sort by created_at desc. Board image ordering via GET /api/v1/images/names is NOT chronological. True latest: d5ecea7e-a8ad-4a41-814c-0100c191adaa.png (2025-08-09 20:56:35.827) vs previous ad7ae269... which was NOT the latest by timestamp.
-    </content>
-    <tags>#其他</tags>
-  </item>
-  <item id="mem_1754773620373_05op8nsxc" time="2025/08/10 05:07">
-    <content>
-      InvokeAI starred images from board: Use GET /api/v1/boards/{board_id}/image_names to get all images, then POST /api/v1/images/images_by_names to get ImageDTOs, filter by starred=true field. Found 2 starred images in probe board: ad7ae269-135e-4432-ac9a-db349cae64d2.png (2025-08-09 19:40:52.348) and 0ab4c196-f00f-449b-8936-82a76c10167c.png (2025-08-09 15:45:57.219). Created api-demo-starred-images.py with download functionality and get-starred-from-probe.py for simple listing.
-    </content>
-    <tags>#其他</tags>
-  </item>
-  <item id="mem_1754913107721_3bf7tuh3t" time="2025/08/11 19:51">
-    <content>
-      Task 5 completed: InvokeAI image upload to board. Key API: POST /api/v1/images/upload with multipart/form-data. Required params: image_category=&#x27;user&#x27;, is_intermediate=false, board_id={target_board_id}. Form data includes &#x27;file&#x27; field with binary image data. Successfully uploaded data/images/ad7ae269-135e-4432-ac9a-db349cae64d2.png (1.83MB, 960x1280) to &#x27;samples&#x27; board (d32f49b7-370e-4bab-8cfd-cf81fcf4c3a8). Returns ImageDTO with new image_name. Created api-demo-upload-image.py with board creation, upload, and verification functionality.
-    </content>
-    <tags>#其他</tags>
-  </item>
-  <item id="mem_1754916383145_t0f3eq6p9" time="2025/08/11 20:46">
-    <content>
-      Created comprehensive InvokeAI workflow schema guide at context/hints/howto-use-invokeai-workflow-schema.md. Document covers complete workflow JSON structure (v3.0.0), node/edge schemas, field types (StringField, ImageField, etc.), core invocation categories (SDXL, FLUX, image processing, ControlNet), custom node development patterns, InvocationContext services, and common workflow patterns. Based on deep analysis of InvokeAI source code, TypeScript schemas, Python invocation classes, and official documentation. Guide includes practical examples for custom nodes, field validation, and troubleshooting.
-    </content>
-    <tags>#其他</tags>
-  </item>
-  <item id="mem_1754916512287_hx1hel8vq" time="2025/08/11 20:48">
-    <content>
-      Enhanced InvokeAI workflow schema guide with comprehensive &quot;Discovering Node Schemas&quot; section. Added 6 methods for finding node JSON schemas: 1) OpenAPI endpoint (http://localhost:9090/openapi.json), 2) Schema analysis workflow with component navigation, 3) Runtime schema discovery via Python API calls, 4) Source code analysis in invokeai/app/invocations/, 5) Workflow inspection of existing JSON files, 6) Frontend node template generation patterns. Included practical examples for SDXL model loader, jq commands for schema queries, and best practices for schema discovery and validation.
-    </content>
-    <tags>#其他</tags>
-  </item>
   <item id="mem_1754923706414_a8slzad1r" time="2025/08/11 22:48">
     <content>
       InvokeAI workflow schema discovery methods for Python client development:
@@ -126,31 +90,6 @@
       - 50+ invocation files - Usage patterns and validation rules
     
       Reference location: context/hints/invokeai-kb/
-    </content>
-    <tags>#其他</tags>
-  </item>
-  <item id="mem_1755286020419_u5t9rz3n0" time="2025/08/16 03:27">
-    <content>
-      Created comprehensive InvokeAI workflow form field interpretation guide at context/hints/invokeai-kb/howto-interpret-workflow-form-field.md
-    
-      Key findings about workflow form structure:
-      1. Form field creates hierarchical GUI with containers (row/column layout), node-fields (actual workflow inputs), dividers, and text elements
-      2. Node-field elements reference workflow nodes via nodeId + fieldName
-      3. Field labels come from node.data.inputs[field].label, fallback to node.data.label, then node.data.type
-      4. Form structure is purely for UI, not workflow execution order
-      5. exposedFields array should match node-field elements in form
-    
-      Critical JSONPath queries:
-      - All form elements: $.form.elements.*
-      - Node fields only: $.form.elements[?(@.type == &quot;node-field&quot;)]
-      - Field references: $.form.elements[*].data.fieldIdentifier
-      - Node label: $.nodes[?(@.id == &quot;nodeId&quot;)].data.inputs.fieldName.label
-    
-      Example: Positive Prompt field
-      - Form element: node-field-I7XLCaNo7D
-      - References: Node 0a167316-ba62-4218-9fcf-b3cff7963df8, field &quot;value&quot;
-      - Field label from node: &quot;Positive Prompt&quot;
-      - Display format: &quot;NodeLabel: FieldLabel&quot;
     </content>
     <tags>#其他</tags>
   </item>
@@ -231,6 +170,63 @@
       - clip: CLIP text encoders
     
       Task 1.2 completed in: context/tasks/features/task-explore-workflow.md
+    </content>
+    <tags>#其他</tags>
+  </item>
+  <item id="mem_1755657923728_nut60czn8" time="2025/08/20 10:45">
+    <content>
+      InvokeAI Python Client Project Architecture and Design (2025-08-20)
+    
+      ## Project Overview
+      Python client for InvokeAI server providing typed wrapper around REST + Socket.IO APIs. Three main domains: Workflows (load/inspect/submit/monitor), Boards &amp; Images (CRUD operations), DNN Models (v2 API discovery).
+    
+      ## Core Design Principles (from context/design/usage-pattern.md)
+      1. **Workflow JSON Preservation**: Original GUI workflow JSON (`WorkflowDefinition.raw_data`) is NEVER modified directly. Only deep copies are mutated during submission.
+      2. **JSONPath-based Updates**: Each input field has a JSONPath pointing to dict in workflow JSON. Updates via `IvkWorkflowInput.field.to_api_format()` only modify VALUES, never add/delete keys.
+      3. **Input Discovery**: Inputs discovered from `form.elements` tree (depth-first from root), NOT from exposedFields.
+      4. **Edge-Connected Inputs**: Retained by default in submission payload to match GUI behavior (env var INVOKEAI_PRUNE_CONNECTED_FIELDS=1 to prune).
+    
+      ## Key Components (from README.md)
+      - `InvokeAIClient`: Connection façade with retrying HTTP + async Socket.IO
+      - `WorkflowDefinition`: Preserved raw JSON + metadata
+      - `WorkflowHandle`: Mutable execution state, submission logic, JSONPath updates
+      - `IvkWorkflowInput`: Public parameters from form tree
+      - `IvkField` types: Default-constructable typed wrappers (primitives, resources, models, complex)
+    
+      ## Workflow Submission Process (README.md lines 356-374)
+      1. Input Discovery: Traverse form.elements depth-first, build IvkWorkflowInput with JSONPath to `...nodes[?(@.id=&#x27;{node_id}&#x27;)].data.inputs.{field}.value`
+      2. Value Mutation: Deep copy raw_data, write field values via JSONPath
+      3. Node Extraction: Build minimal API nodes with id, type, is_intermediate, use_cache, inputs
+      4. Edge Conversion: GUI edges → API format `{source: {node_id, field}, destination: {node_id, field}}`
+      5. Board Injection: Apply board_id to output nodes (save_image, l2i, flux_vae_decode/encode, hed_edge_detection)
+      6. Batch Envelope: POST to `/api/v1/queue/{queue_id}/enqueue_batch`
+      7. Tracking: Get batch_id, item_ids, session_id for monitoring
+    
+      ## Repository Pattern Architecture
+      - `BoardRepository` &amp; `BoardHandle`: Board/image management with uncategorized handling
+      - `WorkflowRepository`: Workflow lifecycle management
+      - `DnnModelRepository`: Model discovery via v2 endpoints (/../v2/models/ traversal)
+    
+      ## Submission Modes
+      - Sync: `submit_sync()` + polling `wait_for_completion_sync()`
+      - Async: `await submit(..., subscribe_events=True)` with callbacks
+      - Streaming: `async for event in submit_sync_monitor_async()`
+    
+      ## Example Workflows (data/workflows/)
+      - sdxl-text-to-image.json → call-wf-sdxl-text-to-image.json
+      - sdxl-flux-refine.json → call-wf-sdxl-flux-refine.json
+      - flux-image-to-image.json → call-wf-flux-image-to-image-1.json
+    
+      ## Recent Implementation (Aug 19 commit 53de014)
+      Fixed workflow field update pattern to properly merge dicts preserving keys (name, label, description). JSONPath now points to entire field dict, not just .value. Added comprehensive tests for SDXL, FLUX, image-to-image workflows.
+    
+      ## Code Review Issues (context/logs/code-reivew/20250819-174650-src-review.md)
+      1. JSONPath should point to ...inputs.{field}.value (currently points to field dict)
+      2. IvkModelIdentifierField should return {&quot;value&quot;: {...}} not top-level keys
+      3. IvkModelIdentifierField violates default-constructability requirement
+      4. README vs code mismatch on pruning connected inputs default behavior
+    
+      References: context/design/usage-pattern.md, README.md, context/tasks/task-check-design.md
     </content>
     <tags>#其他</tags>
   </item>

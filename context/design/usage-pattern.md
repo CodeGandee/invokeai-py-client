@@ -11,9 +11,34 @@ if you are not sure about the InvokeAI web APIs:
 
 # Intended usage pattern and implementation of workflow subsystem
 
+## CRITICAL
+
+DO NOT read the "exposedFields" field in the workflow json, like this one, we DO NOT use these:
+
+```json
+{
+    "name": "flux-image-to-image",
+    ...
+    "exposedFields": [
+        {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "model"           },
+        {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "t5_encoder_model"},
+        {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "clip_embed_model"},
+        {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "vae_model"       },
+        {"nodeId": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c", "fieldName": "prompt"          },
+        {"nodeId": "2981a67c-480f-4237-9384-26b68dbf912b", "fieldName": "image"           }
+    ],
+
+}
+```
+
 ## Files
 - example workflow json: `data\workflows\flux-image-to-image.json`, denote this as `workflow-def`
 - example payload sent to the InvokeAI API: `data\api-calls\call-wf-flux-image-to-image-1.json` with the `workflow-inputs` filled in.
+
+### Input and Output of Workflow
+- When the workflow is created in GUI, the user selected some of the fields in the `wf-node` (nodes within a workflow), and add them to the `form` field in the workflow definition, these are essentially references to the fields of `wf-node`. These fields in the `form` can be considered as the `input-fields` of the workflow, other fields in the `wf-node` with values are considered as default values, usually NOT supposed to be changed by the user. 
+- Some of the `input-fields` are related to output of the workflow, specifying the destination of the output, in particular, output to which `board`. 
+- `output-nodes` refer to the `wf-node` of the that has `board` output, for example, the `save_image`or `l2i` node (see `context\refcode\InvokeAI\invokeai\app\invocations\image.py`), which in python has a `WithBoard` mixin, like below. There is another VERY IMPORTANT condition for a node to be an `output-node`, that is, its output board IS specified in the `form` field, that is, belongs to the `input-fields` of the workflow. Otherwise, those nodes are considered as `debug-nodes`
 
 ## Intended Usage Pattern
 

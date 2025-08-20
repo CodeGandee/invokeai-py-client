@@ -1,6 +1,7 @@
 # InvokeAI Python Client
 
 Typed Python client + examples for interacting with an InvokeAI server (REST + Socket.IO).
+Intended usage: export a workflow JSON from the InvokeAI GUI and treat it as the source of truth. Load it into this client to obtain a workflow handle that derives an ordered set of public inputs from the workflow form (ignore exposedFields). Set input values on the handle; the library preserves the original graph and writes values back via JSONPath without adding or removing keys. On submission, it builds the minimal API graph (retaining literal values even when an input is also fed by an edge), enqueues the batch, and lets you poll or stream progress. Boards and models are accessed via dedicated repositories. See examples in [examples](examples/) and workflow templates in [data/workflows](data/workflows/).
 
 Domains:
 1. Workflows – load exported GUI workflow JSON, inspect & set inputs, submit to queue, monitor progress (sync, async, streaming).
@@ -53,54 +54,6 @@ Field concrete class is locked after discovery—replacement must use the exact 
 - Rich DNN model taxonomy (type, base architecture, storage format enums) + helpers
 - IvkField system (primitive + complex) with Pydantic validation & (de)serialization mixins
 - Example scripts & tests covering practical automation flows
-
-### Implementation status (confirmed in code)
-
-- Workflow JSON preservation and minimal mutation
-  - Raw GUI workflow JSON is preserved and deep-copied during submission; only targeted values are updated for mutation efficiency and forward compatibility.
-  - JSONPath expressions are recorded per input to locate the target within the preserved JSON when assembling the API graph.
-
-- Input discovery from the form tree
-  - Inputs are discovered exclusively from the form.elements tree (starting at root), ignoring exposedFields. This yields a deterministic, depth-first ordering with stable indices.
-
-- Field system safety and default-constructability
-  - All IvkField subclasses are default-constructable. Model identifier fields (IvkModelIdentifierField) now include safe defaults for required attributes (key/hash/name/base/type) allowing parameter-less construction.
-  - Exact-type immutability is enforced on workflow inputs: once a field’s concrete class is discovered, replacements must use the same concrete class (prevents semantic drift).
-
-- Submission graph assembly and eventing
-  - Minimal node graph extraction with normalization (e.g., board normalization, GUI helper nodes like notes are skipped) and 1:1 edge conversion to API edges.
-  - Synchronous submission with polling and two async patterns:
-    - Asynchronous submission with real-time event subscription (invocation_started, invocation_progress, invocation_complete, invocation_error, queue_item_status_changed, graph_complete).
-    - Hybrid “submit sync, monitor async” streaming generator for progressive updates until completion.
-
-- Connected-input pruning behavior (default-retain)
-  - By default, inputs that are fed by edges are retained in the node payload to match GUI-generated payloads and satisfy server schema expectations for required fields.
-  - To enable legacy pruning for experiments, set INVOKEAI_PRUNE_CONNECTED_FIELDS=1.
-
-- Board injection scope (pragmatic)
-  - When a board_id is provided, board injection is applied to output and image-handling node types: save_image, l2i, flux_vae_decode, flux_vae_encode, hed_edge_detection (only when missing on the node).
-
-- DNN model repository (v2 traversal)
-  - The DNN model repository lists and retrieves models via the v2 endpoints using the documented relative traversal approach, maintaining compatibility with evolving upstream routing.
-### Not Yet Implemented (Stubs / Roadmap)
-- Client high-level job methods (`list_jobs`, `get_job`, `cancel_job`, legacy `list_models` / `get_model_info` variants)
-- Workflow output retrieval & cleanup helpers (`get_outputs`, `cleanup_*`) – currently raise `NotImplementedError`
-- Automatic model availability resolution & obsolete node fixing (placeholders in `WorkflowRepository`)
-- Direct database access (previous mention removed; not implemented)
-- Image / artifact convenience download helpers (present only in examples now)
-- Model reference validation & auto-fix passes
-
-## 📦 Installation
-
-Using pixi (project default):
-```bash
-pixi install
-```
-
-Using pip (editable source checkout):
-```bash
-pip install -e .
-```
 
 ## 🚀 Quick Start
 

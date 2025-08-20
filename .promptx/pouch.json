@@ -1,24 +1,17 @@
 {
-  "currentState": "role_activated_with_memory",
+  "currentState": "initialized",
   "stateHistory": [
     {
       "from": "initial",
       "command": "init",
-      "timestamp": "2025-08-18T16:48:59.846Z",
+      "timestamp": "2025-08-20T03:18:58.973Z",
       "args": [
         {
-          "workingDirectory": "D:\\code\\invokeai-py-client"
+          "workingDirectory": "d:/code/invokeai-py-client",
+          "ideType": "vscode"
         }
-      ]
-    },
-    {
-      "from": "initialized",
-      "command": "action",
-      "timestamp": "2025-08-18T16:49:16.156Z",
-      "args": [
-        "webapi-expert"
       ]
     }
   ],
-  "lastUpdated": "2025-08-18T16:49:16.193Z"
+  "lastUpdated": "2025-08-20T03:18:59.012Z"
 }
