@@ -1,76 +1,109 @@
-# General Information for All Tasks
+# Workflow Subsystem – Design & Intended Usage (High‑Level)
 
-- client api source code: `src/invokeai_py_client`
-- terminology and concepts: `context/design/terminology.md`
-- useful information for testing: `context/tasks/info/info-test-data.md`
+This document is a *pre‑implementation* design narrative. It captures the **assumptions, invariants, roles, and user journey** for the client workflow API. Code names and paths are illustrative; low‑level mechanics (registries, concrete class names, environment variable toggles) belong elsewhere and should not dominate this design.
 
-if you are not sure about the InvokeAI web APIs:
-- Look for the demos first: `<workspace>/examples`
-- InvokeAI openapi json: `context\hints\invokeai-kb\invokeai-openapi.json`, use `jq` for faster search
-- InvokeAI API list: `context\hints\invokeai-kb\invokeai-api-list.md`
 
-# Intended usage pattern and implementation of workflow subsystem
+## 1. Purpose
+Provide a stable, ergonomic abstraction for configuring and submitting InvokeAI GUI‑authored workflows from Python code, without requiring callers to understand the raw workflow JSON schema or mutate it directly.
 
-## CRITICAL
+## 2. Core Actors
+| Actor | Goal |
+| ----- | ---- |
+| Workflow Author (in GUI) | Exports a workflow definition JSON. |
+| API User (Python) | Loads the definition, inspects required inputs, supplies values, submits, awaits results. |
+| Extension Author | (Optionally) introduces new semantic input types without editing core client code. |
 
-DO NOT read the "exposedFields" field in the workflow json, like this one, we DO NOT use these:
+## 3. Key Assumptions
+1. The exported workflow JSON is treated as an authoritative, mostly opaque artifact; we do **value substitution only**, never key creation/removal.
+2. Input discoverability is driven exclusively by the `form` tree (its ordered `node-field` entries). The JSON field `exposedFields` is intentionally ignored.
+3. A workflow “input index” is defined by depth‑first traversal order of that form tree and is stable for drift detection between revisions.
+4. Output relevance (for mapping results) requires both: (a) node has board/output capability, (b) that node’s board field appears in the form (user‑configurable). Otherwise it is a *debug* node.
+5. Literal values are retained in the submission even if an edge also supplies that parameter (mirrors GUI behaviour and satisfies server validation models).
+6. Input *types* (string, model, board, etc.) are resolved conceptually via an extensible strategy layer (pluggable rules + builders) rather than hard‑coded branching.
 
-```json
-{
-    "name": "flux-image-to-image",
-    ...
-    "exposedFields": [
-        {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "model"           },
-        {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "t5_encoder_model"},
-        {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "clip_embed_model"},
-        {"nodeId": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90", "fieldName": "vae_model"       },
-        {"nodeId": "01f674f8-b3d1-4df1-acac-6cb8e0bfb63c", "fieldName": "prompt"          },
-        {"nodeId": "2981a67c-480f-4237-9384-26b68dbf912b", "fieldName": "image"           }
-    ],
+## 4. Invariants (Must Always Hold)
+| ID | Invariant |
+|----|-----------|
+| INV‑1 | Original workflow JSON remains structurally intact (no added/removed keys). |
+| INV‑2 | Form traversal is the *only* mechanism to derive user‑visible inputs. |
+| INV‑3 | Each discovered input stores sufficient metadata: label, node id, field name, required flag, stable index, lightweight path reference. |
+| INV‑4 | Field object’s concrete Python type is immutable after first creation (guards downstream assumptions). |
+| INV‑5 | Submission payload always includes required literals even when edge‑connected. |
+| INV‑6 | Extending supported field kinds never requires editing existing conditional logic (Open/Closed). |
 
-}
-```
+## 5. User Journey (Narrative)
+1. User exports a workflow definition from the GUI and saves it locally.
+2. User loads the definition into the client API (repository/factory produces a handle object).
+3. The handle enumerates inputs (ordered) derived from the form tree. User inspects them (labels, indices, current defaults) before deciding what to set.
+4. User sets values using simple index‑oriented helpers (no need to understand internal field classes). An optional bulk helper MAY exist, but bulk mutation is **not** a core design assumption; single‑input setting must remain the primary, always‑available path.
+5. User invokes a submit method. Validation occurs; on success the client produces a derived API graph by substituting only the values corresponding to discovered inputs.
+6. User waits for completion (polling or event stream) and optionally requests a structured mapping of outputs (board destinations → generated image filenames).
+7. User may export an index map to later detect drift if the underlying workflow JSON changes in a future revision.
 
-## Files
-- example workflow json: `data\workflows\flux-image-to-image.json`, denote this as `workflow-def`
-- example payload sent to the InvokeAI API: `data\api-calls\call-wf-flux-image-to-image-1.json` with the `workflow-inputs` filled in.
+## 6. Conceptual Architecture (Black Box View)
+| Layer | Responsibility | Hidden Internals (Not in this doc) |
+|-------|----------------|------------------------------------|
+| Definition Loader | Parse persisted JSON into a lightweight model snapshot. | JSON parsing, minimal normalization. |
+| Input Discovery | Traverse form structure; build ordered input descriptors. | Type heuristics / plugin evaluation. |
+| Field Abstraction | Encapsulate validation + API serialization per semantic type. | Concrete class hierarchy & rule registration. |
+| Submission Builder | Merge current input values into a copy of original JSON and extract a queue graph view. | Node filtering, board heuristics. |
+| Execution Monitor | Track queue items (sync or async) and surface status & outputs. | Socket/event implementation details. |
+| Output Mapper | Provide best‑effort mapping of declared output nodes to produced assets. | Multi‑tier resolution strategy. |
 
-### Input and Output of Workflow
-- When the workflow is created in GUI, the user selected some of the fields in the `wf-node` (nodes within a workflow), and add them to the `form` field in the workflow definition, these are essentially references to the fields of `wf-node`. These fields in the `form` can be considered as the `input-fields` of the workflow, other fields in the `wf-node` with values are considered as default values, usually NOT supposed to be changed by the user. 
-- Some of the `input-fields` are related to output of the workflow, specifying the destination of the output, in particular, output to which `board`. 
-- `output-nodes` refer to the `wf-node` of the that has `board` output, for example, the `save_image`or `l2i` node (see `context\refcode\InvokeAI\invokeai\app\invocations\image.py`), which in python has a `WithBoard` mixin, like below. There is another VERY IMPORTANT condition for a node to be an `output-node`, that is, its output board IS specified in the `form` field, that is, belongs to the `input-fields` of the workflow. Otherwise, those nodes are considered as `debug-nodes`
+## 7. Extension Strategy (Conceptual)
+Extensions contribute new “field kinds” by supplying:
+1. A *detection hint* (predicate over node type / field name / field metadata).
+2. A *construction recipe* (create a field object with initial metadata / constraints).
+The core system evaluates registered hints in priority order. Unrecognized inputs degrade to a generic string‑like field (unless future “strict” mode is enabled). Concrete registration APIs and environment flags are *implementation* concerns and excluded here by design; they live in the technical documentation.
 
-## Intended Usage Pattern
+## 8. Error & Validation Model
+| Stage | Failure Examples | Surface To User |
+|-------|------------------|-----------------|
+| Discovery | Malformed form entries | Omit entry; optionally warn (non‑fatal). |
+| Value Assignment | Type mismatch, missing required | Indexed error messages. |
+| Submission Build | Unexpected structural absence | Raised as submission error with context. |
+| Execution | Queue failure / node error | Propagated through wait APIs with status. |
 
-- user create make a `workflow-def` through InvokeAI's GUI, and download it for use.
-- user creates a `WorkflowDefinition` instance from the `workflow-def` json file (see `src\invokeai_py_client\workflow\workflow_model.py`). IMPORTANT: `WorkflowDefinition.raw_data` is the original workflow json content, which is not modified by the client api, and we need this to craft the submission payload, denote this as `original_workflow_json`. 
-  
-- user load the `workflow-def` into the client api using `WorkflowRepository.create_workflow()`, get a `WorkflowHandle` instance. 
-- - During parsing `workflow-def`, we will record the `jsonpath` of each input field in the `WorkflowHandle`, that `jsonpath` will point to an `dict` object in the (copy of)`WorkflowDefinition.raw_data`, which will be OVERWRITEN by contents of `IvkWorkflowInput.field.to_api_format()` (by matching keys) when the user sets the input value, the OVERWRITING process NEVER creates or deletes keys in the `original_workflow_json`, it only modifies the values of the fields. THIS IS VERY IMPORTANT, if you found a key that you do not know about, leave it as is, do not modify it. To do this correctly, you need to consult the InvokeAI api doc in `context\hints\invokeai-kb\invokeai-openapi.json`, and `context\hints\invokeai-kb\about-invokeai-workflow-input-types.md`, and its source code in `context\refcode\InvokeAI\invokeai`.
+Optional bulk update (if provided) SHOULD be transactional; however, callers must not depend on its presence—design guarantees revolve around single‑value assignment and submission integrity.
 
-- user gets the input fields of the workflow using `WorkflowHandle.list_inputs()`, and fill in the inputs using `WorkflowHandle.set_input_value()`.
-- - input fields are identified by looking at a `form` field in the `workflow-def`, you can see this in `.list_inputs()`. DO NOT look at the `exposedFields` in the json, it is irrelevant to the client api.
+## 9. Output Identification Logic (Intent)
+We categorize a node as “output” strictly when the user is empowered (via form) to choose its destination (e.g., a board). This filters out diagnostic or intermediary nodes that also produce images but are not part of the user’s configured output surface.
 
-- user configures the inputs of the workflow using `WorkflowHandle.set_input_value()`, which will modify a copy of the `original_workflow_json` to fill in the inputs.
-- - IMPORTANT: in this process, you NEVER modify the keys of the `original_workflow_json`, you only modify the values of the fields.
-- - NOTE ON EDGE-CONNECTED INPUTS: The client API retains all literal input values in the final submission payload, even if they are also supplied by an incoming edge. This matches the behavior of the InvokeAI GUI and is required for server-side validation.
+## 10. Drift Detection Rationale
+Consumers may version workflows externally; an exported index map (index → stable field path reference) allows a later run to classify inputs as unchanged / moved / missing / new, enabling cautious automation or upgrade scripts without brittle UUID hard‑coding.
 
-- craft a request based on the updated `WorkflowHandle.raw_data and submit it to the InvokeAI API.
+## 11. Non‑Goals
+| Out of Scope | Reason |
+|--------------|-------|
+| Direct editing of arbitrary nodes outside discovered inputs | Avoid accidental schema drift & guard invariants. |
+| Server‑side optimization (caching, deduping) | Owned by InvokeAI service layer. |
+| Rich dependency graph visualization | Orthogonal concern (UI responsibility). |
+| Persisted client‑side state management | Kept ephemeral; callers manage their own storage if needed. |
 
-- wait for the workflow to complete, and retrieve the results.
+## 12. Open Questions / Future Considerations
+| Topic | Notes |
+|-------|-------|
+| Strict Type Mode | Decide default posture (opt‑in vs opt‑out) after initial feedback. |
+| Telemetry / Metrics | Possibly collect detection rule hit counts for tuning heuristics. |
+| Advanced Output Semantics | Multi‑asset outputs beyond images (latents, masks) mapping strategy. |
+| Partial Resubmission | Incremental re‑execution of subgraphs (requires server support). |
 
-For more info, see `context\tasks\features\usecase-workflow.md`.
+## 13. Minimal User Story (Condensed)
+“As a Python user I can load a GUI‑exported workflow, list its configurable inputs in a stable order, set values with simple primitives, submit it, and obtain structured references to the generated images—without learning internal node schema or editing raw JSON.”
 
-## Examples
+## 14. Traceability
+Each invariant (INV‑1..INV‑6) will be covered by future automated tests: structural preservation, ordering stability, error surfacing, and extension neutrality.
 
-### sdxl-flux-refine workflow
-- workflow json: `data\workflows\sdxl-flux-refine.json`
-- example API call: `data\api-calls\call-wf-sdxl-flux-refine.json`
+## 15. Example Workflow Artifacts (Reference Paths to Retain)
+These artifact links are part of the design narrative so downstream readers can map concepts to concrete examples. They are *illustrative*; the design does not require their internal structure.
 
-### sdxl-text-to-image workflow
-- workflow json: `data\workflows\sdxl-text-to-image.json`
-- example API call: `data\api-calls\call-wf-sdxl-text-to-image.json`
+| Use Case | Workflow Definition JSON | Example API Payload (inputs populated) |
+|----------|--------------------------|----------------------------------------|
+| SDXL Flux Refine | `data/workflows/sdxl-flux-refine.json` | `data/api-calls/call-wf-sdxl-flux-refine.json` |
+| SDXL Text to Image | `data/workflows/sdxl-text-to-image.json` | `data/api-calls/call-wf-sdxl-text-to-image.json` |
+| FLUX Image to Image | `data/workflows/flux-image-to-image.json` | `data/api-calls/call-wf-flux-image-to-image-1.json` |
 
-### flux-image-to-image workflow
-- workflow json: `data\workflows\flux-image-to-image.json`
-- example API call: `data\api-calls\call-wf-flux-image-to-image-1.json`
+(If response examples are later curated, they can be linked in a parallel column without altering core assumptions.)
+
+
+This design intentionally omits code‑level mechanics. Implementation documents should link back here to demonstrate compliance with the stated invariants and user journey.
