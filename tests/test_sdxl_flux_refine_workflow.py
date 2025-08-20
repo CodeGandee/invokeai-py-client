@@ -8,7 +8,7 @@ import sys
 import json
 import time
 from pathlib import Path
-from typing import Optional, Any, Dict
+from typing import Optional, Any
 from datetime import datetime
 
 # Add src to path
@@ -16,9 +16,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from invokeai_py_client import InvokeAIClient
 from invokeai_py_client.workflow import WorkflowRepository
-from invokeai_py_client.board import BoardRepository
-from invokeai_py_client.dnn_model import DnnModelRepository, DnnModel, DnnModelType, BaseDnnModelType
-from invokeai_py_client.ivk_fields.model_conversion import to_ivk_model_field
+from invokeai_py_client.dnn_model import (
+    DnnModelRepository,
+    DnnModel,
+    DnnModelType,
+    BaseDnnModelType,
+)
 
 
 # Configuration
@@ -31,7 +34,7 @@ FLUX_STEPS = 12
 NOISE_RATIO = 0.3
 
 
-def check_models(repo: DnnModelRepository) -> Dict[str, Optional[DnnModel]]:
+def check_models(repo: DnnModelRepository) -> dict[str, Optional[DnnModel]]:
     """Check available models for the workflow."""
     print("\n[MODEL CHECK]")
     all_models = repo.list_models()
@@ -53,93 +56,131 @@ def check_models(repo: DnnModelRepository) -> Dict[str, Optional[DnnModel]]:
     return models
 
 
-def configure_workflow(workflow: Any, models: Dict[str, Optional[DnnModel]]) -> None:
-    """Configure all workflow inputs."""
-    print("\n[CONFIGURE INPUTS]")
-    
-    # Build input lookup
-    input_lookup = {
-        (inp.node_id, inp.field_name): inp.input_index 
-        for inp in workflow.list_inputs()
+def configure_workflow(workflow: Any, models: dict[str, Optional[DnnModel]]) -> None:
+    """Configure workflow using dynamic discovery + index-centric API.
+
+    Rules (heuristics relying only on labels & field names):
+      - Positive Prompt: first string input whose label contains 'positive prompt'
+      - Negative Prompt: first string input whose label contains 'negative prompt'
+      - Width/Height: first integer inputs with field_name 'width'/'height'
+      - SDXL stage model fields: node_type contains 'sdxl_model_loader'
+      - FLUX stage model fields: node_type contains 'flux_model_loader'
+      - Sampler steps: inputs named 'num_steps'; first associated with SDXL stage gets SDXL_STEPS; second gets FLUX_STEPS
+      - Noise ratio / blend param: field_name 'b' (common for mix/blend) set to NOISE_RATIO if found
+      - Any 'board' field: set to 'none'
+    """
+    print("\n[CONFIGURE INPUTS - NEW API]")
+
+    # Build node_type map
+    node_type_map: dict[str, str] = {}
+    try:
+        for n in workflow.definition.nodes:
+            nid = n.get('id')
+            ntype = n.get('data', {}).get('type')
+            if nid and ntype:
+                node_type_map[nid] = ntype
+    except Exception:
+        pass
+
+    inputs = workflow.list_inputs()
+
+    def first_index(pred) -> int | None:
+        for inp in inputs:
+            try:
+                if pred(inp):
+                    return inp.input_index
+            except Exception:
+                continue
+        return None
+
+    updates: dict[int, Any] = {}
+
+    # Prompts
+    pos_idx = first_index(lambda i: i.field_name == 'value' and 'positive prompt' in (i.label or '').lower())
+    neg_idx = first_index(lambda i: i.field_name == 'value' and 'negative prompt' in (i.label or '').lower())
+    if pos_idx is not None:
+        updates[pos_idx] = TEST_PROMPT
+    if neg_idx is not None:
+        updates[neg_idx] = TEST_NEGATIVE
+
+    # Dimensions
+    width_idx = first_index(lambda i: i.field_name == 'value' and (i.label or '').strip().lower() == 'width')
+    height_idx = first_index(lambda i: i.field_name == 'value' and (i.label or '').strip().lower() == 'height')
+    # Fallback: look for field_name width/height directly if label missing
+    if width_idx is None:
+        width_idx = first_index(lambda i: i.field_name == 'width')
+    if height_idx is None:
+        height_idx = first_index(lambda i: i.field_name == 'height')
+    if width_idx is not None:
+        updates[width_idx] = OUTPUT_WIDTH
+    if height_idx is not None:
+        updates[height_idx] = OUTPUT_HEIGHT
+
+    # Model fields (SDXL and FLUX phases)
+    # (Model field name hints are implicit in conditional below; no separate map kept.)
+    # Map phase -> available model objects
+    model_objs = {
+        'sdxl_model': models.get('sdxl'),
+        'flux_model': models.get('flux'),
+        't5_encoder_model': models.get('t5_encoder'),
+        'clip_embed_model': models.get('clip_embed'),
+        'flux_vae_model': models.get('flux_vae'),
+        'sdxl_vae_model': models.get('sdxl_vae'),
     }
-    
-    # Set prompts
-    prompt_configs = [
-        ("cdb3e45f-a9da-4b4f-b1ef-1cb6b691997f", "value", TEST_PROMPT, "positive prompt"),
-        ("31346633-f8e8-415a-ae34-66771d62e44f", "value", TEST_NEGATIVE, "negative prompt"),
-    ]
-    
-    for node_id, field_name, value, label in prompt_configs:
-        key = (node_id, field_name)
-        if key in input_lookup:
-            field = workflow.get_input_value(input_lookup[key])
-            if hasattr(field, 'value'):
-                field.value = value
-                print(f"[OK] Set {label}: {value[:50]}...")
-    
-    # Set dimensions
-    dimension_configs = [
-        ("fc1c13c9-ccba-4f70-8793-0f5b26c9450f", "value", OUTPUT_WIDTH, "width"),
-        ("7f14f907-5659-4f82-9bbe-c4e88517e002", "value", OUTPUT_HEIGHT, "height"),
-    ]
-    
-    for node_id, field_name, value, label in dimension_configs:
-        key = (node_id, field_name)
-        if key in input_lookup:
-            field = workflow.get_input_value(input_lookup[key])
-            if hasattr(field, 'value'):
-                field.value = value
-                print(f"[OK] Set {label}: {value}")
-    
-    # Set models
-    model_configs = [
-        ("90f25dcd-e0e0-420f-8e09-56402678ad08", "model", models.get("sdxl"), "SDXL model"),
-        ("8e36a01e-d8fc-4b25-ae96-32a74a087ca7", "model", models.get("flux"), "FLUX model"),
-        ("8e36a01e-d8fc-4b25-ae96-32a74a087ca7", "t5_encoder_model", models.get("t5_encoder"), "T5 encoder"),
-        ("8e36a01e-d8fc-4b25-ae96-32a74a087ca7", "clip_embed_model", models.get("clip_embed"), "CLIP embed"),
-        ("8e36a01e-d8fc-4b25-ae96-32a74a087ca7", "vae_model", models.get("flux_vae"), "FLUX VAE"),
-        ("90f25dcd-e0e0-420f-8e09-56402678ad08", "vae", models.get("sdxl_vae"), "SDXL VAE"),
-    ]
-    
-    for node_id, field_name, model, label in model_configs:
-        if model:
-            key = (node_id, field_name)
-            if key in input_lookup:
-                try:
-                    field = to_ivk_model_field(model)
-                    workflow.set_input_value(input_lookup[key], field)
-                    print(f"[OK] Set {label}: {model.name}")
-                except Exception as e:
-                    print(f"[WARN] Failed to set {label}: {e}")
-    
-    # Set other parameters
-    param_configs = [
-        ("c8a8a0b6-b2d5-4bed-a08e-8c2c6d455731", "b", NOISE_RATIO, "noise ratio"),
-        ("0e659086-1212-4b21-97e8-88e1e1a93e33", "num_steps", FLUX_STEPS, "FLUX steps"),
-        ("ffe7d637-e383-4b97-85ae-adcaee9c3343", "num_steps", SDXL_STEPS, "SDXL steps"),
-    ]
-    
-    for node_id, field_name, value, label in param_configs:
-        key = (node_id, field_name)
-        if key in input_lookup:
-            field = workflow.get_input_value(input_lookup[key])
-            if hasattr(field, 'value'):
-                field.value = value
-                print(f"[OK] Set {label}: {value}")
-    
-    # Set output board to uncategorized
-    board_configs = [
-        ("6fa8cc65-9968-403d-8ddb-14cbeb913edc", "board"),
-        ("ed8e2b08-39f8-4a95-92e1-c4d6c3e95529", "board"),
-        ("5efc13f3-b58a-42e7-8ef1-4a54dd056dc4", "board"),
-    ]
-    
-    for node_id, field_name in board_configs:
-        key = (node_id, field_name)
-        if key in input_lookup:
-            field = workflow.get_input_value(input_lookup[key])
-            if hasattr(field, 'value'):
-                field.value = "none"
+
+    def to_model_dict(m: DnnModel | None) -> dict[str, Any] | None:
+        if not m:
+            return None
+        base = m.base.value if hasattr(m.base, 'value') else str(m.base)
+        mtype = m.type.value if hasattr(m.type, 'value') else str(m.type)
+        return {
+            'key': m.key,
+            'hash': m.hash,
+            'name': m.name,
+            'base': base,
+            'type': mtype,
+        }
+
+    # Iterate inputs; assign when matches type & field
+    for inp in inputs:
+        ntype = node_type_map.get(inp.node_id, '')
+        fn = inp.field_name
+        if fn == 'model':
+            if 'sdxl' in ntype and (md := to_model_dict(model_objs['sdxl_model'])):
+                updates[inp.input_index] = md
+            elif 'flux' in ntype and (md := to_model_dict(model_objs['flux_model'])):
+                updates[inp.input_index] = md
+        elif fn == 't5_encoder_model' and 'flux' in ntype and (md := to_model_dict(model_objs['t5_encoder_model'])):
+            updates[inp.input_index] = md
+        elif fn == 'clip_embed_model' and 'flux' in ntype and (md := to_model_dict(model_objs['clip_embed_model'])):
+            updates[inp.input_index] = md
+        elif fn == 'vae_model' and 'flux' in ntype and (md := to_model_dict(model_objs['flux_vae_model'])):
+            updates[inp.input_index] = md
+        elif fn == 'vae' and 'sdxl' in ntype and (md := to_model_dict(model_objs['sdxl_vae_model'])):
+            updates[inp.input_index] = md
+
+    # Steps: collect indices then assign SDXL_STEPS to first, FLUX_STEPS to second (order of discovery)
+    step_indices = [inp.input_index for inp in inputs if inp.field_name == 'num_steps']
+    if step_indices:
+        updates[step_indices[0]] = SDXL_STEPS
+    if len(step_indices) > 1:
+        updates[step_indices[1]] = FLUX_STEPS
+
+    # Noise ratio (field 'b')
+    noise_idx = first_index(lambda i: i.field_name == 'b')
+    if noise_idx is not None:
+        updates[noise_idx] = NOISE_RATIO
+
+    # Board fields
+    for inp in inputs:
+        if inp.field_name == 'board':
+            updates[inp.input_index] = 'none'
+
+    print(f"[INFO] Applying {len(updates)} updates via set_many() (dynamic discovery)")
+    workflow.set_many(updates)
+    print('[DEBUG] Input preview:')
+    for row in workflow.preview():
+        print(f"  [{row['index']:02d}] {row['label']} ({row['type']}): {row['value']}")
 
 
 def submit_and_monitor(client: InvokeAIClient, workflow: Any) -> bool:

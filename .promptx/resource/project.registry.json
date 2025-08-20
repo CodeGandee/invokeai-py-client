@@ -4,8 +4,8 @@
   "metadata": {
     "version": "2.0.0",
     "description": "project 级资源注册表",
-    "createdAt": "2025-08-20T03:18:58.984Z",
-    "updatedAt": "2025-08-20T03:18:58.990Z",
+    "createdAt": "2025-08-20T10:21:51.500Z",
+    "updatedAt": "2025-08-20T10:21:51.503Z",
     "resourceCount": 5
   },
   "resources": [
@@ -17,9 +17,9 @@
       "description": "执行模式，定义具体的行为模式",
       "reference": "@project://.promptx/resource/role/webapi-expert/execution/web-automation.execution.md",
       "metadata": {
-        "createdAt": "2025-08-20T03:18:58.987Z",
-        "updatedAt": "2025-08-20T03:18:58.987Z",
-        "scannedAt": "2025-08-20T03:18:58.987Z",
+        "createdAt": "2025-08-20T10:21:51.501Z",
+        "updatedAt": "2025-08-20T10:21:51.501Z",
+        "scannedAt": "2025-08-20T10:21:51.501Z",
         "path": "role/webapi-expert/execution/web-automation.execution.md"
       }
     },
@@ -31,9 +31,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/webapi-expert/knowledge/tech-stack.knowledge.md",
       "metadata": {
-        "createdAt": "2025-08-20T03:18:58.987Z",
-        "updatedAt": "2025-08-20T03:18:58.987Z",
-        "scannedAt": "2025-08-20T03:18:58.987Z",
+        "createdAt": "2025-08-20T10:21:51.502Z",
+        "updatedAt": "2025-08-20T10:21:51.502Z",
+        "scannedAt": "2025-08-20T10:21:51.502Z",
         "path": "role/webapi-expert/knowledge/tech-stack.knowledge.md"
       }
     },
@@ -45,9 +45,9 @@
       "description": "思维模式，指导AI的思考方式",
       "reference": "@project://.promptx/resource/role/webapi-expert/thought/api-analysis.thought.md",
       "metadata": {
-        "createdAt": "2025-08-20T03:18:58.988Z",
-        "updatedAt": "2025-08-20T03:18:58.988Z",
-        "scannedAt": "2025-08-20T03:18:58.988Z",
+        "createdAt": "2025-08-20T10:21:51.502Z",
+        "updatedAt": "2025-08-20T10:21:51.502Z",
+        "scannedAt": "2025-08-20T10:21:51.502Z",
         "path": "role/webapi-expert/thought/api-analysis.thought.md"
       }
     },
@@ -59,9 +59,9 @@
       "description": "思维模式，指导AI的思考方式",
       "reference": "@project://.promptx/resource/role/webapi-expert/thought/backend-design.thought.md",
       "metadata": {
-        "createdAt": "2025-08-20T03:18:58.989Z",
-        "updatedAt": "2025-08-20T03:18:58.989Z",
-        "scannedAt": "2025-08-20T03:18:58.989Z",
+        "createdAt": "2025-08-20T10:21:51.503Z",
+        "updatedAt": "2025-08-20T10:21:51.503Z",
+        "scannedAt": "2025-08-20T10:21:51.503Z",
         "path": "role/webapi-expert/thought/backend-design.thought.md"
       }
     },
@@ -73,9 +73,9 @@
       "description": "专业角色，提供特定领域的专业能力",
       "reference": "@project://.promptx/resource/role/webapi-expert/webapi-expert.role.md",
       "metadata": {
-        "createdAt": "2025-08-20T03:18:58.989Z",
-        "updatedAt": "2025-08-20T03:18:58.989Z",
-        "scannedAt": "2025-08-20T03:18:58.989Z",
+        "createdAt": "2025-08-20T10:21:51.503Z",
+        "updatedAt": "2025-08-20T10:21:51.503Z",
+        "scannedAt": "2025-08-20T10:21:51.503Z",
         "path": "role/webapi-expert/webapi-expert.role.md"
       }
     }

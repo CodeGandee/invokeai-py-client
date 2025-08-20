@@ -48,130 +48,200 @@ Below we use `data\workflows\sdxl-flux-refine.json` as an example workflow defin
 ```python
 from invokeai_py_client import InvokeAIClient
 from invokeai_py_client.workflow import WorkflowDefinition, WorkflowHandle, IvkWorkflowInput
-from invokeai_py_client.ivk_fields import IvkField
-from typing import List, Optional
+## Workflow subsystem usage pattern
 
-# Initialize the client
-client = InvokeAIClient.from_url("http://localhost:9090")
+```
 
-# Step 1: Load workflow definition from JSON file
-workflow_def = WorkflowDefinition.from_file("data/workflows/sdxl-flux-refine.json")
+The workflow subsystem now centers around an immutable *definition* plus a lightweight *handle* that supports:
+  - Index‑centric input inspection & mutation (`list_inputs()`, `preview()`, `set_input_value_simple()`, `set_many()`).
+  - Safe batch updates (atomic validation & overwrite guard for edge‑fed fields).
+  - Dynamic model / prompt discovery without hard‑coding node UUIDs (heuristics use labels, field names, node types).
+  - Submission helpers (`submit_sync`) plus polling convenience on the handle.
+  - Introspection utilities for output-node to produced-assets mapping (see mapping test).
 
-# Alternative: Load from dict
-# with open("data/workflows/sdxl-flux-refine.json", "r") as f:
-#     workflow_dict = json.load(f)
-# workflow_def = WorkflowDefinition.from_dict(workflow_dict)
+Below: refreshed end‑to‑end usage with `data/workflows/sdxl-flux-refine.json` as the running example.
 
-# Step 2: Create workflow handle using the repository pattern
-# The WorkflowRepository creates and manages WorkflowHandle instances
-workflow_handle: WorkflowHandle = client.workflow_repo.create_workflow_handle(workflow_def)
+### Use case 1: Load workflow & inspect inputs (index‑centric)
 
-# Basic workflow information (from WorkflowDefinition properties)
-print(f"Workflow: {workflow_handle.definition.name}")
-print(f"Description: {workflow_handle.definition.description}")
-print(f"Version: {workflow_handle.definition.version}")
-print(f"Author: {workflow_handle.definition.author}")
-print()
+```python
+from invokeai_py_client import InvokeAIClient
+from invokeai_py_client.workflow import WorkflowRepository
 
-# List all configurable inputs (returns list ordered by input-index)
-inputs: List[IvkWorkflowInput] = workflow_handle.list_inputs()
+client = InvokeAIClient(base_url="http://127.0.0.1:9090")
+repo = WorkflowRepository(client)
+workflow = repo.create_workflow_from_file("data/workflows/sdxl-flux-refine.json")
 
-print(f"Total configurable inputs: {len(inputs)}")
-print("=" * 60)
+print(f"Workflow: {workflow.definition.name}  inputs={len(workflow.inputs)}")
 
-# Inputs are accessed by index (0-based) based on form tree traversal order
-for idx, input_info in enumerate(inputs):
-    # IvkWorkflowInput has typed properties with IvkField base
-    print(f"\n[{idx}] {input_info.label}")
-    print(f"  Node: {input_info.node_name} ({input_info.node_id})")
-    print(f"  Field: {input_info.field_name}")
-    print(f"  Type: {type(input_info.field).__name__}")  # e.g., IvkStringField (subclass of IvkField)
-    print(f"  Required: {input_info.required}")
-    
-    # Show current value if the field has a value property
-    # Note: Not all IvkField subclasses have a 'value' property
-    # Primitive fields (String, Integer, Float, Boolean) and some others do
-    if hasattr(input_info.field, 'value'):
-        current_value = input_info.field.value
-        if current_value is not None:
-            print(f"  Current Value: {current_value}")
-    else:
-        # For fields without 'value' (e.g., IvkColorField has r,g,b,a)
-        print(f"  Current State: {input_info.field.to_json_dict()}")
+# List (ordered) inputs; each has stable input_index
+for inp in workflow.list_inputs():
+    f = inp.field
+    val = getattr(f, 'value', None)
+    print(f"[{inp.input_index:02d}] {inp.label or inp.field_name} | node_type={inp.node_type} field={inp.field_name} type={type(f).__name__} value={val}")
 
-# Access inputs by index - the primary way to get/set inputs
-positive_prompt: IvkWorkflowInput = workflow_handle.get_input(0)  # Index [0] is Positive Prompt
-negative_prompt: IvkWorkflowInput = workflow_handle.get_input(1)  # Index [1] is Negative Prompt
-width_input: IvkWorkflowInput = workflow_handle.get_input(2)      # Index [2] is Output Width
-height_input: IvkWorkflowInput = workflow_handle.get_input(3)     # Index [3] is Output Height
+# Quick preview (condensed rows) via helper
+for row in workflow.preview():
+    # row: {index,label,type,value}
+    print(row)
+```
 
-# Example: Print information about a specific input
-print(f"\nInput at index 0:")
-print(f"  Label: {positive_prompt.label}")  # "Positive Prompt"
-print(f"  Node: {positive_prompt.node_name}")  # "Positive" (from node's label field)
-print(f"  Field: {positive_prompt.field_name}")  # "value"
+Key points:
+  - Input ordering derives from the workflow form; indices are stable across runs of the same definition.
+  - `workflow.inputs` is a cached list; prefer `list_inputs()` to respect any future lazy refresh logic.
 
-# Get all inputs as an indexed list
-all_inputs: List[IvkWorkflowInput] = workflow_handle.list_inputs()
-# Returns ordered list where index matches input-index:
-# [
-#     IvkWorkflowInput(...),  # [0] Positive Prompt with IvkField subclass
-#     IvkWorkflowInput(...),  # [1] Negative Prompt with IvkField subclass
-#     IvkWorkflowInput(...),  # [2] Output Width with IvkField subclass
-#     ...                      # up to [23] for this workflow
-# ]
+### Use case 2: Dynamic discovery & bulk updates (no UUID literals)
 
-# Find input by searching (returns index, or None if not found)
-def find_input_index(workflow_handle: WorkflowHandle, node_name: str, field_name: str) -> Optional[int]:
-    """Helper to find input index by node/field names if needed."""
-    for idx, input_info in enumerate(workflow_handle.list_inputs()):
-        if input_info.node_name == node_name and input_info.field_name == field_name:
-            return idx
+```python
+PROMPT_TXT = "Majestic sunset over alpine lake, ultra-detailed, 8k"
+NEG_TXT    = "blurry, low quality, distorted"
+SDXL_STEPS = 20
+FLUX_STEPS = 12
+
+inputs = workflow.list_inputs()
+
+def find_index(pred):
+    for i in inputs:
+        try:
+            if pred(i):
+                return i.input_index
+        except Exception:
+            continue
     return None
 
-# Example: Find the FLUX model input
-flux_model_idx = find_input_index(workflow_handle, "flux_model_loader", "model")
-if flux_model_idx is not None:
-    flux_model_input = workflow_handle.get_input(flux_model_idx)
-    print(f"\nFound FLUX model input at index {flux_model_idx}")
+# Heuristics using labels / field names / node types
+pos_idx = find_index(lambda x: x.field_name in {"value","prompt"} and 'positive prompt' in (x.label or '').lower())
+neg_idx = find_index(lambda x: x.field_name in {"value","prompt"} and 'negative prompt' in (x.label or '').lower())
+width_idx = find_index(lambda x: x.field_name == 'width')
+height_idx = find_index(lambda x: x.field_name == 'height')
 
-# Check which required inputs are missing values
-missing_inputs = [inp for inp in workflow_handle.list_inputs() 
-                   if inp.required and hasattr(inp.field, 'value') and inp.field.value is None]
-if missing_inputs:
-    print(f"\nRequired inputs still needed:")
-    for inp in missing_inputs:
-        print(f"  [{inp.input_index}] {inp.label}")
+# Steps: first two num_steps fields map to SDXL then FLUX phase
+step_indices = [i.input_index for i in inputs if i.field_name == 'num_steps']
 
-# Alternative: Get another workflow handle for the same definition
-# This creates a new instance with independent state
-another_workflow = client.workflow_repo.create_workflow_handle(workflow_def)
+# Model identifiers: choose by node_type suffix/prefix (no UUID)
+def model_idx(selector):
+    return find_index(lambda x: x.field_name == 'model' and selector in (x.node_type or ''))
 
-# Or retrieve an existing workflow handle by ID (if implemented)
-# existing_workflow = client.workflow_repo.get_workflow_handle(workflow_id)
+sdxl_model_idx = model_idx('sdxl')
+flux_model_idx = model_idx('flux')
+
+updates = {}
+if pos_idx is not None: updates[pos_idx] = PROMPT_TXT
+if neg_idx is not None: updates[neg_idx] = NEG_TXT
+if width_idx is not None: updates[width_idx] = 1024
+if height_idx is not None: updates[height_idx] = 1024
+if step_indices: updates[step_indices[0]] = SDXL_STEPS
+if len(step_indices) > 1: updates[step_indices[1]] = FLUX_STEPS
+
+# Example: setting model fields requires structured dict (already provided by model repo in real tests)
+def as_model_dict(m):
+    return None if not m else {
+        'key': m.key,
+        'hash': m.hash,
+        'name': m.name,
+        'base': getattr(m.base,'value',str(m.base)),
+        'type': getattr(m.type,'value',str(m.type)),
+    }
+
+# (Pseudo) assume we selected models earlier
+sdxl_model = flux_model = None  # replace with real selections
+if sdxl_model_idx is not None and sdxl_model: updates[sdxl_model_idx] = as_model_dict(sdxl_model)
+if flux_model_idx is not None and flux_model: updates[flux_model_idx] = as_model_dict(flux_model)
+
+print(f"Applying {len(updates)} updates via set_many()")
+workflow.set_many(updates)
+
+for row in workflow.preview():
+    print(row)
 ```
 
-**Expected Output**:
+Advantages:
+  - Single atomic `set_many()` minimizes round‑trips & prevents partial state.
+  - Logic resilient to node ID churn; only relies on semantic labels/types.
+  - Safe: implementation guards against overwriting inputs connected by graph edges (edge‑fed).
+
+### Use case 3: Validation & submission
+
+```python
+errors = workflow.validate_inputs()
+if errors:
+    for idx, msgs in errors.items():
+        print(f"[INVALID] idx={idx}: {', '.join(msgs)}")
+    raise SystemExit("Input validation failed")
+
+result = workflow.submit_sync(board_id="none")  # returns batch metadata
+item_id = (result.get('item_ids') or [None])[0]
+print("Submitted", result)
+
+# Poll (simple blocking loop)
+import time, requests
+status_url = f"{client.base_url}/queue/default/i/{item_id}"
+start = time.time(); last=None
+while True:
+    qi = client.session.get(status_url).json()
+    if qi.get('status') != last:
+        print("status=", qi.get('status'))
+        last = qi.get('status')
+    if last in {"completed","failed","canceled"}: break
+    if time.time()-start > 180: raise TimeoutError
+    time.sleep(3)
+print("FINAL", last)
 ```
-Workflow: SDXL then FLUX
-Description: Multi-stage image generation workflow
-Version: 3.0.0
-Author: InvokeAI
 
-Total configurable inputs: 24
-============================================================
+Notes:
+  - `submit_sync` automatically converts current handle state into API graph.
+  - Board assignment: unspecified boards can be auto‑assigned based on heuristic (or explicit `board_id`).
 
-[0] Positive Prompt
-  Node: Positive (0a167316-ba62-4218-9fcf-b3cff7963df8)
-  Field: value
-  Type: IvkStringField
-  Required: True
+### Use case 4: Output mapping (node → produced images)
 
-[1] Negative Prompt
-  Node: Negative (1711c26d-e362-48fa-8f02-3e3e1a6010d4)
-  Field: value
-  Type: IvkStringField
-  Required: True
+The handle exposes `list_outputs()` (ordered like inputs) to identify output nodes; mapping real images currently uses queue/session data as shown in the dedicated test (`test_node_to_image_output_mapping.py`). A distilled snippet:
+
+```python
+queue_item = qi  # obtained after completion
+session = queue_item.get('session', {})
+results = session.get('results', {})
+src_map = session.get('prepared_source_mapping', {})
+
+images_by_original = {}
+for prepared_id, payload in results.items():
+    orig = src_map.get(prepared_id, prepared_id)
+    img = (payload or {}).get('image', {})
+    name = img.get('image_name')
+    if name:
+        images_by_original.setdefault(orig, []).append(name)
+
+for out in workflow.list_outputs():
+    print(out.node_id, images_by_original.get(out.node_id, []))
+```
+
+Fallback tiers (already implemented in test script): legacy `outputs` array, and traversal search through execution graph if modern results absent.
+
+### Use case 5: Rapid experimentation / preview
+
+`preview()` returns a lightweight snapshot for logging or UI binding without enumerating entire field objects:
+
+```python
+for row in workflow.preview():
+    # row = { 'index','label','type','value' }
+    print(row)
+```
+
+### Design summary (refactored)
+
+| Concern | Previous Approach | Current Approach |
+|---------|-------------------|------------------|
+| Input addressing | Node UUID + field name | Stable integer index (0..N-1) |
+| Bulk mutation | Repeated per-field set | `set_many()` atomic update |
+| Safety | Manual caution | Edge-fed overwrite guard + validation |
+| Discovery | Hard-coded IDs common | Label/field/node_type heuristics |
+| Output mapping | Ad-hoc board scans | Structured session results + fallbacks |
+| Model fields | Manual nested edits | Normalized dict accepted by `set_many()` |
+
+Best practices:
+  - Never persist node UUID literals in application code; rely on indices or semantic heuristics.
+  - Batch whenever configuring more than one input.
+  - Validate before submission; fail fast on missing required fields.
+  - Persist the exported API graph for reproducibility / debugging.
+  - Treat output node → image mapping as a read‑only post‑processing step.
 
 [2] Output Width
   Node: integer (8e860322-3d35-4013-ab38-29e41af698ed)

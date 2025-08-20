@@ -58,13 +58,36 @@ def _random_prompt(prefix: str) -> str:
     return f"{prefix} {uuid.uuid4()} cinematic, detailed, high quality"
 
 
-def _configure_prompts(workflow) -> None:
-    for inp in workflow.list_inputs():
-        label_l = inp.label.lower()
-        if inp.field_name == 'prompt' or 'prompt' in label_l:
-            if hasattr(inp.field, 'value'):
-                prefix = 'Positive' if 'negative' not in label_l else 'Negative'
-                inp.field.value = _random_prompt(prefix)
+def _configure_inputs_via_new_api(workflow) -> None:
+    """Configure prompts (and optionally boards) using index-centric new API.
+
+    Rules:
+      - Any input whose label contains 'positive prompt' (case-insensitive) gets a random Positive prompt.
+      - Any input whose label contains 'negative prompt' gets a random Negative prompt.
+      - Fallback: inputs whose field_name == 'prompt' but label missing; classify by presence of 'negative' in label.
+      - All 'board' fields (if exposed) explicitly set to 'none' to avoid unintended board writes.
+    """
+    inputs = workflow.list_inputs()
+    updates: dict[int, str] = {}
+
+    for inp in inputs:
+        label = inp.label or ''
+        ll = label.lower()
+        if inp.field_name == 'prompt' or 'prompt' in ll:
+            is_negative = 'negative' in ll
+            prefix = 'Negative' if is_negative else 'Positive'
+            updates[inp.input_index] = _random_prompt(prefix)
+        elif inp.field_name == 'board':  # rarely exposed, but handle
+            updates[inp.input_index] = 'none'
+
+    if not updates:
+        return
+    print(f"[INFO] Applying {len(updates)} input updates via set_many() (new API)")
+    workflow.set_many(updates)
+    print("[DEBUG] Input preview after prompt updates:")
+    for row in workflow.preview():
+        if 'prompt' in (row['label'] or '').lower():  # show only prompts for brevity
+            print(f"  [{row['index']:02d}] {row['label']}: {row['value'][:80]}")
 
 
 def _submit_and_wait(workflow, console: Console) -> dict[str, Any]:
@@ -204,7 +227,7 @@ def main() -> int:
     repo = WorkflowRepository(client)
     workflow = repo.create_workflow_from_file(str(WORKFLOW_FILE))
 
-    _configure_prompts(workflow)
+    _configure_inputs_via_new_api(workflow)
     outputs = workflow.list_outputs()
     if not outputs:
         console.print("[red]No output nodes detected; aborting.[/red]")

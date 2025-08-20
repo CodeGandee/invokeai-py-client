@@ -10,9 +10,12 @@ from __future__ import annotations
 import asyncio
 import os
 import time
-from typing import TYPE_CHECKING, Any, AsyncGenerator, Callable, TypedDict
+from typing import TYPE_CHECKING, Any, Callable, TypedDict
+from collections.abc import AsyncGenerator
+import json
 
-from jsonpath_ng.ext import parse as parse_jsonpath  # type: ignore[import-untyped]
+# JSONPath retained only for backward compatibility (may be phased out after upstream model integration)
+# (Legacy JSONPath import removed after upstream model integration)
 from pydantic import BaseModel, ConfigDict, PrivateAttr, model_validator
 
 from invokeai_py_client.ivk_fields import (
@@ -22,11 +25,16 @@ from invokeai_py_client.ivk_fields import (
     IvkFloatField,
     IvkImageField,
     IvkIntegerField,
-    IvkModelIdentifierField,
     IvkStringField,
 )
 from invokeai_py_client.ivk_fields.base import IvkField
+from invokeai_py_client.workflow import field_plugins
 from invokeai_py_client.models import IvkJob
+from invokeai_py_client.workflow.upstream_models import (
+    load_workflow_json,
+    is_field_connected,
+    update_output_boards,
+)
 
 if TYPE_CHECKING:
     from invokeai_py_client.client import InvokeAIClient
@@ -118,8 +126,10 @@ class IvkWorkflowInput(BaseModel):
         """
         # Check if required field has value
         if self.required:
-            if hasattr(self.field, 'value') and self.field.value is None:
-                raise ValueError(f"Required field '{self.label}' is not set")
+            # Best-effort check for value-style fields
+            if isinstance(self.field, (IvkStringField, IvkIntegerField, IvkFloatField, IvkBooleanField, IvkEnumField, IvkBoardField, IvkImageField)):
+                if getattr(self.field, 'value', None) is None:
+                    raise ValueError(f"Required field '{self.label}' is not set")
         
         # Delegate to field's validation
         return self.field.validate_field()
@@ -203,6 +213,14 @@ class WorkflowHandle:
         self.inputs: list[IvkWorkflowInput] = []
         self.job: IvkJob | None = None
         self.uploaded_assets: list[str] = []
+
+        # Upstream workflow root model (forward-compatible structured representation)
+        # Loaded from the raw definition dict; mutations applied during conversion only.
+        try:
+            self._root = load_workflow_json(self.definition.to_dict())
+        except Exception:
+            # Fail softly; retain legacy path if parsing fails
+            self._root = None  # type: ignore[assignment]
         
         # Queue tracking
         self.batch_id: str | None = None
@@ -216,12 +234,31 @@ class WorkflowHandle:
         """
         Initialize workflow inputs from the definition.
 
-        This parses the form structure and exposed fields to create
+        This parses the form structure and GUI-public fields to create
         the ordered list of IvkWorkflowInput objects.
+
+        Terminology note:
+        "GUI-public fields" refers to node input fields that have been intentionally
+        surfaced in the workflow "form" tree via a `node-field` element (so they are
+        user-configurable in the InvokeAI GUI). This wording avoids confusion with the
+        raw workflow JSON property sometimes named `exposedFields` in other contexts;
+        here we rely solely on the form element structure to decide what is user facing.
         """
-        # Get form elements and nodes for reference
-        form_elements = self.definition.form.get("elements", {})
-        nodes = {node["id"]: node for node in self.definition.nodes}
+        # Prefer upstream model if available for form elements & nodes
+        _root_obj = getattr(self, "_root", None)
+        if _root_obj is not None:
+            try:
+                form_elements = _root_obj.form.elements  # type: ignore[attribute-defined-outside-init]
+                nodes = {n.get("id"): n for n in _root_obj.nodes if isinstance(n, dict)}  # type: ignore[attribute-defined-outside-init]
+                element_is_model = True
+            except Exception:
+                form_elements = self.definition.form.get("elements", {})
+                nodes = {node["id"]: node for node in self.definition.nodes}
+                element_is_model = False
+        else:
+            form_elements = self.definition.form.get("elements", {})
+            nodes = {node["id"]: node for node in self.definition.nodes}
+            element_is_model = False
 
         # Track input index
         input_index = 0
@@ -234,16 +271,28 @@ class WorkflowHandle:
             if not elem:
                 return
 
-            elem_type = elem.get("type")
+            # Support both dict and model element forms
+            if element_is_model:
+                elem_type = elem.type  # type: ignore[union-attr]
+                elem_data = getattr(elem, 'data', None)
+                children = (elem_data.children if elem_data and elem_data.children else [])
+                field_identifier = getattr(elem_data, 'fieldIdentifier', None)
+            else:
+                elem_type = elem.get("type")  # type: ignore[assignment]
+                elem_data = elem.get("data", {})  # type: ignore[assignment]
+                children = elem_data.get("children", [])
+                field_identifier = elem_data.get("fieldIdentifier")
 
             if elem_type == "container":
                 # Process children in order
-                for child_id in elem.get("data", {}).get("children", []):
+                for child_id in children:
                     traverse_form(child_id)
 
             elif elem_type == "node-field":
-                # Extract field information
-                field_id = elem["data"]["fieldIdentifier"]
+                # Extract field information (upstream model uses same structure)
+                field_id = field_identifier
+                if not field_id:
+                    return
                 node_id = field_id["nodeId"]
                 field_name = field_id["fieldName"]
 
@@ -301,6 +350,8 @@ class WorkflowHandle:
         """
         Create appropriate field instance based on node and field information.
         
+        Uses the plugin-based field registry for extensible field type support.
+        
         Parameters
         ----------
         node_data : Dict[str, Any]
@@ -315,99 +366,19 @@ class WorkflowHandle:
         IvkField[Any]
             Appropriate Ivk*Field instance (IvkStringField, IvkIntegerField, etc.)
         """
-        # Get node type for context
-        node_type = node_data.get("type", "")
-
-        # Get field value if exists
-        field_value = field_info.get("value")
-
-        # Detect field type based on various hints
-        field_type = self._detect_field_type(node_type, field_name, field_info)
-
-        # Create field instance based on detected type
-        if field_type == "string":
-            return IvkStringField(
-                value=field_value
-            )
-
-        elif field_type == "integer":
-            return IvkIntegerField(
-                value=field_value,
-                minimum=field_info.get("minimum"),
-                maximum=field_info.get("maximum")
-            )
-
-        elif field_type == "float":
-            return IvkFloatField(
-                value=field_value,
-                minimum=field_info.get("minimum"),
-                maximum=field_info.get("maximum")
-            )
-
-        elif field_type == "boolean":
-            return IvkBooleanField(
-                value=field_value
-            )
-
-        elif field_type == "model":
-            # Extract model properties from field_value dict
-            if isinstance(field_value, dict):
-                return IvkModelIdentifierField(
-                    key=field_value.get("key", ""),
-                    hash=field_value.get("hash", ""),
-                    name=field_value.get("name", ""),
-                    base=field_value.get("base", "any"),
-                    type=field_value.get("type", "main"),
-                    submodel_type=field_value.get("submodel_type")
-                )
-            else:
-                # Handle case where field_value is not a dict
-                return IvkModelIdentifierField(
-                    key="",
-                    hash="",
-                    name=str(field_value) if field_value else "",
-                    base="any",
-                    type="main"
-                )
-
-        elif field_type == "board":
-            # Board values can be dict with board_id or string
-            board_value = field_value
-            if isinstance(field_value, dict) and "board_id" in field_value:
-                board_value = field_value["board_id"]
-            return IvkBoardField(
-                value=board_value
-            )
-
-        elif field_type == "image":
-            return IvkImageField(
-                value=field_value
-            )
-
-        elif field_type == "enum":
-            # Get choices from options or ui_choices
-            choices = field_info.get("options", [])
-            if not choices:
-                ui_choices = field_info.get("ui_choices", [])
-                if ui_choices:
-                    choices = ui_choices
-
-            return IvkEnumField(
-                value=field_value,
-                choices=choices
-            )
-
-        else:
-            # Default to string field for unknown types
-            return IvkStringField(
-                value=field_value
-            )
+        # Delegate to plugin system
+        return field_plugins.build_field(node_data, field_name, field_info)
 
     def _detect_field_type(
         self, node_type: str, field_name: str, field_info: dict[str, Any]
     ) -> str:
         """
         Detect the field type based on various hints.
+        
+        .. deprecated:: 
+            This method is deprecated and will be removed in a future version.
+            It now delegates to the plugin system via field_plugins.detect_field_type().
+            External code should use field_plugins.detect_field_type() directly.
         
         Parameters
         ----------
@@ -423,58 +394,8 @@ class WorkflowHandle:
         str
             Detected field type identifier
         """
-        # Check explicit type hint in field info
-        if "type" in field_info:
-            return str(field_info["type"])
-
-        # Check by field name patterns
-        if field_name == "board":
-            return "board"
-        elif field_name == "model" or field_name.endswith("_model"):
-            return "model"
-        elif field_name == "image":
-            return "image"
-        elif field_name == "scheduler":
-            return "enum"
-
-        # Check by node type for primitive nodes
-        if node_type == "string":
-            return "string"
-        elif node_type == "integer":
-            return "integer"
-        elif node_type == "float" or node_type == "float_math":
-            return "float"
-        elif node_type == "boolean":
-            return "boolean"
-
-        # Check value type if present
-        value = field_info.get("value")
-        if value is not None:
-            if isinstance(value, bool):
-                return "boolean"
-            elif isinstance(value, int) and not isinstance(value, bool):
-                return "integer"
-            elif isinstance(value, float):
-                return "float"
-            elif isinstance(value, dict):
-                # Model fields have dict values with key/name/base/type
-                if "key" in value and "base" in value:
-                    return "model"
-            elif isinstance(value, str):
-                return "string"
-
-        # Check for enum fields by presence of options/choices
-        if "options" in field_info or "ui_choices" in field_info:
-            return "enum"
-
-        # Check for numeric constraints
-        if "minimum" in field_info or "maximum" in field_info:
-            if "multiple_of" in field_info:
-                return "integer"
-            return "float"
-
-        # Default to string
-        return "string"
+        # Delegate to plugin system for backward compatibility
+        return field_plugins.detect_field_type(node_type, field_name, field_info)
 
     def list_inputs(self) -> list[IvkWorkflowInput]:
         """
@@ -492,6 +413,176 @@ class WorkflowHandle:
         ...     print(f"[{inp.input_index}] {inp.label}")
         """
         return self.inputs.copy()
+
+    # ------------------------------------------------------------------
+    # Index-centric convenience APIs (non-breaking additions)
+    # ------------------------------------------------------------------
+    def set_input_value_simple(self, index: int, value: Any) -> WorkflowHandle:
+        """Convenience setter using only the depth-first input index.
+
+        This avoids requiring the user to understand field classes. It maps
+        plain Python literals (str/int/float/bool) or small dicts onto the
+        existing typed IvkField instance *without* replacing the field object.
+
+        Rules:
+        - Primitive / resource fields having `.value`: assign directly.
+        - Model identifier field: accept dict with any subset of keys and
+          update attributes individually.
+        - Other Pydantic IvkField subclasses: if a dict is given, update
+          matching attributes (shallow only) and leave unknowns untouched.
+        - Validation errors raise ValueError with index-only context.
+        """
+        wf_input = self.get_input(index)
+        field_obj = wf_input.field
+        try:
+            # Model identifier style (no unified .value)
+            from invokeai_py_client.ivk_fields.models import IvkModelIdentifierField  # local import to avoid cycles
+            if isinstance(field_obj, IvkModelIdentifierField):
+                if not isinstance(value, dict):
+                    raise TypeError("Model field expects dict with keys (key, hash, name, base, type, submodel_type)")
+                for k, v in value.items():
+                    if hasattr(field_obj, k):
+                        setattr(field_obj, k, v)
+                wf_input.validate_input()
+                return self
+
+            # Fields with a simple `.value` attribute
+            if hasattr(field_obj, "value") and not isinstance(value, dict):
+                field_obj.value = value  # type: ignore[attr-defined]
+                wf_input.validate_input()
+                return self
+
+            # Dict update for complex/composite fields
+            if isinstance(value, dict):
+                # Shallow attribute merge: only update existing attributes
+                for k, v in value.items():
+                    if hasattr(field_obj, k):
+                        setattr(field_obj, k, v)
+                wf_input.validate_input()
+                return self
+
+            raise TypeError(f"Unsupported value type {type(value).__name__} for input {index}")
+        except Exception as e:  # Re-wrap with friendly context
+            raise ValueError(f"Failed to set input {index}: {e}") from e
+
+    def set_many(self, updates: dict[int, Any]) -> WorkflowHandle:
+        """Atomically apply multiple index -> value updates.
+
+        If any update fails validation, all prior changes are rolled back.
+        """
+        # Snapshot originals (shallow copy of field state via model_dump / attrs)
+        snapshots: dict[int, Any] = {}
+        for idx in updates.keys():
+            inp = self.get_input(idx)
+            fld = inp.field
+            if hasattr(fld, "model_dump"):
+                try:
+                    state = fld.model_dump()  # type: ignore[attr-defined]
+                except Exception:
+                    state = {}
+            else:
+                state = {k: getattr(fld, k) for k in dir(fld) if not k.startswith("_") and not callable(getattr(fld, k))}
+            snapshots[idx] = (fld, state)
+        try:
+            for idx, val in updates.items():
+                self.set_input_value_simple(idx, val)
+        except Exception:
+            # Rollback
+            for idx, (fld, state) in snapshots.items():
+                if hasattr(fld, "model_validate"):
+                    try:
+                        new_obj = fld.__class__.model_validate(state)  # type: ignore[attr-defined]
+                        self.set_input_value(idx, new_obj)
+                        continue
+                    except Exception:
+                        pass
+                for k, v in state.items():
+                    if hasattr(fld, k):
+                        try:
+                            setattr(fld, k, v)
+                        except Exception:
+                            pass
+            raise
+        return self
+
+    def preview(self) -> list[dict[str, Any]]:
+        """Return lightweight summary of current inputs (index, label, type, value-preview)."""
+        out: list[dict[str, Any]] = []
+        for inp in self.inputs:
+            field_obj = inp.field
+            ftype = type(field_obj).__name__.replace("Ivk", "")
+            if hasattr(field_obj, "value"):
+                val = field_obj.value  # type: ignore[attr-defined]
+            else:
+                # Attempt a compact dict preview
+                if hasattr(field_obj, "model_dump"):
+                    dmp = field_obj.model_dump(exclude_none=True)  # type: ignore[attr-defined]
+                    # limit size
+                    keys = list(dmp.keys())[:4]
+                    val = {k: dmp[k] for k in keys}
+                else:
+                    val = None
+            if isinstance(val, str) and len(val) > 60:
+                val = val[:57] + "..."
+            out.append({
+                "index": inp.input_index,
+                "label": inp.label or inp.field_name,
+                "type": ftype,
+                "value": val,
+            })
+        return out
+
+    def export_input_index_map(self, path: str | os.PathLike[str]) -> None:
+        """Persist current input index mapping (for drift detection)."""
+        import datetime
+        data = {
+            "workflow_id": getattr(self.definition, "id", None),
+            "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
+            "inputs": [
+                {
+                    "index": inp.input_index,
+                    "label": inp.label,
+                    "field_name": inp.field_name,
+                    "jsonpath": inp.jsonpath,
+                }
+                for inp in self.inputs
+            ],
+        }
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, indent=2)
+
+    def verify_input_index_map(self, path: str | os.PathLike[str]) -> dict[str, Any]:
+        """Load a previously exported map and report drift.
+
+        Returns dict with keys: unchanged, moved, missing, new.
+        """
+        import json
+        with open(path, encoding="utf-8") as fh:
+            recorded = json.load(fh)
+        current_by_jsonpath = {inp.jsonpath: inp for inp in self.inputs}
+        report = {"unchanged": [], "moved": [], "missing": [], "new": []}
+        # Check recorded entries
+        for rec in recorded.get("inputs", []):
+            jp = rec.get("jsonpath")
+            recorded_index = rec.get("index")
+            cur = current_by_jsonpath.get(jp)
+            if not cur:
+                report["missing"].append(rec)
+            else:
+                if cur.input_index == recorded_index:
+                    report["unchanged"].append({"index": cur.input_index, "label": rec.get("label")})
+                else:
+                    report["moved"].append({
+                        "from": recorded_index,
+                        "to": cur.input_index,
+                        "label": rec.get("label"),
+                    })
+        # Detect new jsonpaths not in recorded
+        recorded_jps = {r.get("jsonpath") for r in recorded.get("inputs", [])}
+        for inp in self.inputs:
+            if inp.jsonpath not in recorded_jps:
+                report["new"].append({"index": inp.input_index, "label": inp.label})
+        return report
     
     def list_outputs(self) -> list[IvkWorkflowOutput]:
         """
@@ -773,30 +864,32 @@ class WorkflowHandle:
         try:
             response = self.client._make_request("POST", url, json=batch_data)
             result = response.json()
-            
+
             # Extract batch information
             batch_info = result.get("batch", {})
             self.batch_id = batch_info.get("batch_id")
             item_ids = result.get("item_ids", [])
-            
+
             if not self.batch_id or not item_ids:
                 raise RuntimeError(f"Invalid submission response: {result}")
-            
+
             # Store first item ID for tracking
             self.item_id = item_ids[0]
-            
+
             # Get session ID from queue item
+            if self.item_id is None:
+                raise RuntimeError("Submission did not return an item id")
             queue_item = self._get_queue_item_by_id(queue_id, self.item_id)
             if queue_item:
                 self.session_id = queue_item.get("session_id")
-            
+
             return {
                 "batch_id": self.batch_id,
                 "item_ids": item_ids,
                 "enqueued": len(item_ids),
-                "session_id": self.session_id
+                "session_id": self.session_id,
             }
-            
+
         except Exception as e:
             # Surface server validation errors (422) with as much context as possible
             resp = getattr(e, 'response', None)
@@ -807,8 +900,9 @@ class WorkflowHandle:
                     detail_json = {"non_json_response": resp.text[:2000]}
                 # Persist for offline diffing
                 try:
+                    import json as _json  # local alias to satisfy static analyzer
                     with open("tmp/last_failed_submission_detail.json", "w", encoding="utf-8") as fh:
-                        json.dump({"status_code": resp.status_code, "detail": detail_json}, fh, indent=2)
+                        _json.dump({"status_code": resp.status_code, "detail": detail_json}, fh, indent=2)
                 except Exception:
                     pass
                 raise RuntimeError(
@@ -931,6 +1025,8 @@ class WorkflowHandle:
             self.item_id = item_ids[0]
             
             # Get session ID from queue item
+            if self.item_id is None:
+                raise RuntimeError("Submission did not return an item id")
             queue_item = self._get_queue_item_by_id(queue_id, self.item_id)
             if queue_item:
                 self.session_id = queue_item.get("session_id")
@@ -953,14 +1049,15 @@ class WorkflowHandle:
             }
             
         except Exception as e:
-            # Try to get error details from response
-            if hasattr(e, 'response') and e.response is not None:
+            # Try to get error details from HTTP-like exceptions
+            resp = getattr(e, 'response', None)
+            if resp is not None:
                 try:
-                    error_detail = e.response.json()
-                    raise RuntimeError(f"Workflow submission failed: {error_detail}")
-                except:
-                    pass
-            raise RuntimeError(f"Workflow submission failed: {e}")
+                    error_detail = resp.json()
+                except Exception:
+                    error_detail = getattr(resp, 'text', '')[:500]
+                raise RuntimeError(f"Workflow submission failed: {error_detail}") from e
+            raise RuntimeError(f"Workflow submission failed: {e}") from e
     
     async def _setup_event_subscriptions(
         self,
@@ -1209,11 +1306,11 @@ class WorkflowHandle:
                 return result, mappings
             return result
             
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as exc:
             await sio.emit("unsubscribe_queue", {"queue_id": queue_id})
             raise asyncio.TimeoutError(
                 f"Workflow execution timed out after {timeout} seconds"
-            )
+            ) from exc
 
     async def submit_sync_monitor_async(
         self,
@@ -1418,7 +1515,7 @@ class WorkflowHandle:
             response = self.client._make_request("DELETE", url)
             return bool(response.status_code == 200)
         except Exception as e:
-            raise RuntimeError(f"Failed to cancel job: {e}")
+            raise RuntimeError(f"Failed to cancel job: {e}") from e
     
     async def cancel_async(self, queue_id: str = "default") -> bool:
         """
@@ -1505,14 +1602,13 @@ class WorkflowHandle:
         allowing the workflow to be reconfigured and rerun.
         """
         # Reset all input values
+        from invokeai_py_client.ivk_fields import (
+            IvkStringField, IvkIntegerField, IvkFloatField, IvkBooleanField,
+            IvkEnumField, IvkBoardField, IvkImageField
+        )
         for inp in self.inputs:
-            if hasattr(inp.field, 'value'):
-                # Primitive fields have a value attribute
-                inp.field.value = None
-            else:
-                # Complex fields - reset individual attributes
-                # This would need field-specific logic
-                pass
+            if isinstance(inp.field, (IvkStringField, IvkIntegerField, IvkFloatField, IvkBooleanField, IvkEnumField, IvkBoardField, IvkImageField)):
+                inp.field.value = None  # type: ignore[attr-defined]
 
         # Clear job and assets
         self.job = None
@@ -1571,35 +1667,51 @@ class WorkflowHandle:
         
         # Start with a deep copy of the original workflow JSON
         workflow_copy = copy.deepcopy(self.definition.raw_data)
+
+        # If upstream root model exists and board_id provided, attempt heuristic board assignment early
+        if board_id and getattr(self, "_root", None) is not None:
+            try:
+                # Mutate the root model's underlying node dicts directly to set boards where missing
+                updated = update_output_boards(self._root, board_id)  # type: ignore[attr-defined]
+                if updated:
+                    # sync changes back into workflow_copy (nodes share dict identity only if same object; ensure overwrite)
+                    workflow_copy['nodes'] = self._root.nodes  # type: ignore[attr-defined]
+            except Exception:
+                pass
         
-        # Update exposed fields using JSONPath expressions
+    # Update GUI-public (form-surfaced) fields using JSONPath expressions
         for inp in self.inputs:
             # Parse the stored JSONPath expression
-            jsonpath_expr = parse_jsonpath(inp.jsonpath)
-            
-            # Get the field's API format
+            # Legacy JSONPath update replaced by direct mutation via field metadata
             field = inp.field
             api_format = field.to_api_format()
-            
-            # Find the target field dict in the workflow
-            matches = jsonpath_expr.find(workflow_copy)
-            for match in matches:
-                # Get the existing field dict
-                existing_dict = match.value
-                if not isinstance(existing_dict, dict):
-                    existing_dict = {}
-                
-                # For model fields (and other fields without a 'value' wrapper),
-                # we need to update the 'value' key if it exists in the original
-                if 'value' in existing_dict and inp.field_name in ['model', 'vae', 'unet', 'clip']:
-                    # Model fields: update the 'value' key with the new model data
-                    merged_dict = {**existing_dict, 'value': api_format}
+            node_id = inp.node_id
+            field_name = inp.field_name
+
+            # Skip mutation if destination field is edge-connected (avoid overriding dynamic input)
+            try:
+                if self._root is not None and is_field_connected(self._root, node_id, field_name):  # type: ignore[attr-defined]
+                    continue
+            except Exception:
+                pass
+
+            for node in workflow_copy.get("nodes", []):
+                if node.get("id") != node_id:
+                    continue
+                inputs = (node.get("data", {}).get("inputs") or {})
+                field_dict = inputs.get(field_name)
+                if isinstance(field_dict, dict):
+                    # Generic model identifier handling: nested 'value' dict containing a 'key'
+                    if 'value' in field_dict and isinstance(field_dict['value'], dict) and 'key' in field_dict['value'] and 'key' in api_format:
+                        field_dict['value'] = api_format
+                    # Specific legacy field names for model identifiers stored directly
+                    elif 'value' in field_dict and field_name in ['model', 'vae', 'unet', 'clip']:
+                        field_dict['value'] = api_format
+                    else:
+                        field_dict.update(api_format)
                 else:
-                    # Other fields: merge at the top level
-                    merged_dict = {**existing_dict, **api_format}
-                
-                # Update the field dict in the workflow
-                match.full_path.update(workflow_copy, merged_dict)
+                    inputs[field_name] = api_format
+                break
         
         # Build a set of fields that are connected via edges.
         # Historically we attempted to REMOVE these fields from the serialized
@@ -1643,7 +1755,7 @@ class WorkflowHandle:
             }
             
             # Process inputs - only include fields with values
-            # (Note: JSONPath has already updated exposed fields in workflow_copy)
+            # (Note: JSONPath-based mutation above already updated GUI-public fields in workflow_copy)
             node_inputs = node_data.get("inputs", {})
             for field_name, field_data in node_inputs.items():
                 # Optionally skip connected fields only if pruning explicitly enabled

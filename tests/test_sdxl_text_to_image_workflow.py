@@ -8,7 +8,7 @@ import sys
 import json
 import time
 from pathlib import Path
-from typing import Optional, Any, Dict
+from typing import Any
 from datetime import datetime
 
 # Add src to path
@@ -16,8 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from invokeai_py_client import InvokeAIClient
 from invokeai_py_client.workflow import WorkflowRepository
-from invokeai_py_client.dnn_model import DnnModelRepository, DnnModel, DnnModelType, BaseDnnModelType
-from invokeai_py_client.ivk_fields.model_conversion import to_ivk_model_field
+from invokeai_py_client.dnn_model import DnnModelRepository, DnnModelType, BaseDnnModelType
 
 
 # Configuration
@@ -25,110 +24,120 @@ TEST_PROMPT = "A futuristic city skyline with flying cars, cyberpunk aesthetic, 
 TEST_NEGATIVE = "blurry, low quality, distorted, ugly"
 OUTPUT_WIDTH = 1024
 OUTPUT_HEIGHT = 1024
-NUM_STEPS = 30
-CFG_SCALE = 7.5
+NUM_STEPS = 24  # reduced for faster test runtime
+CFG_SCALE = 7.0
 SCHEDULER = "euler"
 
 
-def check_models(repo: DnnModelRepository) -> Dict[str, Optional[DnnModel]]:
-    """Check available models for the workflow."""
-    print("\n[MODEL CHECK]")
+def select_sdxl_models(repo: DnnModelRepository) -> dict[str, Any]:
+    """Select SDXL main (and optional VAE) models by name preference then fallback.
+
+    Preference order for main model names (substring match, case-insensitive):
+      1. "juggernaut"
+      2. "cyberrealistic"
+      3. first SDXL main model
+    """
+    print("\n[MODEL DISCOVERY]")
     all_models = repo.list_models()
-    
-    models = {
-        "sdxl": next((m for m in all_models if m.type == DnnModelType.Main and m.base == BaseDnnModelType.StableDiffusionXL), None),
-        "sdxl_vae": next((m for m in all_models if m.type == DnnModelType.VAE and m.base == BaseDnnModelType.StableDiffusionXL), None),
-    }
-    
-    for key, model in models.items():
-        status = "OK" if model else "MISSING"
-        name = getattr(model, "name", "N/A")
-        print(f"[{status}] {key}: {name}")
-    
-    return models
+    mains = [m for m in all_models if m.type == DnnModelType.Main and m.base == BaseDnnModelType.StableDiffusionXL]
+    vaes = [m for m in all_models if m.type == DnnModelType.VAE and m.base == BaseDnnModelType.StableDiffusionXL]
+
+    def pick_main() -> Any | None:
+        priorities = ["juggernaut", "cyberrealistic"]
+        for p in priorities:
+            for m in mains:
+                if p in m.name.lower():
+                    return m
+        return mains[0] if mains else None
+
+    chosen_main = pick_main()
+    chosen_vae = vaes[0] if vaes else None
+    for label, mdl in [("main", chosen_main), ("vae", chosen_vae)]:
+        print(f"[{ 'OK' if mdl else 'MISSING'}] {label}: {getattr(mdl,'name','<none>')}")
+    return {"main": chosen_main, "vae": chosen_vae}
 
 
-def configure_workflow(workflow: Any, models: Dict[str, Optional[DnnModel]]) -> None:
-    """Configure all workflow inputs."""
-    print("\n[CONFIGURE INPUTS]")
-    
-    # Build input lookup
-    input_lookup = {
-        (inp.node_id, inp.field_name): inp.input_index 
-        for inp in workflow.list_inputs()
-    }
-    
-    # Set model - using the actual node IDs from the workflow
-    if models.get("sdxl"):
-        key = ("sdxl_model_loader:PwBr7RXRsy", "model")
-        if key in input_lookup:
+def configure_workflow_via_new_api(workflow: Any, models: dict[str, Any]) -> None:
+    """Configure workflow inputs without hard-coded node IDs.
+
+    Strategy:
+      - Build a node_id -> node_type map from workflow.definition
+      - Iterate exposed inputs; select by field_name + (label heuristics or node_type)
+      - Apply updates atomically using set_many()
+    """
+    print("\n[CONFIGURE INPUTS - NEW API]")
+
+    # Map node id -> type for disambiguation (avoids hard-coded ids)
+    node_type_map: dict[str, str] = {}
+    try:
+        for n in workflow.definition.nodes:
+            nid = n.get("id")
+            ntype = n.get("data", {}).get("type")
+            if nid and ntype:
+                node_type_map[nid] = ntype
+    except Exception:
+        pass
+
+    inputs = workflow.list_inputs()
+
+    # Helper to locate first input matching predicate
+    def find_input(pred) -> int | None:
+        for inp in inputs:
             try:
-                field = to_ivk_model_field(models["sdxl"])
-                workflow.set_input_value(input_lookup[key], field)
-                print(f"[OK] Set SDXL model: {models['sdxl'].name}")
-            except Exception as e:
-                print(f"[WARN] Failed to set SDXL model: {e}")
-    
-    # Set VAE if available and exposed
-    if models.get("sdxl_vae"):
-        key = ("sdxl_model_loader:PwBr7RXRsy", "vae")
-        if key in input_lookup:
-            try:
-                field = to_ivk_model_field(models["sdxl_vae"])
-                workflow.set_input_value(input_lookup[key], field)
-                print(f"[OK] Set SDXL VAE: {models['sdxl_vae'].name}")
-            except Exception as e:
-                print(f"[WARN] Failed to set VAE: {e}")
-    
-    # Set prompts - using the actual node IDs from the workflow
-    prompt_configs = [
-        ("positive_prompt:kjUMdcg0zO", "value", TEST_PROMPT, "positive prompt"),
-        ("484ecc77-b7a0-4e19-b793-cc313f20fbe6", "value", TEST_NEGATIVE, "negative prompt"),
-    ]
-    
-    for node_id, field_name, value, label in prompt_configs:
-        key = (node_id, field_name)
-        if key in input_lookup:
-            field = workflow.get_input_value(input_lookup[key])
-            if hasattr(field, 'value'):
-                field.value = value
-                print(f"[OK] Set {label}: {value[:50]}...")
-    
-    # Set dimensions - using the actual node IDs from the workflow
-    dimension_configs = [
-        ("noise:f4Bv4UWa22", "width", OUTPUT_WIDTH, "width"),
-        ("noise:f4Bv4UWa22", "height", OUTPUT_HEIGHT, "height"),
-    ]
-    
-    for node_id, field_name, value, label in dimension_configs:
-        key = (node_id, field_name)
-        if key in input_lookup:
-            field = workflow.get_input_value(input_lookup[key])
-            if hasattr(field, 'value'):
-                field.value = value
-                print(f"[OK] Set {label}: {value}")
-    
-    # Set generation parameters - using the actual node IDs from the workflow
-    param_configs = [
-        ("denoise_latents:TRC0Y88EWe", "steps", NUM_STEPS, "steps"),
-        ("denoise_latents:TRC0Y88EWe", "cfg_scale", CFG_SCALE, "CFG scale"),
-    ]
-    
-    for node_id, field_name, value, label in param_configs:
-        key = (node_id, field_name)
-        if key in input_lookup:
-            field = workflow.get_input_value(input_lookup[key])
-            if hasattr(field, 'value'):
-                field.value = value
-                print(f"[OK] Set {label}: {value}")
-    
-    # Set scheduler - using the actual node ID from the workflow
-    key = ("denoise_latents:TRC0Y88EWe", "scheduler")
-    if key in input_lookup:
-        field = workflow.get_input_value(input_lookup[key])
-        if hasattr(field, 'value'):
-            field.value = SCHEDULER
-            print(f"[OK] Set scheduler: {SCHEDULER}")
+                if pred(inp):
+                    return inp.input_index
+            except Exception:
+                continue
+        return None
+
+    updates: dict[int, Any] = {}
+
+    main_model = models.get("main")
+    if main_model:
+        model_idx = find_input(lambda inp: inp.field_name == "model" and node_type_map.get(inp.node_id, "").startswith("sdxl_model_loader"))
+        if model_idx is not None:
+            updates[model_idx] = {
+                "key": main_model.key,
+                "hash": main_model.hash,
+                "name": main_model.name,
+                "base": getattr(main_model.base, 'value', str(main_model.base)),
+                "type": getattr(main_model.type, 'value', str(main_model.type)),
+            }
+
+    # Positive & negative prompts (labels carry hints)
+    pos_idx = find_input(lambda inp: inp.field_name == "value" and "positive" in (inp.label or "").lower())
+    if pos_idx is not None:
+        updates[pos_idx] = TEST_PROMPT
+    neg_idx = find_input(lambda inp: inp.field_name == "value" and "negative" in (inp.label or "").lower())
+    if neg_idx is not None:
+        updates[neg_idx] = TEST_NEGATIVE
+
+    # Width / Height
+    width_idx = find_input(lambda inp: inp.field_name == "width")
+    if width_idx is not None:
+        updates[width_idx] = OUTPUT_WIDTH
+    height_idx = find_input(lambda inp: inp.field_name == "height")
+    if height_idx is not None:
+        updates[height_idx] = OUTPUT_HEIGHT
+
+    # Steps / cfg_scale / scheduler (under denoise_latents node type)
+    steps_idx = find_input(lambda inp: inp.field_name == "steps" and node_type_map.get(inp.node_id, "") == "denoise_latents")
+    if steps_idx is not None:
+        updates[steps_idx] = NUM_STEPS
+    cfg_idx = find_input(lambda inp: inp.field_name == "cfg_scale" and node_type_map.get(inp.node_id, "") == "denoise_latents")
+    if cfg_idx is not None:
+        updates[cfg_idx] = CFG_SCALE
+    sched_idx = find_input(lambda inp: inp.field_name == "scheduler" and node_type_map.get(inp.node_id, "") == "denoise_latents")
+    if sched_idx is not None:
+        updates[sched_idx] = SCHEDULER
+
+    # Apply
+    print(f"[INFO] Applying {len(updates)} updates via set_many() (dynamic discovery)")
+    workflow.set_many(updates)
+    # Compact single-line header to avoid syntax issues from multiline string
+    print("[DEBUG] Input preview (index label type value):")
+    for row in workflow.preview():
+        print(f"  [{row['index']:02d}] {row['label']} ({row['type']}): {row['value']}")
 
 
 def submit_and_monitor(client: InvokeAIClient, workflow: Any) -> bool:
@@ -225,9 +234,9 @@ def main() -> int:
         return 1
     
     # Check available models
-    models = check_models(client.dnn_model_repo)
-    if not models.get("sdxl"):
-        print("[ERROR] SDXL model not available")
+    models = select_sdxl_models(client.dnn_model_repo)
+    if not models.get("main"):
+        print("[ERROR] No SDXL main model available")
         return 1
     
     # Load workflow
@@ -251,7 +260,7 @@ def main() -> int:
         print(f"  [{inp.input_index}] {inp.node_id}.{inp.field_name} ({field_type}) - {inp.label}")
     
     # Configure workflow inputs
-    configure_workflow(workflow, models)
+    configure_workflow_via_new_api(workflow, models)
     
     # Debug: Save the API graph
     api_graph = workflow._convert_to_api_format("none")
