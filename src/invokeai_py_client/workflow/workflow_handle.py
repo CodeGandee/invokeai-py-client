@@ -1668,6 +1668,9 @@ class WorkflowHandle:
         # Start with a deep copy of the original workflow JSON
         workflow_copy = copy.deepcopy(self.definition.raw_data)
 
+    # (Model synchronization now handled explicitly by sync_dnn_model();
+    # no automatic silent replacement is performed here.)
+
         # If upstream root model exists and board_id provided, attempt heuristic board assignment early
         if board_id and getattr(self, "_root", None) is not None:
             try:
@@ -1781,6 +1784,7 @@ class WorkflowHandle:
                 
                 # Only include the field if it has a non-None value
                 if field_value is not None:
+                    # Sanitize stale embedded model identifiers (hidden / non-form fields)
                     api_node[field_name] = field_value
             
             # Special handling for specific node types
@@ -1821,6 +1825,198 @@ class WorkflowHandle:
             "nodes": api_nodes,
             "edges": api_edges
         }
+
+    # ------------------------------------------------------------------
+    # DNN Model Synchronization
+    # ------------------------------------------------------------------
+    def sync_dnn_model(self, by_name: bool = True, by_base: bool = False) -> int:
+        """Synchronize (validate & refresh) all embedded DNN model references.
+
+        This scans *every* node input in the workflow (including those not
+        surfaced via the form/UI) for model identifier dictionaries and
+        verifies that the referenced model exists in the connected InvokeAI
+        system.
+
+                Matching Strategy (first match wins):
+                    1. Hash match (exact, full string)
+                    2. Optional: Name match (case sensitive) if ``by_name`` True
+                    3. Optional: Base model type fallback if ``by_base`` True (excluded if base == 'any').
+                         When using base fallback, preference is given to installed models whose
+                         ``type`` matches the candidate (e.g. main, vae, lora). If none match, the
+                         first installed model (sorted by name) with that base is chosen.
+
+        If a matching installed model is found, the workflow's model
+        identifier is replaced with authoritative attributes from the local
+        system (key, hash, name, base, type, submodel_type if present). If no
+        match is found for a model reference, a ``ValueError`` is raised
+        immediately identifying the offending node & field.
+
+        Parameters
+        ----------
+        by_name : bool, default True
+            Enable name-based matching after hash mismatch.
+        by_base : bool, default False
+            Enable final fallback matching by base model type (excluding 'any').
+            Use cautiously; this can change the intended model if multiple are installed.
+
+        Returns
+        -------
+        int
+            Count of model fields successfully synchronized.
+
+        Raises
+        ------
+        ValueError
+            If any model reference cannot be matched by hash or name.
+
+        Notes
+        -----
+        * This method performs an in-place mutation of the underlying
+          ``WorkflowDefinition.raw_data`` and (when possible) the upstream
+          parsed root model (``self._root``) so subsequent submissions use
+          the synchronized identifiers.
+        * After synchronization, corresponding ``IvkModelIdentifierField``
+          objects in ``self.inputs`` are also updated to keep their state
+          consistent.
+        * It is intentionally strict: it will not fall back to "any" model
+          of the same type. Use the existing opportunistic replacement in
+          ``_convert_to_api_format`` (or extend it) if permissive behavior
+          is desired.
+        """
+        repo = getattr(self.client, 'dnn_model_repo', None)
+        if repo is None:
+            raise ValueError("DNN model repository not available on client")
+
+        try:
+            installed_models = list(repo.list_models())  # type: ignore[attr-defined]
+        except Exception as e:  # pragma: no cover - defensive
+            raise ValueError(f"Unable to list installed models: {e}") from e
+
+        # Build lookup maps
+        by_hash: dict[str, Any] = {}
+        name_map: dict[str, Any] = {}
+        for m in installed_models:
+            try:
+                by_hash[m.hash] = m
+                name_map[m.name] = m
+            except Exception:
+                continue
+
+        # Helper to build replacement dict
+        def _model_dict(m) -> dict[str, Any]:
+            return {
+                'key': m.key,
+                'hash': m.hash,
+                'name': m.name,
+                'base': getattr(m.base, 'value', m.base),
+                'type': getattr(m.type, 'value', m.type),
+            }
+
+        # Scan & replace
+        nodes = self.definition.raw_data.get('nodes', [])  # original structure
+        replaced_count = 0
+
+        for node in nodes:
+            node_id = node.get('id')
+            data = node.get('data', {}) if isinstance(node, dict) else {}
+            inputs = data.get('inputs', {}) if isinstance(data, dict) else {}
+            for field_name, field_data in list(inputs.items()):
+                # Identify candidate model identifier dictionaries
+                candidate: dict[str, Any] | None = None
+                if isinstance(field_data, dict):
+                    if 'value' in field_data and isinstance(field_data['value'], dict) and 'key' in field_data['value'] and 'name' in field_data['value']:
+                        candidate = field_data['value']
+                    elif 'key' in field_data and 'name' in field_data:
+                        candidate = field_data
+                if not candidate:
+                    continue
+                # Extract identifying info
+                cand_hash = candidate.get('hash') or ''
+                cand_name = candidate.get('name') or ''
+                cand_base = candidate.get('base') or ''
+                cand_type = candidate.get('type') or ''
+                match_model = None
+                if cand_hash and cand_hash in by_hash:
+                    match_model = by_hash[cand_hash]
+                elif by_name and cand_name and cand_name in name_map:
+                    match_model = name_map[cand_name]
+                elif by_base and cand_base and cand_base != 'any':
+                    # Collect candidates with same base
+                    base_candidates = [m for m in installed_models if getattr(m.base, 'value', m.base) == cand_base]
+                    if base_candidates:
+                        # Prefer same model type if possible
+                        same_type = [m for m in base_candidates if getattr(m.type, 'value', m.type) == cand_type]
+                        chosen_pool = same_type if same_type else base_candidates
+                        # Deterministic choice: sort by name
+                        chosen_pool.sort(key=lambda m: getattr(m, 'name', ''))
+                        match_model = chosen_pool[0]
+                if not match_model:
+                    raise ValueError(
+                        f"Unrecognized model reference: node='{node_id}' field='{field_name}' name='{cand_name}' hash='{cand_hash}'"
+                        f" (strategies tried: hash{', name' if by_name else ''}{', base' if by_base else ''})"
+                    )
+                # Replace with authoritative model attributes if any field differs
+                new_dict = _model_dict(match_model)
+                if candidate != new_dict:
+                    if 'value' in field_data and candidate is field_data.get('value'):
+                        field_data['value'] = new_dict
+                    else:
+                        # Direct dict form
+                        # Replace keys atomically: clear only known keys to avoid wiping extra metadata
+                        for k in list(field_data.keys()):
+                            if k in {'key','hash','name','base','type'}:
+                                field_data.pop(k, None)
+                        field_data.update(new_dict)
+                    replaced_count += 1
+
+        # Propagate changes to upstream parsed model if present
+        if getattr(self, '_root', None) is not None:
+            try:
+                # self._root.nodes is a list of dicts; update in-place based on id mapping
+                id_map = {n.get('id'): n for n in nodes if isinstance(n, dict)}
+                for rn in self._root.nodes:  # type: ignore[attr-defined]
+                    try:
+                        rid = rn.get('id')
+                        if rid in id_map:
+                            # Replace reference entirely to ensure parity
+                            updated = id_map[rid]
+                            rn.clear()
+                            rn.update(updated)  # type: ignore[union-attr]
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+
+        # Update IvkModelIdentifierField instances in self.inputs to reflect any new values
+        from invokeai_py_client.ivk_fields.models import IvkModelIdentifierField  # local import
+        for inp in self.inputs:
+            fld = inp.field
+            if isinstance(fld, IvkModelIdentifierField):
+                # Locate corresponding node/field in raw_data to pull current dict
+                for node in nodes:
+                    if node.get('id') != inp.node_id:  # type: ignore[union-attr]
+                        continue
+                    nd = node.get('data', {})
+                    inps = nd.get('inputs', {})
+                    fd = inps.get(inp.field_name)
+                    model_ref = None
+                    if isinstance(fd, dict):
+                        if 'value' in fd and isinstance(fd['value'], dict) and 'key' in fd['value']:
+                            model_ref = fd['value']
+                        elif 'key' in fd:
+                            model_ref = fd
+                    if model_ref:
+                        try:
+                            fld.key = model_ref.get('key', fld.key)
+                            fld.hash = model_ref.get('hash', fld.hash)
+                            fld.name = model_ref.get('name', fld.name)
+                            fld.base = model_ref.get('base', fld.base)
+                            fld.type = model_ref.get('type', fld.type)
+                        except Exception:
+                            pass
+                    break
+
+        return replaced_count
     
     
     def map_outputs_to_images(self, queue_item: dict[str, Any]) -> list[OutputMapping]:

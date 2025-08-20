@@ -9,9 +9,10 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from invokeai_py_client.ivk_fields.base import IvkField, PydanticFieldMixin
+from invokeai_py_client.dnn_model.dnn_model_types import BaseDnnModelType, DnnModelType
 
 
 class IvkModelIdentifierField(BaseModel, PydanticFieldMixin, IvkField[dict[str, Any]]):
@@ -42,8 +43,8 @@ class IvkModelIdentifierField(BaseModel, PydanticFieldMixin, IvkField[dict[str, 
     key: str = Field(default="", description="The model's unique key")
     hash: str = Field(default="", description="The model's BLAKE3 hash")
     name: str = Field(default="", description="The model's name")
-    base: str = Field(default="any", description="The model's base model type (e.g., 'sdxl', 'flux', 'sd-1', 'sd-2')")
-    type: str = Field(default="main", description="The model's type (e.g., 'main', 'vae', 'lora', 'controlnet')")
+    base: BaseDnnModelType = Field(default=BaseDnnModelType.Any, description="The model's base model enum (e.g., sdxl, flux, sd-1, sd-2)")
+    type: DnnModelType = Field(default=DnnModelType.Main, description="The model's type enum (e.g., main, vae, lora, controlnet)")
     submodel_type: Optional[str] = Field(
         default=None,
         description="The submodel to load, if this is a main model"
@@ -60,22 +61,51 @@ class IvkModelIdentifierField(BaseModel, PydanticFieldMixin, IvkField[dict[str, 
             "key": self.key,
             "hash": self.hash,
             "name": self.name,
-            "base": self.base,
-            "type": self.type,
+            "base": getattr(self.base, 'value', self.base),
+            "type": getattr(self.type, 'value', self.type),
             "submodel_type": self.submodel_type
         }
 
     @classmethod
     def from_api_format(cls, data: dict[str, Any]) -> IvkModelIdentifierField:
-        """Create from API data."""
+        """Create from API data, coercing base to enum."""
+        base_val = data.get("base", BaseDnnModelType.Any)
+        try:
+            base_enum = base_val if isinstance(base_val, BaseDnnModelType) else BaseDnnModelType(str(base_val))
+        except Exception:
+            base_enum = BaseDnnModelType.Any
         return cls(
             key=data.get("key", ""),
             hash=data.get("hash", ""),
             name=data.get("name", ""),
-            base=data.get("base", "any"),
-            type=data.get("type", "main"),
+            base=base_enum,
+            type=cls._coerce_type(data.get("type", DnnModelType.Main)),
             submodel_type=data.get("submodel_type")
         )
+
+    @field_validator("base", mode="before")
+    @classmethod
+    def _coerce_base(cls, v: Any) -> BaseDnnModelType:
+        if isinstance(v, BaseDnnModelType):
+            return v
+        try:
+            return BaseDnnModelType(str(v))
+        except Exception:
+            return BaseDnnModelType.Any
+
+    @staticmethod
+    def _coerce_type(v: Any) -> DnnModelType:
+        if isinstance(v, DnnModelType):
+            return v
+        try:
+            return DnnModelType(str(v))
+        except Exception:
+            return DnnModelType.Main
+
+    @field_validator("type", mode="before")
+    @classmethod
+    def _validate_type(cls, v: Any) -> DnnModelType:
+        return cls._coerce_type(v)
 
 
 class IvkUNetField(BaseModel, PydanticFieldMixin, IvkField[dict[str, Any]]):

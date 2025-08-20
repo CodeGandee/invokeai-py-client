@@ -289,6 +289,14 @@ def main() -> int:
     except Exception as e:
         print(f"[ERROR] Failed to load workflow: {e}")
         return 1
+
+    # Synchronize embedded DNN model identifiers with local installation
+    try:
+        replaced = workflow.sync_dnn_model(by_name=True, by_base=True)
+        print(f"[OK] Synchronized {replaced} model reference(s) with local system")
+    except Exception as e:
+        print(f"[ERROR] Model synchronization failed: {e}")
+        return 1
     
     # Configure workflow inputs
     configure_workflow(workflow, models)
