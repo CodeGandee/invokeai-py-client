@@ -18,9 +18,11 @@ Focused, typed access to a subset of InvokeAI capabilities: loading exported wor
 Out‑of‑scope (current): arbitrary graph mutation, full REST surface parity, subgraph re‑execution, advanced visualization.
 
 ### Intended Users
-- **Automation / Power Users**: Script reproducible runs built from GUI workflows.
-- **Tooling Authors**: Build higher‑level CLIs or dashboards on top of stable input ordering & output mapping.
-- **Contributors**: Extend field detection or repository behaviors without destabilizing public APIs.
+Primary audience: existing InvokeAI GUI users who prototype workflows visually and then want to *automate large or repeatable runs (batch processing, parameter sweeps, scheduled jobs, regression comparisons)* using Python—without re‑authoring or reverse‑engineering the graph.
+
+Secondary audiences:
+- **Tool / CLI Builders**: Layer higher‑level interfaces atop stable ordered inputs & output mapping.
+- **Contributors / Extenders**: Add field detection rules or repositories while preserving public invariants.
 
 ### Design Principles (Condensed)
 - Treat exported workflow JSON as immutable source of truth (value‑only substitution on submit).
