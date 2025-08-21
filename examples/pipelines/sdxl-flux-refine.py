@@ -76,6 +76,8 @@ from invokeai_py_client.ivk_fields import (  # type: ignore
     IvkIntegerField,
     IvkFloatField,
     IvkBoardField,
+    IvkSchedulerField,
+    SchedulerName,
 )
 from invokeai_py_client.ivk_fields.models import IvkModelIdentifierField  # type: ignore
 
@@ -98,7 +100,7 @@ WIDTH = 768
 HEIGHT = 1024
 SDXL_STEPS = 20
 SDXL_CFG_SCALE = 7.5
-SDXL_SCHEDULER = "euler_a"  # Valid scheduler (formerly often called 'euler_ancestral')
+SDXL_SCHEDULER: SchedulerName = SchedulerName.EULER_A  # canonical (aka 'euler_ancestral')
 FLUX_DOMAIN_STEPS = 10
 FLUX_DOMAIN_NOISE_RATIO = 0.85  # (field 'b')
 FLUX_DOMAIN_CONTROL_WEIGHT = 0.3
@@ -243,15 +245,9 @@ if hasattr(steps_field, 'value'):
 if hasattr(cfg_field, 'value'):
     cfg_field.value = SDXL_CFG_SCALE  # type: ignore[attr-defined]
 if hasattr(scheduler_field, 'value'):
-    # Normalize a few common alias spellings to valid literal values
-    _sched_aliases = {
-        "euler_ancestral": "euler_a",
-        "euler-ancestral": "euler_a",
-        "euler ancestral": "euler_a",
-    }
-    desired = _sched_aliases.get(SDXL_SCHEDULER.lower(), SDXL_SCHEDULER)
+    # Use enum value directly; normalize user-provided alias via IvkSchedulerField if needed
     try:
-        scheduler_field.value = desired  # type: ignore[attr-defined]
+        scheduler_field.value = IvkSchedulerField.normalize_alias(SDXL_SCHEDULER.value)  # type: ignore[attr-defined]
     except Exception:
         pass
 

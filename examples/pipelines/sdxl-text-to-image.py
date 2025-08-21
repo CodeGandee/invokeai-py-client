@@ -84,6 +84,8 @@ from invokeai_py_client.ivk_fields import (  # type: ignore
     IvkStringField,
     IvkIntegerField,
     IvkFloatField,
+    IvkSchedulerField,
+    SchedulerName,
 )
 from invokeai_py_client.ivk_fields.models import IvkModelIdentifierField  # type: ignore
 from invokeai_py_client.board.board_handle import BoardHandle  # type: ignore
@@ -121,7 +123,7 @@ OUTPUT_WIDTH = 1024
 OUTPUT_HEIGHT = 1024
 NUM_STEPS = 30
 CFG_SCALE = 7.5
-SCHEDULER = "dpmpp_3m_k"
+SCHEDULER: SchedulerName = SchedulerName.DPMPP_3M_K
 
 console = Console()
 client: InvokeAIClient = InvokeAIClient.from_url(INVOKEAI_BASE_URL)
@@ -242,12 +244,14 @@ field_steps.value = NUM_STEPS  # type: ignore[assignment]
 field_cfg: IvkFloatField = workflow_handle.get_input_value(IDX_CFG_SCALE)  # type: ignore[assignment]
 assert isinstance(field_cfg, IvkFloatField)
 field_cfg.value = CFG_SCALE  # type: ignore[assignment]
-# Scheduler (may not be a plain IvkStringField depending on server build)
+# Scheduler field (enum-backed)
 field_sched = workflow_handle.get_input_value(IDX_SCHEDULER)  # type: ignore[assignment]
 if not hasattr(field_sched, 'value'):
     raise TypeError(f"IDX_SCHEDULER field object lacks 'value' attribute (type={type(field_sched)})")
 try:
-    field_sched.value = SCHEDULER  # type: ignore[attr-defined]
+    # Normalize any alias if server still uses legacy naming
+    canonical = IvkSchedulerField.normalize_alias(SCHEDULER.value)
+    field_sched.value = canonical  # type: ignore[attr-defined]
 except Exception as _e:  # pragma: no cover
     console.print(f"[yellow]Warning: could not set scheduler value: {_e}[/yellow]")
 
@@ -296,7 +300,7 @@ config_tbl.add_row("WIDTH", str(OUTPUT_WIDTH))
 config_tbl.add_row("HEIGHT", str(OUTPUT_HEIGHT))
 config_tbl.add_row("STEPS", str(NUM_STEPS))
 config_tbl.add_row("CFG_SCALE", str(CFG_SCALE))
-config_tbl.add_row("SCHEDULER", SCHEDULER)
+config_tbl.add_row("SCHEDULER", SCHEDULER.value)
 config_tbl.add_row("BOARD_ID (input)", resolved_board_id if BOARD_INPUT_INDEX is not None else f"(no board field) {resolved_board_id}")
 console.print(config_tbl)
 

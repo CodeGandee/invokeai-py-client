@@ -8,29 +8,52 @@ interpolation modes, and other predefined option sets.
 from __future__ import annotations
 
 from typing import Any, Optional
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from invokeai_py_client.ivk_fields.base import IvkField, PydanticFieldMixin
 
-# Scheduler options from InvokeAI
-SCHEDULER_NAMES = [
-    "ddim",
-    "ddpm", 
-    "deis",
-    "dpm_2",
-    "dpm_2_ancestral",
-    "dpm_multi", 
-    "dpm_sde",
-    "dpm_sde_k",
-    "euler",
-    "euler_ancestral",
-    "euler_k",
-    "heun",
-    "lms",
-    "pndm",
-    "unipc"
-]
+class SchedulerName(str, Enum):
+    """Canonical scheduler names (mirrors upstream InvokeAI SCHEDULER_NAME_VALUES).
+
+    Keep ordering stable so list(SchedulerName) aligns with upstream Literal ordering.
+    """
+
+    DDIM = "ddim"
+    DDPM = "ddpm"
+    DEIS = "deis"
+    DEIS_K = "deis_k"
+    LMS = "lms"
+    LMS_K = "lms_k"
+    PNDM = "pndm"
+    HEUN = "heun"
+    HEUN_K = "heun_k"
+    EULER = "euler"
+    EULER_K = "euler_k"
+    EULER_A = "euler_a"
+    KDPM_2 = "kdpm_2"
+    KDPM_2_K = "kdpm_2_k"
+    KDPM_2_A = "kdpm_2_a"
+    KDPM_2_A_K = "kdpm_2_a_k"
+    DPMPP_2S = "dpmpp_2s"
+    DPMPP_2S_K = "dpmpp_2s_k"
+    DPMPP_2M = "dpmpp_2m"
+    DPMPP_2M_K = "dpmpp_2m_k"
+    DPMPP_2M_SDE = "dpmpp_2m_sde"
+    DPMPP_2M_SDE_K = "dpmpp_2m_sde_k"
+    DPMPP_3M = "dpmpp_3m"
+    DPMPP_3M_K = "dpmpp_3m_k"
+    DPMPP_SDE = "dpmpp_sde"
+    DPMPP_SDE_K = "dpmpp_sde_k"
+    UNIPC = "unipc"
+    UNIPC_K = "unipc_k"
+    LCM = "lcm"
+    TCD = "tcd"
+
+
+# Export as simple list for legacy callers
+SCHEDULER_NAMES = [e.value for e in SchedulerName]
 
 # Interpolation modes
 INTERPOLATION_MODES = [
@@ -176,13 +199,30 @@ class IvkSchedulerField(IvkEnumField):
         """Convert to API format."""
         return {
             "value": self.value,
-            "type": "scheduler"
+            "type": "scheduler",
+            "choices": SCHEDULER_NAMES,
         }
 
     @classmethod
     def from_api_format(cls, data: dict[str, Any]) -> IvkSchedulerField:
         """Create from API data."""
         return cls(value=data.get("value"))
+
+    @staticmethod
+    def normalize_alias(name: str) -> str:
+        """Normalize common legacy / alias spellings to canonical values.
+
+        Examples:
+            euler_ancestral -> euler_a
+            euler-ancestral -> euler_a
+            euler ancestral -> euler_a
+        """
+        aliases = {
+            "euler_ancestral": SchedulerName.EULER_A.value,
+            "euler-ancestral": SchedulerName.EULER_A.value,
+            "euler ancestral": SchedulerName.EULER_A.value,
+        }
+        return aliases.get(name.lower(), name)
 
 
 class IvkInterpolationField(IvkEnumField):

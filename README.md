@@ -1,11 +1,21 @@
 # InvokeAI Python Client
 
-> A typed Python client that turns GUI‑authored InvokeAI workflow JSON files into programmable, reproducible automation scripts.
+> Turn an [InvokeAI](https://github.com/invoke-ai/InvokeAI) GUI workflow into a high‑throughput Python batch pipeline: export the workflow JSON and run large, parameterized image generations with minimal ceremony.
 
-The library discovers ordered user‑configurable inputs directly from a workflow's `form` tree, lets you assign values with strong typing, submits jobs (sync / async / streaming), and maps declared output nodes back to produced image filenames.
+Built for existing GUI users: discovers ordered form inputs, provides typed setters, submits (sync / async / streaming), and maps output nodes to produced image filenames—enabling loops, sweeps, scheduled batches, regressions, and reproducible artifacts.
 
 ---
 ## 1. Introduction, Scope & Audience
+
+### About InvokeAI
+InvokeAI is an open creative engine and professional-grade web UI for image generation, refinement, and workflow authoring. It provides:
+- A modern browser UI (generation, refinement, unified canvas)
+- Node-based workflow editor & export (the JSON this client consumes)
+- Board & gallery management with metadata-rich images
+- Support for multiple model families (SD1.x / SD2 / SDXL / FLUX, ckpt & diffusers)
+- Model & embedding management, upscaling, control components
+
+This client does not re‑implement the UI; instead it leverages the exported workflow artifact and selected REST endpoints to let GUI users automate large, repeatable runs in Python.
 
 ### What This Is
 Focused, typed access to a subset of InvokeAI capabilities: loading exported workflow JSON, enumerating & setting form inputs, submitting executions, tracking progress, managing boards/images, resolving models, and mapping outputs.
@@ -44,7 +54,157 @@ Secondary audiences:
 
 Invariants: only form‑derived inputs are public; unchanged literals stay untouched; indices shift only if the GUI form structure changes (containers/fields add/remove/reorder).
 
+> Important: Only parameters you place into the workflow's **Form** panel in the InvokeAI GUI are discoverable as ordered inputs here. Drag (or add) the fields you want to control into the Form region before exporting the workflow JSON. Anything left outside remains a literal in the graph and cannot be programmatically changed via this client.
+
+![InvokeAI workflow form showing exposed fields](examples/pipelines/gui-sdxl-text-to-image.png)
+
+### Input Fields (Important)
+
+Input discovery relies only on a depth‑first traversal of the Form tree in the exported workflow JSON. Many InvokeAI workflow fields lack a stable `label`, and field names are not globally unique, so the **index** is the single stable handle while the form layout remains unchanged.
+
+Ordering rule (plain terms): traverse containers in the order they appear; inside each, visit child fields top → bottom (and nested containers recursively). Visually: think of reading the form from top to bottom, descending into each container as you encounter it.
+
+Code example (listing + index mapping only):
+
+```python
+from invokeai_py_client import InvokeAIClient
+from invokeai_py_client.workflow import WorkflowDefinition
+from invokeai_py_client.ivk_fields import SchedulerName  # enum of valid schedulers
+
+client = InvokeAIClient.from_url("http://localhost:9090")
+wf = client.workflow_repo.create_workflow(
+    WorkflowDefinition.from_file("data/workflows/sdxl-text-to-image.json")
+)
+
+# Depth‑first discovery (pre‑order). Indices are the ONLY stable handle.
+indexed = []
+for inp in wf.list_inputs():  # depth-first / pre-order over the Form tree
+    label = (inp.label or inp.field_name) or '-'
+    print(f"[{inp.input_index:02d}] {label}  field={inp.field_name}  node={inp.node_name}")
+    indexed.append((inp.input_index, label, inp.field_name))
+
+# Access a field by index (example: set positive prompt if index 1)
+pos_idx = 1  # taken from printed list above
+pos_field = wf.get_input_value(pos_idx)
+if hasattr(pos_field, 'value'):
+    pos_field.value = "A cinematic sunset over snowy mountains"
+
+# Tip: avoid containers -> indices match simple top→bottom visual order.
+```
+
+Pattern: defining stable index constants + retrieval/logging (excerpted & simplified from `sdxl-text-to-image.py`):
+
+```python
+# After listing inputs once, you may snapshot their indices for the current workflow version.
+IDX_MODEL = 0
+IDX_POS_PROMPT = 1
+IDX_NEG_PROMPT = 2
+IDX_WIDTH = 3
+IDX_HEIGHT = 4
+IDX_STEPS = 5
+IDX_CFG_SCALE = 6
+IDX_SCHEDULER = 7
+
+# Retrieve by index (assert expected field types where helpful)
+field_model = wf.get_input_value(IDX_MODEL)
+pos = wf.get_input_value(IDX_POS_PROMPT); pos.value = "A cinematic sunset"
+neg = wf.get_input_value(IDX_NEG_PROMPT); neg.value = "blurry, low quality"
+width = wf.get_input_value(IDX_WIDTH); width.value = 1024
+height = wf.get_input_value(IDX_HEIGHT); height.value = 1024
+steps = wf.get_input_value(IDX_STEPS); steps.value = 30
+cfg = wf.get_input_value(IDX_CFG_SCALE); cfg.value = 7.5
+sched = wf.get_input_value(IDX_SCHEDULER); sched.value = SchedulerName.DPMPP_3M_K.value
+
+# Optional logging helper
+def log(idx):
+    meta = wf.get_input(idx)
+    val = getattr(wf.get_input_value(idx), 'value', None)
+    print(f"[{idx}] {(meta.label or meta.field_name)!r} -> {val!r}")
+
+for i in [IDX_POS_PROMPT, IDX_NEG_PROMPT, IDX_WIDTH, IDX_HEIGHT, IDX_STEPS, IDX_CFG_SCALE, IDX_SCHEDULER]:
+    log(i)
+```
+
+Simplest workflow authoring strategy:
+- If index reasoning feels confusing, **don’t use containers**. Then the indices are just the vertical order of fields (top = 0, next = 1, ...).
+- When you *must* reorganize the form, expect downstream indices to shift. Re‑run `list_inputs()` and update any hard‑coded indices in scripts.
+
+Practical tips:
+- Keep a small comment block in your automation script capturing the current index → label snapshot.
+- Group frequently tuned parameters early so their indices are less likely to shift when you add rare/advanced ones later.
+- Avoid gratuitous container nesting unless you need visual grouping in the GUI.
+
+### Output Fields (Boards & Image Mapping)
+
+An "output field" in this client context is simply a **board selector exposed in the Form** for an output‑capable node. Only those board fields you expose become part of ordered inputs and therefore:
+
+1. Let you configure which board receives that node's images at submission time.
+2. Provide a stable anchor for mapping node → produced image filenames after completion.
+
+If a node writes to a board but you did NOT expose its board field in the Form, this client will still map its images if the node type is output‑capable; however it becomes **your responsibility** to ensure either:
+- The node's board output is disabled in the workflow graph, or
+- The workflow JSON hard‑codes a valid board id (e.g. `'none'` for uncategorized) so images land somewhere valid.
+
+Key points:
+- Board configuration happens through input fields (they appear in `list_inputs()` with `field_name == 'board'`).
+- Boards belong to nodes; after execution we correlate queue/session data and return per‑node image name lists.
+- Node → image mapping uses only what the server produced; the workflow JSON structure itself is not mutated.
+
+Unified mapping example (node_id and input_index linkage):
+
+Each `IvkWorkflowInput` (and thus each output from `wf.list_outputs()`) carries a `node_id`. We first build a map `node_id -> input_index` for board-exposed outputs, then map runtime results back to both the originating node and its input index.
+
+```python
+# 1. Execute (assumes inputs already set)
+queue_item = wf.wait_for_completion_sync(timeout=180)
+
+# 2. Enumerate board-exposed output fields (these are IvkWorkflowInput objects)
+outputs = wf.list_outputs()
+output_index_by_node_id = {o.node_id: o.input_index for o in outputs}
+
+# 3. Runtime node -> image filenames
+mappings = wf.map_outputs_to_images(queue_item)
+
+# 4. Display per-node info (includes board + images)
+for m in mappings:
+    node_id = m['node_id']
+    idx = output_index_by_node_id.get(node_id, -1)
+    images = m.get('image_names') or []
+    print(f"idx={idx:02d} node={node_id[:8]} board={m.get('board_id')} images={images}")
+
+# 5. Invert to input_index -> [image_names]
+index_to_images: dict[int, list[str]] = {}
+for m in mappings:
+    idx = output_index_by_node_id.get(m['node_id'])
+    if idx is None:
+        continue
+    for name in m.get('image_names') or []:
+        index_to_images.setdefault(idx, []).append(name)
+
+print("Index to images:")
+for idx, names in sorted(index_to_images.items()):
+    print(f"  {idx:02d} -> {names}")
+
+# 6. Optional richer structure (node_id -> (input_index, first_image_name))
+images_by_node: dict[str, tuple[int, str]] = {}
+for m in mappings:
+    idx = output_index_by_node_id.get(m['node_id'], -1)
+    first_name = (m.get('image_names') or [''])[0]
+    images_by_node[m['node_id']] = (idx, first_name)
+```
+
+Pre‑flight (optional) you can inspect which nodes are considered outputs:
+
+```python
+for out in wf.list_outputs():
+    # out is similar shape to an input descriptor but represents a board-exposed output node
+    print(out.node_id, getattr(out, 'field_name', 'board'))
+```
+
+Recommendation: expose the board fields for every final image you care about so you can cleanly route different outputs to distinct boards during automation.
+
 ### Minimal SDXL Text‑to‑Image
+Full script: `examples/pipelines/sdxl-text-to-image.py`
 ```python
 from invokeai_py_client import InvokeAIClient
 from invokeai_py_client.workflow import WorkflowDefinition
@@ -74,6 +234,7 @@ for m in wf.map_outputs_to_images(result):
 ```
 
 ### Minimal Flux Image‑to‑Image (Conceptual)
+Full script (see broader refinement & multi-output pattern in): `examples/pipelines/sdxl-flux-refine.py`
 ```python
 from invokeai_py_client import InvokeAIClient, WorkflowDefinition
 
@@ -103,8 +264,6 @@ for m in wf.map_outputs_to_images(queue_item):
     print("Output node", m['node_id'], "->", m.get('image_names'))
 ```
 
-### Output Mapping Essentials
-`workflow.list_outputs()` returns board-exposed output nodes (ordered subset). After completion, `map_outputs_to_images(queue_item)` yields dictionaries including: `node_id`, `tier`, `image_names`, `board_id`.
 
 ### Execution Modes
 | Mode | When | API |
@@ -113,8 +272,6 @@ for m in wf.map_outputs_to_images(queue_item):
 | Async + Events | Concurrent UI / dashboards | `await submit(subscribe_events=True)` + callbacks |
 | Hybrid Streaming | Need events while blocking | `async for evt in submit_sync_monitor_async()` |
 
-### Drift Detection (Optional)
-Export the current index map; later compare after a new GUI export to classify unchanged / moved / missing / new inputs (see design docs). Useful for regenerating stable automation scripts.
 
 ---
 ## 3. Developer Guide: Architecture & Design
@@ -153,17 +310,6 @@ Filters form inputs whose `field_name == 'board'` and whose node type is output�
 
 ### Validation & Drift
 `validate_inputs()` performs per‑field checks pre‑submission. Drift utilities compare previously exported `jsonpath` + index records to current discovery to surface: unchanged / moved / missing / new.
-
-### Roadmap (Indicative)
-| Area | Direction |
-|------|-----------|
-| Diagnostics | Field detection stats & fallback counts |
-| Strict Mode | Fail fast on unknown field types |
-| Payload Preview | Inspect built submission graph pre-enqueue |
-| Output Mapping | Extend beyond images (latents / masks) |
-| Performance | Cache discovery artifacts |
-
-Out‑of‑scope for now: arbitrary graph mutation, server caching policy shaping, rich visualization layers.
 
 ### Contributing
 1. Review invariants (`context/design/usage-pattern.md`).

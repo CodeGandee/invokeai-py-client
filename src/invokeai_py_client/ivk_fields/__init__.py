@@ -153,6 +153,7 @@ from invokeai_py_client.ivk_fields.enums import (
     IvkColorModeField,
     IvkLiteralField,
     # Constants
+    SchedulerName,
     SCHEDULER_NAMES,
     INTERPOLATION_MODES,
     COLOR_MODES,
@@ -215,6 +216,7 @@ __all__ = [
     "IvkLiteralField",
     
     # Constants
+    "SchedulerName",
     "SCHEDULER_NAMES",
     "INTERPOLATION_MODES",
     "COLOR_MODES",
