@@ -293,7 +293,7 @@ def main() -> int:
     # Synchronize embedded DNN model identifiers with local installation
     try:
         replaced = workflow.sync_dnn_model(by_name=True, by_base=True)
-        print(f"[OK] Synchronized {replaced} model reference(s) with local system")
+        print(f"[OK] Synchronized {len(replaced)} model reference(s) with local system")
     except Exception as e:
         print(f"[ERROR] Model synchronization failed: {e}")
         return 1

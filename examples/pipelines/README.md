@@ -1,0 +1,1 @@
+full aigc pipeline using InvokeAI APIs.

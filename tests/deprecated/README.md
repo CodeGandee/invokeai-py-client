@@ -1,1 +1,0 @@
-consider contents in this dir as outdated and will be removed in future releases.

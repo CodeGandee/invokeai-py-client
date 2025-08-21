@@ -1,0 +1,1 @@
+demonstrate how to use the InvokeAI APIs directly without the InvokeAI client library.

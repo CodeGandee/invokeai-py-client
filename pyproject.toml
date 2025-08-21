@@ -21,7 +21,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
-dependencies = ["scipy>=1.16.1,<2", "opencv-python", "pillow", "requests>=2.32.4,<3", "ipykernel>=6.30.1,<7", "imageio", "python-socketio[asyncio-client]>=5.13.0,<6", "jsonpath-ng>=1.7.0,<2", "rich>=14.1.0,<15", "pluggy"]
+dependencies = ["scipy>=1.16.1,<2", "opencv-python", "pillow", "requests>=2.32.4,<3", "ipykernel>=6.30.1,<7", "python-socketio[asyncio-client]>=5.13.0,<6", "jsonpath-ng>=1.7.0,<2", "rich>=14.1.0,<15", "pluggy", "dynamicprompts>=0.31.0,<0.32", "imageio"]
 
 [project.urls]
 Homepage = "https://github.com/CodeGandee/invokeai-py-client"
