@@ -97,6 +97,7 @@ from invokeai_py_client.ivk_fields import (
 )
 from invokeai_py_client.ivk_fields.models import IvkModelIdentifierField
 from invokeai_py_client.ivk_fields.resources import IvkBoardField, IvkImageField
+from invokeai_py_client.dnn_model.dnn_model_types import BaseDnnModelType, DnnModelType
 
 hookspec = pluggy.HookspecMarker("invokeai_fields")
 hookimpl = pluggy.HookimplMarker("invokeai_fields")
@@ -548,7 +549,13 @@ def _builder_model(value: Any, field_info: dict[str, Any]) -> IvkField[Any]:
             type=value.get("type", "main"),
             submodel_type=value.get("submodel_type"),
         )
-    return IvkModelIdentifierField(key="", hash="", name=str(value) if value else "", base="any", type="main")
+    return IvkModelIdentifierField(
+        key="",
+        hash="",
+        name=str(value) if value else "",
+        base=BaseDnnModelType.Any,
+        type=DnnModelType.Main,
+    )
 
 
 def _builder_board(value: Any, field_info: dict[str, Any]) -> IvkField[Any]:
@@ -559,10 +566,25 @@ def _builder_board(value: Any, field_info: dict[str, Any]) -> IvkField[Any]:
 
 
 def _builder_image(value: Any, field_info: dict[str, Any]) -> IvkField[Any]:
-    """Core image field builder with debug warning if ``image_name`` missing."""
-    if isinstance(value, dict) and "image_name" not in value and FIELD_DEBUG:
-        logger.warning(f"Image field missing image_name: {field_info}")
-    return IvkImageField(value=value)
+    """Core image field builder with proper dict handling.
+
+    Accepts:
+    - dict: {"image_name": "..."} -> extracts string
+    - str or None: passes through
+    - other primitives: coerces to string
+    """
+    if isinstance(value, dict):
+        image_name = value.get("image_name")
+        if image_name is None and FIELD_DEBUG:
+            logger.warning(f"Image field missing image_name key; got {value!r}")
+        return IvkImageField(value=image_name)
+    if value is None or isinstance(value, str):
+        return IvkImageField(value=value)
+    # Last‑resort coercion to keep behavior predictable and avoid builder failure
+    try:
+        return IvkImageField(value=str(value))
+    except Exception:
+        return IvkImageField(value=None)
 
 
 def _builder_enum(value: Any, field_info: dict[str, Any]) -> IvkField[Any]:

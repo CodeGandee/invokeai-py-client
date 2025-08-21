@@ -102,6 +102,7 @@ from invokeai_py_client.ivk_fields import (
     IvkIntegerField,
     IvkFloatField,
     IvkBoardField,
+    IvkImageField,
 )
 from invokeai_py_client.ivk_fields.models import IvkModelIdentifierField  # type: ignore
 from invokeai_py_client.workflow.workflow_handle import OutputMapping  # type: ignore
@@ -313,8 +314,8 @@ field_model: IvkModelIdentifierField = workflow_handle.get_input_value(IDX_MODEL
 assert isinstance(field_model, IvkModelIdentifierField), f"IDX_MODEL expected IvkModelIdentifierField, got {type(field_model)}"
 
 # Image field
-field_image: IvkStringField = workflow_handle.get_input_value(IDX_IMAGE)  # type: ignore[assignment]
-assert isinstance(field_image, IvkStringField), f"IDX_IMAGE expected IvkStringField, got {type(field_image)}"
+field_image: IvkImageField = workflow_handle.get_input_value(IDX_IMAGE)  # type: ignore[assignment]
+assert isinstance(field_image, IvkImageField), f"IDX_IMAGE expected IvkImageField, got {type(field_image)}"
 field_image.value = uploaded_name  # Set immediately after retrieval
 
 # T5 encoder field
