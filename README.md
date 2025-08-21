@@ -1,209 +1,181 @@
 # InvokeAI Python Client
 
-Typed Python client for interacting with an InvokeAI server (selected REST endpoints + optional Socket.IO events). It bridges GUI‑authored workflow definitions and programmatic automation: load an exported workflow JSON, inspect ordered user‑configurable inputs (derived purely from the workflow `form` tree), set values, submit, and monitor progress.
+> A typed Python client that turns GUI‑authored InvokeAI workflow JSON files into programmable, reproducible automation scripts.
 
-This README targets two audiences:
-- Users: How to load, configure, and run workflows (usage pattern & quick start).
-- Developers / Contributors: Design invariants, architecture layers, extensibility model.
-
-NOTE: Earlier drafts referenced direct JSONPath patching. The current design treats the workflow JSON as an opaque artifact: we perform value‑only substitutions for discovered inputs and retain literals even if also supplied by edges (mirrors GUI behavior). Stored JSONPath strings now primarily support drift detection tooling rather than runtime mutation logic.
+The library discovers ordered user‑configurable inputs directly from a workflow's `form` tree, lets you assign values with strong typing, submits jobs (sync / async / streaming), and maps declared output nodes back to produced image filenames.
 
 ---
-## ✨ Core Domains
-1. Workflows – load exported GUI workflow JSON, list & set inputs, submit (sync/async/stream), map outputs to images.
-2. Boards & Images – enumerate/create boards, upload images, associate outputs.
-3. DNN Models – discover installed models (v2 endpoints) and bind them to workflow model fields.
+## 1. Introduction, Scope & Audience
+
+### What This Is
+Focused, typed access to a subset of InvokeAI capabilities: loading exported workflow JSON, enumerating & setting form inputs, submitting executions, tracking progress, managing boards/images, resolving models, and mapping outputs.
+
+### Scope (Core Domains)
+1. Workflows – load, list ordered inputs, set, submit (sync/async/stream), map outputs.
+2. Boards & Images – list/create, upload, associate outputs.
+3. DNN Models – discover & bind to model identifier fields.
+
+Out‑of‑scope (current): arbitrary graph mutation, full REST surface parity, subgraph re‑execution, advanced visualization.
+
+### Intended Users
+- **Automation / Power Users**: Script reproducible runs built from GUI workflows.
+- **Tooling Authors**: Build higher‑level CLIs or dashboards on top of stable input ordering & output mapping.
+- **Contributors**: Extend field detection or repository behaviors without destabilizing public APIs.
+
+### Design Principles (Condensed)
+- Treat exported workflow JSON as immutable source of truth (value‑only substitution on submit).
+- Stable, depth‑first index ordering of form inputs (ignore legacy `exposedFields`).
+- Strongly typed `Ivk*Field` objects; open/closed detection registry (no giant if/elif chains in user code).
+- Minimal state; explicit operations (no hidden mutation of the original definition).
 
 ---
-## 🎯 Goals (High-Level)
-- Treat exported GUI workflow JSON as the unmodified source of truth.
-- Derive stable, index‑oriented public inputs from the `form` element tree (ignore `exposedFields`).
-- Provide strongly typed but ergonomic field objects (`Ivk*Field`) with validation.
-- Support sync, async, and streaming submission patterns.
-- Offer an open/closed field type system (extensible detection & construction rules without editing core branches).
-- Keep core library state light; no heavy local persistence.
+## 2. User Guide: Usage Pattern & Examples
 
-Non‑Goals (for now): full coverage of every InvokeAI endpoint, advanced graph editing, subgraph re‑execution, or rich visualization.
+### High‑Level Flow
+1. Export a workflow from InvokeAI GUI.
+2. Load JSON → `WorkflowDefinition`.
+3. Create handle via `client.workflow_repo.create_workflow(def)`.
+4. Enumerate ordered inputs (`list_inputs()`) and note indices.
+5. Set `.value` on the retrieved field objects you care about.
+6. Submit (`submit_sync()` / `await submit(...)`).
+7. Wait for completion & map outputs (`map_outputs_to_images`).
 
----
-## 🧭 Usage Pattern (User Story)
-1. Export a workflow JSON from the InvokeAI GUI.
-2. Load it into a `WorkflowDefinition` and create a `WorkflowHandle` via the client repository.
-3. Enumerate inputs (ordered, stable) and view labels & types.
-4. Set values (single assignment helpers; bulk update is optional and not required for core flow).
-5. Submit; the client builds an API graph by substituting only those input values (no key additions/removals).
-6. Poll or stream execution events; optionally map declared output nodes to produced image filenames.
-7. (Optional) Export an input index map for future drift detection when the definition changes.
+Invariants: only form‑derived inputs are public; unchanged literals stay untouched; indices shift only if the GUI form structure changes (containers/fields add/remove/reorder).
 
-Invariants (summary): structure preserved; only form-derived inputs are user‑visible; field concrete type locked after creation; retain literals even when edge-connected; adding new field kinds should not require modifying existing conditionals.
-
----
-## 🚀 Quick Start
+### Minimal SDXL Text‑to‑Image
 ```python
 from invokeai_py_client import InvokeAIClient
 from invokeai_py_client.workflow import WorkflowDefinition
 
 client = InvokeAIClient.from_url("http://localhost:9090")
-wf_def = WorkflowDefinition.from_file("data/workflows/sdxl-text-to-image.json")
-workflow = client.workflow_repo.create_workflow(wf_def)
+wf = client.workflow_repo.create_workflow(
+    WorkflowDefinition.from_file("data/workflows/sdxl-text-to-image.json")
+)
 
-for inp in workflow.list_inputs():
+# Inspect ordered inputs
+for inp in wf.list_inputs():
+    print(f"[{inp.input_index}] {inp.label}")
+
+# Set prompt (assume index 0 from listing) and steps (found by inspection)
+prompt = wf.get_input_value(0)
+if hasattr(prompt, "value"):
+    prompt.value = "A cinematic sunset over snowy mountains"
+
+# Submit & block
+submission = wf.submit_sync()
+result = wf.wait_for_completion_sync(timeout=180)
+print("Status:", result.get("status"))
+
+# Map output nodes to image names
+for m in wf.map_outputs_to_images(result):
+    print(m["node_id"], m.get("image_names"))
+```
+
+### Minimal Flux Image‑to‑Image (Conceptual)
+```python
+from invokeai_py_client import InvokeAIClient, WorkflowDefinition
+
+client = InvokeAIClient.from_url("http://localhost:9090")
+wf = client.workflow_repo.create_workflow(
+    WorkflowDefinition.from_file("data/workflows/flux-image-to-image.json")
+)
+
+# Assume you already uploaded an image and know its name
+INPUT_IMAGE_NAME = "my_source.png"
+
+for inp in wf.list_inputs():
     print(f"[{inp.input_index}] {inp.label} :: {inp.field_name}")
 
-prompt_field = workflow.get_input_value(0)
-if hasattr(prompt_field, 'value'):
-    prompt_field.value = "A cinematic sunset over mountains"
+# Set model / image / prompts using indices discovered above
+image_field = wf.get_input_value(1)
+if hasattr(image_field, 'value'):
+    image_field.value = INPUT_IMAGE_NAME
 
-submission = workflow.submit_sync()
-queue_item = workflow.wait_for_completion_sync(timeout=120)
-print("Final status:", queue_item.get("status"))
+positive_prompt = wf.get_input_value(5)
+if hasattr(positive_prompt, 'value'):
+    positive_prompt.value = "Futuristic portrait, volumetric lighting"
+
+wf.submit_sync()
+queue_item = wf.wait_for_completion_sync(timeout=240)
+for m in wf.map_outputs_to_images(queue_item):
+    print("Output node", m['node_id'], "->", m.get('image_names'))
 ```
 
-Async streaming example:
-```python
-import asyncio
-from invokeai_py_client import InvokeAIClient
-from invokeai_py_client.workflow import WorkflowDefinition
+### Output Mapping Essentials
+`workflow.list_outputs()` returns board-exposed output nodes (ordered subset). After completion, `map_outputs_to_images(queue_item)` yields dictionaries including: `node_id`, `tier`, `image_names`, `board_id`.
 
-async def main():
-    client = InvokeAIClient.from_url("http://localhost:9090")
-    wf_def = WorkflowDefinition.from_file("data/workflows/sdxl-text-to-image.json")
-    wf = client.workflow_repo.create_workflow(wf_def)
-    field0 = wf.get_input_value(0)
-    if hasattr(field0, 'value'):
-        field0.value = "A watercolor fox in a forest"
+### Execution Modes
+| Mode | When | API |
+|------|------|-----|
+| Blocking | Simple scripts | `submit_sync()` + `wait_for_completion_sync()` |
+| Async + Events | Concurrent UI / dashboards | `await submit(subscribe_events=True)` + callbacks |
+| Hybrid Streaming | Need events while blocking | `async for evt in submit_sync_monitor_async()` |
 
-    def on_progress(evt):
-        p = evt.get('progress')
-        if p is not None:
-            print(f"Progress: {p*100:.0f}%")
-
-    await wf.submit(subscribe_events=True, on_invocation_progress=on_progress)
-    result = await wf.wait_for_completion(timeout=90)
-    print("Completed with status:", result.get("status"))
-
-asyncio.run(main())
-```
+### Drift Detection (Optional)
+Export the current index map; later compare after a new GUI export to classify unchanged / moved / missing / new inputs (see design docs). Useful for regenerating stable automation scripts.
 
 ---
-## 🔑 Field Type System (Extensibility Overview)
-Field detection & construction use a plugin registry (rules + builders). New kinds can be introduced externally without editing core `if/elif` blocks:
-- Detection: prioritized predicates over (node_type, field_name, metadata).
-- Construction: builder functions producing a concrete `IvkField` instance.
-Fallback is a generic string field (unless a future strict mode is enabled). End users just interact with typed fields surfaced by the handle.
+## 3. Developer Guide: Architecture & Design
 
-Design doc: `context/design/usage-pattern.md` (conceptual invariants & journey).
+### Module Overview
+| Module / Layer | Purpose |
+|----------------|---------|
+| `client.py` | Connection + HTTP plumbing + repository access. |
+| `workflow/` | Definition loading, input discovery, submission building, output mapping. |
+| `ivk_fields/` | Typed field classes + model/board/image resource wrappers. |
+| `board/` | Board repository & image download/upload helpers. |
+| `models/` (DNN) | Model metadata lookup & synchronization helpers. |
 
----
-## 📚 Key Terminology (summary)
-Full glossary in `context/design/terminology.md`.
+### Discovery & Field System
+Depth‑first traversal of the workflow `form` tree produces an ordered list of `IvkWorkflowInput` objects. Each holds: `input_index`, `label`, `field_name`, `node_name`, concrete `field` (an `Ivk*Field`). Detection is plugin driven: predicate → builder. New field types can register externally (open/closed principle).
 
-| Term | Meaning |
-|------|---------|
-| InvokeAI (`invokeai`) | The running inference backend. |
-| Client API (`client-api`) | This Python wrapper project. |
-| InvokeAI Client (`InvokeAIClient`) | Connection façade exposing repositories. |
-| Workflow Definition (`WorkflowDefinition`) | Preserved raw JSON + light helpers. |
-| Workflow Handle (`WorkflowHandle`) | Mutable execution state & submission logic. |
-| Workflow Inputs (`IvkWorkflowInput`) | Public parameters derived from `form`. |
-| Field Types (`Ivk*Field`) | Typed wrappers for InvokeAI values/resources. |
+### Submission Pipeline
+1. Copy raw workflow JSON. 2. Substitute only values that users changed (by visiting discovered inputs). 3. Post resulting graph to enqueue endpoint. No structural edits: edges/nodes remain intact.
 
-Field concrete class is locked after discovery—replacement must use the exact same class.
+### Output Mapping
+Filters form inputs whose `field_name == 'board'` and whose node type is output‑capable (implements board persistence). After completion, correlates session/queue data to produce image filename lists per node (tiered results vs intermediates if applicable).
 
----
-## ✅ Current Feature Set
-- Workflows: definition loading, ordered input discovery, single & optional bulk value updates, submission (sync/async/stream), progress & completion helpers.
-- Boards: list/create/update/delete, upload images, uncategorized fallback.
-- DNN Models: enumerate & filter, single lookup, rich taxonomy.
-- Field System: typed primitives (string/int/float/bool/enum) + resources (model/board/image) + extensible plugin detection.
-- Output Mapping: best‑effort image filename resolution for declared output nodes.
-- Event Streaming: Socket.IO callbacks for invocation lifecycle.
-- Validation: pre‑submission input validation & basic drift tooling.
+### Key Invariants
+- Ordered inputs reflect GUI form semantics, not node graph topological order.
+- Field concrete class is stable post‑discovery (no replacement with different runtime type).
+- Literals remain even if an edge also supplies a value (mirrors GUI precedence model).
+- No hidden mutation of original workflow definition object.
 
----
-## 🧪 Examples
-See runnable scripts in `examples/` and template workflows in `data/workflows/`.
+### Extensibility Points
+| Area | Mechanism |
+|------|-----------|
+| Field detection | Register predicate/builder pairs. |
+| Model resolution | `sync_dnn_model` strategies (by name / base). |
+| Output mapping | Extend node capability classification. |
+| Drift tooling | Export & verify input index map JSON. |
 
-### Minimal Conceptual Examples
+### Validation & Drift
+`validate_inputs()` performs per‑field checks pre‑submission. Drift utilities compare previously exported `jsonpath` + index records to current discovery to surface: unchanged / moved / missing / new.
 
-SDXL Text-to-Image (see `examples/pipelines/sdxl-text-to-image.py`):
-1. Load definition: `wf_def = WorkflowDefinition.from_file("data/workflows/sdxl-text-to-image.json")`
-2. Enumerate inputs: locate prompt, negative prompt, width, height, steps, cfg, scheduler, board.
-3. Set a few `.value` attributes (prompt, steps, cfg, scheduler, board id).
-4. `workflow.submit_sync()` then `wait_for_completion_sync()`.
-5. Map outputs: iterate `workflow.map_outputs_to_images(queue_item)`.
-
-Flux Image-to-Image (see `examples/pipelines/flux-image-to-image.py`):
-1. Upload or reference an existing image (board repo or upload helper).
-2. Load flux i2i workflow JSON & create handle.
-3. Enumerate inputs; note fixed indices (e.g., model, image name, encoder models, prompts, steps, denoise start, output board).
-4. Assign source image name & prompts; pick steps & denoise strength.
-5. Submit & wait; map outputs the same way.
-6. (Optional) List boards first to pick a destination board id for the output board field.
-
-Core invariants in both flows: inputs are ordered form fields; you only set `.value` on retrieved field objects; submission builds a value‑only substituted copy; output mapping inspects queue results to link output-capable nodes to produced image filenames.
-
-### Example Workflow Artifacts
-| Use Case | Workflow JSON | Example Populated Payload |
-|----------|---------------|---------------------------|
-| SDXL Flux Refine | `data/workflows/sdxl-flux-refine.json` | `data/api-calls/call-wf-sdxl-flux-refine.json` |
-| SDXL Text To Image | `data/workflows/sdxl-text-to-image.json` | `data/api-calls/call-wf-sdxl-text-to-image.json` |
-| FLUX Image To Image | `data/workflows/flux-image-to-image.json` | `data/api-calls/call-wf-flux-image-to-image.json` |
-
----
-## 🚦 Execution Patterns
-| Pattern | When to Use | API |
-|---------|-------------|-----|
-| Blocking | Simple scripts / CLI | `submit_sync()` + `wait_for_completion_sync()` |
-| Async + Events | Dashboards / concurrency | `await submit(subscribe_events=True)` + callbacks |
-| Hybrid Streaming | Need simplicity + events | `async for evt in submit_sync_monitor_async()` |
-
----
-## 🔍 Validation & Drift
-`validate_inputs()` reports indexed errors before submission. Drift utilities export the current index/label/path mapping and later compare a new workflow version to classify inputs as unchanged / moved / missing / new.
-
----
-## 🧱 Architectural Summary
-| Layer | Responsibility |
-|-------|----------------|
-| Definition Loader | Parse JSON, retain raw data. |
-| Input Discovery | Depth‑first traversal of `form` → ordered public inputs. |
-| Field System | Typed validation + API serialization; open/closed extension model. |
-| Submission Builder | Value‑only substitution into a copy of raw JSON; produce queue graph. |
-| Execution Monitor | Poll or stream progress (event handler registration). |
-| Output Mapper | Tiered image filename resolution. |
-| Drift Tools | Export & verify index mapping across versions. |
-
-See `context/design/usage-pattern.md` for conceptual narrative & invariants.
-
----
-## 🗺️ Roadmap (Indicative)
+### Roadmap (Indicative)
 | Area | Direction |
 |------|-----------|
-| Diagnostics | Optional stats on field detection & fallback occurrences |
-| Strict Mode | Opt‑in enforcement for unknown field types (early failure) |
-| Payload Introspection | Public helper to preview submission graph without enqueueing |
+| Diagnostics | Field detection stats & fallback counts |
+| Strict Mode | Fail fast on unknown field types |
+| Payload Preview | Inspect built submission graph pre-enqueue |
 | Output Mapping | Extend beyond images (latents / masks) |
-| Performance | Cache immutable per‑workflow discovery artifacts |
+| Performance | Cache discovery artifacts |
 
-Out‑of‑Scope: arbitrary graph mutation, server caching policy shaping, rich visualization.
+Out‑of‑scope for now: arbitrary graph mutation, server caching policy shaping, rich visualization layers.
 
----
-## 🤝 Contributing
-1. Review invariants in `context/design/usage-pattern.md` before proposing changes.
-2. Preserve backward compatibility of public method signatures when feasible.
-3. Add or update tests when altering discovery, submission building, or field behaviors.
-4. Keep README changes in sync with design doc evolution.
+### Contributing
+1. Review invariants (`context/design/usage-pattern.md`).
+2. Keep public method signatures stable when feasible.
+3. Add/adjust tests for discovery, submission, mapping, or field changes.
+4. Sync docs with behavior changes (README + design notes).
 
----
-## 🧪 Testing
+### Testing
 ```bash
 pixi run test
 ```
 
----
-## 📄 License
+### License
 See [LICENSE](LICENSE).
 
 ---
-If something here diverges from actual behavior, open an issue or PR—docs and code should evolve together.
+If something diverges from behavior, open an issue or PR—docs and code should evolve together.
