@@ -183,7 +183,8 @@ class BoardHandle:
         self,
         file_path: str | Path,
         is_intermediate: bool = False,
-        image_category: ImageCategory = ImageCategory.GENERAL,
+    # Default to USER category so uploads appear under the GUI's Assets tab
+    image_category: ImageCategory = ImageCategory.USER,
         session_id: str | None = None,
     ) -> IvkImage:
         """
@@ -196,7 +197,7 @@ class BoardHandle:
         is_intermediate : bool
             Whether this is an intermediate image.
         image_category : ImageCategory
-            The category of the image.
+            The category of the image. Defaults to ImageCategory.USER (Assets tab).
         session_id : str, optional
             Session ID to associate with the upload.
 
@@ -273,7 +274,8 @@ class BoardHandle:
         image_data: bytes,
         filename: str | None = None,
         is_intermediate: bool = False,
-        image_category: ImageCategory = ImageCategory.GENERAL,
+    # Default to USER category so uploads appear under the GUI's Assets tab
+    image_category: ImageCategory = ImageCategory.USER,
         session_id: str | None = None,
     ) -> IvkImage:
         """
@@ -288,7 +290,7 @@ class BoardHandle:
         is_intermediate : bool
             Whether this is an intermediate image.
         image_category : ImageCategory
-            The category of the image.
+            The category of the image. Defaults to ImageCategory.USER (Assets tab).
         session_id : str, optional
             Session ID to associate with the upload.
 
