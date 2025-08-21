@@ -1,8 +1,13 @@
 #!/usr/bin/env python
-"""Minimal FLUX image-to-image example.
+"""Minimal FLUX image-to-image example (sync).
 
-This script executes a FLUX image-to-image workflow. Below is an ASCII
-representation of the current GUI form layout (fields in depth‑first order):
+This mirrors the style of the SDXL example: explicit indexed input mapping,
+inline assignment, optional dynamic board selection via a form-exposed
+``board`` input, rich console tables, and an in-memory ``final_image``
+variable for interactive users.
+
+Below is an ASCII representation of the current GUI form layout
+(fields in depth‑first order / pre-order traversal):
 
     +------------------------------------------------------------------+
     |                      FLUX Image-to-Image                         |
@@ -60,13 +65,22 @@ representation of the current GUI form layout (fields in depth‑first order):
     |                                                                  |
     +------------------------------------------------------------------+
 
-Intentionally tiny: no defensive error handling, no model lookup heuristics.
 Steps:
     1. Pick a sample PNG from data/images
-    2. Upload to the uncategorized board ('none')
-    3. Load the exported workflow JSON
-    4. Assign a random positive / fixed negative prompt + image input
-    5. Submit synchronously and wait for completion
+    2. Upload to target board (default: uncategorized 'none')
+    3. Load exported workflow JSON
+    4. Sync model identifier fields (resolve hashes/keys)
+    5. Enumerate inputs (deterministic pre-order form traversal)
+    6. Assign prompts, image, sampler params & board
+    7. Submit synchronously & wait for completion
+    8. Map outputs & optionally save first image
+
+Board Handling:
+    * The board id is now supplied ONLY via the workflow's exposed board field.
+    * You may set ``BOARD_NAME`` (GUI display name, case-insensitive) to choose
+        a specific board. Names are not guaranteed unique; the FIRST match wins.
+    * If ``BOARD_NAME`` is None or no match is found, falls back to 'none'.
+    * We list all boards (id vs GUI name) for clarity before submission.
 
 Run (InvokeAI at default URL):
   pixi run -e dev python examples/pipelines/flux-image-to-image.py
@@ -118,7 +132,8 @@ final_image: Image.Image | None = None  # Will hold a PIL.Image.Image after succ
 INVOKEAI_BASE_URL = "http://127.0.0.1:9090"  # Running InvokeAI server
 IMAGE_DIR = Path("data/images")              # Input images folder
 WORKFLOW_PATH = Path("data/workflows/flux-image-to-image.json")  # Exported workflow JSON
-BOARD_ID = "none"                            # 'none' => uncategorized board
+BOARD_NAME: str | None = None                # GUI board name to target (None => uncategorized)
+DEFAULT_UNCATEGORIZED_ID = "none"           # Stable uncategorized board id
 SAMPLE_IMAGE_FILENAME = "8079126e-6cb0-4d47-956a-0eec6b71c600.png"
 
 #############################################
@@ -159,11 +174,48 @@ console: Console = Console()
 # Initialize the InvokeAI client, connect to InvokeAI server
 client: InvokeAIClient = InvokeAIClient.from_url(INVOKEAI_BASE_URL)
 
-# 1. Pick sample & upload image to 'none' board
+# 1. Pick sample image file
 chosen_image_path: Path = IMAGE_DIR / SAMPLE_IMAGE_FILENAME
 chosen_image_bytes: bytes = chosen_image_path.read_bytes()
-# Obtain handle (repository normalizes 'none')
-board_handle: BoardHandle = client.board_repo.get_board_handle(BOARD_ID)
+
+# Enumerate boards (id vs GUI name) and resolve board id by name (optional)
+try:
+    boards = client.board_repo.list_boards(include_uncategorized=True)
+except Exception as _e:  # pragma: no cover
+    boards = []
+    print(f"[WARN] Could not list boards: {_e}")
+
+def _board_table():
+    tbl = Table(show_header=True, header_style="bold cyan", box=box.SIMPLE)
+    tbl.add_column("API Board ID", overflow="fold")
+    tbl.add_column("Board Name (GUI)")
+    tbl.add_column("Images", justify="right")
+    tbl.add_column("Uncat?", justify="center")
+    for b in boards:
+        bid = getattr(b, 'board_id', '?')
+        bname = getattr(b, 'board_name', '') or ''
+        count = str(getattr(b, 'image_count', ''))
+        is_uncat = 'Y' if getattr(b, 'is_uncategorized', lambda: False)() else ''
+        tbl.add_row(bid, bname, count, is_uncat)
+    return tbl
+
+console.rule("Available Boards (API id vs GUI name)")
+console.print(_board_table())
+
+resolved_board_id = DEFAULT_UNCATEGORIZED_ID
+if BOARD_NAME and boards:
+    target_lower = BOARD_NAME.lower()
+    match = next((b for b in boards if getattr(b, 'board_name', '').lower() == target_lower), None)
+    if match:
+        resolved_board_id = getattr(match, 'board_id', DEFAULT_UNCATEGORIZED_ID)
+        console.print(f"[green]Using board by name[/green]: '{BOARD_NAME}' (id={resolved_board_id})")
+    else:
+        console.print(f"[yellow]Board name '{BOARD_NAME}' not found; using '{resolved_board_id}' (uncategorized).[/yellow]")
+else:
+    console.print(f"[cyan]Using uncategorized board id[/cyan]: {resolved_board_id}")
+
+# Upload to resolved board
+board_handle: BoardHandle = client.board_repo.get_board_handle(resolved_board_id)
 uploaded_image: IvkImage = board_handle.upload_image_data(image_data=chosen_image_bytes, filename=chosen_image_path.name)
 
 # 2. Load workflow definition & create handle
@@ -234,15 +286,9 @@ if not exposed_outputs:
     console.print("[bold yellow]Warning:[/bold yellow] This workflow exposes no output board fields in the form.\n"
                   "Output mapping will return an empty list. Ensure the decode/save node's board field is form-exposed if you want automatic mapping.")
 
-# Depth-first indices (stable unless form structure changes)
-# ---------------------------------------------------------------------------
-# The GUI form (see ASCII header above) is traversed in a pre-order depth-first
-# walk of its container tree. Each 'node-field-*' element encountered becomes
-# the next workflow input. The constants below are the resulting indices for
-# the current workflow JSON. If you add/remove/reorder form elements in the
-# workflow definition, all subsequent indices after the change will shift.
-# Treat these as a snapshot tied to this workflow version.
-# ---------------------------------------------------------------------------
+# Depth-first indices (stable unless form structure changes). We still expose
+# constants for currently-exported workflow revision but dynamically locate the
+# board field to avoid silent drift if ordering changes.
 IDX_MODEL = 0
 IDX_IMAGE = 1
 IDX_T5 = 2
@@ -252,7 +298,13 @@ IDX_POS_PROMPT = 5
 IDX_NEG_PROMPT = 6
 IDX_STEPS = 7
 IDX_DENOISE_START = 8
-IDX_OUTPUT_BOARD = 9  # Board assignment for output (decode/save) node
+
+# Dynamic detection of board input index (field name == 'board')
+BOARD_INPUT_INDEX: int | None = next((i.input_index for i in inputs if i.field_name == 'board'), None)
+if BOARD_INPUT_INDEX is None:
+    console.print("[yellow]No 'board' input detected; output will be uncategorized.[/yellow]")
+else:
+    console.print(f"[green]Detected board input at index {BOARD_INPUT_INDEX}.[/green]")
 
 positive_prompt: str = POSITIVE_PROMPT
 negative_prompt: str = NEGATIVE_PROMPT_DEFAULT
@@ -303,11 +355,13 @@ field_denoise_start: IvkFloatField = workflow_handle.get_input_value(IDX_DENOISE
 assert isinstance(field_denoise_start, IvkFloatField), f"IDX_DENOISE_START expected IvkFloatField, got {type(field_denoise_start)}"
 field_denoise_start.value = 1 - NOISE_RATIO  # type: ignore[assignment]  # Set immediately
 
-# Output board field
-field_output_board: Union[IvkStringField, IvkBoardField] = workflow_handle.get_input_value(IDX_OUTPUT_BOARD)  # type: ignore[assignment]
-assert isinstance(field_output_board, (IvkStringField, IvkBoardField)), f"IDX_OUTPUT_BOARD unexpected type {type(field_output_board)}"
-if hasattr(field_output_board, 'value'):
-    field_output_board.value = BOARD_ID  # type: ignore[assignment]  # Set immediately
+if BOARD_INPUT_INDEX is not None:
+    field_output_board: Union[IvkStringField, IvkBoardField] = workflow_handle.get_input_value(BOARD_INPUT_INDEX)  # type: ignore[assignment]
+    assert isinstance(field_output_board, (IvkStringField, IvkBoardField)), f"BOARD_INPUT_INDEX unexpected type {type(field_output_board)}"
+    if hasattr(field_output_board, 'value'):
+        field_output_board.value = resolved_board_id  # type: ignore[assignment]
+else:
+    field_output_board = None  # type: ignore
 
 def log_field_set(idx: int, field_obj: object) -> None:
     """Log the effective value of a workflow input previously set.
@@ -328,7 +382,8 @@ log_field_set(IDX_POS_PROMPT, field_pos_prompt)
 log_field_set(IDX_NEG_PROMPT, field_neg_prompt)
 log_field_set(IDX_STEPS, field_steps)
 log_field_set(IDX_DENOISE_START, field_denoise_start)
-log_field_set(IDX_OUTPUT_BOARD, field_output_board)
+if field_output_board is not None and BOARD_INPUT_INDEX is not None:
+    log_field_set(BOARD_INPUT_INDEX, field_output_board)
 
 console.rule("Effective Configuration")
 config_tbl = Table(show_header=False, box=box.MINIMAL_DOUBLE_HEAD)
@@ -336,6 +391,7 @@ config_tbl.add_row("POSITIVE_PROMPT", positive_prompt)
 config_tbl.add_row("NEGATIVE_PROMPT", negative_prompt)
 config_tbl.add_row("STEPS", str(STEPS))
 config_tbl.add_row("DENOISING_START", f"{1 - NOISE_RATIO} (derived from NOISE_RATIO={NOISE_RATIO})")
+config_tbl.add_row("BOARD_ID (input)", resolved_board_id if BOARD_INPUT_INDEX is not None else f"(no board field) {resolved_board_id}")
 console.print(config_tbl)
 
 ############################
@@ -344,7 +400,7 @@ console.print(config_tbl)
 # Submit the prepared workflow graph to the server queue (sync). Returns submission
 # metadata: batch_id, list of item_ids, enqueued count, and session_id used for
 # later status tracking/event subscription.
-submission_result: dict[str, Any] = workflow_handle.submit_sync()
+submission_result: dict[str, Any] = workflow_handle.submit_sync()  # board chosen via input field
 
 # Poll the queue until the single enqueued item reaches a terminal state.
 # Always returns the queue item dict (status, timings, any error info). We separate
