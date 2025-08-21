@@ -230,8 +230,15 @@ class BoardHandle:
             params = {
                 "image_category": image_category.value,
                 "is_intermediate": is_intermediate,
-                "board_id": self.board_id,
             }
+            # IMPORTANT: The backend treats "uncategorized" images as those with
+            # no board association (board_id omitted). Passing the sentinel 'none'
+            # causes an (ignored) failure when attempting to associate with a
+            # non-existent board record. We therefore omit board_id when the
+            # handle refers to the uncategorized pseudo-board so the image shows
+            # up in the GUI's Uncategorized > Images view.
+            if self.board_id not in ("none", "", None):
+                params["board_id"] = self.board_id
 
             if session_id:
                 params["session_id"] = session_id
@@ -313,8 +320,9 @@ class BoardHandle:
         params = {
             "image_category": image_category.value,
             "is_intermediate": is_intermediate,
-            "board_id": self.board_id,
         }
+        if self.board_id not in ("none", "", None):
+            params["board_id"] = self.board_id
 
         if session_id:
             params["session_id"] = session_id
