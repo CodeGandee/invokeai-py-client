@@ -48,14 +48,13 @@ wf_def = WorkflowDefinition.from_file("data/workflows/sdxl-text-to-image.json")
 workflow = client.workflow_repo.create_workflow(wf_def)
 
 for inp in workflow.list_inputs():
-    print(f"[{inp.input_index}] {inp.label} -> {type(inp.field).__name__}")
+    print(f"[{inp.input_index}] {inp.label} :: {inp.field_name}")
 
 prompt_field = workflow.get_input_value(0)
 if hasattr(prompt_field, 'value'):
     prompt_field.value = "A cinematic sunset over mountains"
 
-submission = workflow.submit_sync(board_id="my-board")
-print("Submitted batch", submission["batch_id"], "session", submission["session_id"])
+submission = workflow.submit_sync()
 queue_item = workflow.wait_for_completion_sync(timeout=120)
 print("Final status:", queue_item.get("status"))
 ```
@@ -124,6 +123,25 @@ Field concrete class is locked after discovery—replacement must use the exact 
 ---
 ## 🧪 Examples
 See runnable scripts in `examples/` and template workflows in `data/workflows/`.
+
+### Minimal Conceptual Examples
+
+SDXL Text-to-Image (see `examples/pipelines/sdxl-text-to-image.py`):
+1. Load definition: `wf_def = WorkflowDefinition.from_file("data/workflows/sdxl-text-to-image.json")`
+2. Enumerate inputs: locate prompt, negative prompt, width, height, steps, cfg, scheduler, board.
+3. Set a few `.value` attributes (prompt, steps, cfg, scheduler, board id).
+4. `workflow.submit_sync()` then `wait_for_completion_sync()`.
+5. Map outputs: iterate `workflow.map_outputs_to_images(queue_item)`.
+
+Flux Image-to-Image (see `examples/pipelines/flux-image-to-image.py`):
+1. Upload or reference an existing image (board repo or upload helper).
+2. Load flux i2i workflow JSON & create handle.
+3. Enumerate inputs; note fixed indices (e.g., model, image name, encoder models, prompts, steps, denoise start, output board).
+4. Assign source image name & prompts; pick steps & denoise strength.
+5. Submit & wait; map outputs the same way.
+6. (Optional) List boards first to pick a destination board id for the output board field.
+
+Core invariants in both flows: inputs are ordered form fields; you only set `.value` on retrieved field objects; submission builds a value‑only substituted copy; output mapping inspects queue results to link output-capable nodes to produced image filenames.
 
 ### Example Workflow Artifacts
 | Use Case | Workflow JSON | Example Populated Payload |
