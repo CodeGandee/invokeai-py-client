@@ -298,13 +298,7 @@ IDX_POS_PROMPT = 5
 IDX_NEG_PROMPT = 6
 IDX_STEPS = 7
 IDX_DENOISE_START = 8
-
-# Dynamic detection of board input index (field name == 'board')
-BOARD_INPUT_INDEX: int | None = next((i.input_index for i in inputs if i.field_name == 'board'), None)
-if BOARD_INPUT_INDEX is None:
-    console.print("[yellow]No 'board' input detected; output will be uncategorized.[/yellow]")
-else:
-    console.print(f"[green]Detected board input at index {BOARD_INPUT_INDEX}.[/green]")
+IDX_OUTPUT_BOARD = 9  # Prior knowledge: board field consistently exported at index 9 for this workflow version
 
 positive_prompt: str = POSITIVE_PROMPT
 negative_prompt: str = NEGATIVE_PROMPT_DEFAULT
@@ -355,13 +349,10 @@ field_denoise_start: IvkFloatField = workflow_handle.get_input_value(IDX_DENOISE
 assert isinstance(field_denoise_start, IvkFloatField), f"IDX_DENOISE_START expected IvkFloatField, got {type(field_denoise_start)}"
 field_denoise_start.value = 1 - NOISE_RATIO  # type: ignore[assignment]  # Set immediately
 
-if BOARD_INPUT_INDEX is not None:
-    field_output_board: Union[IvkStringField, IvkBoardField] = workflow_handle.get_input_value(BOARD_INPUT_INDEX)  # type: ignore[assignment]
-    assert isinstance(field_output_board, (IvkStringField, IvkBoardField)), f"BOARD_INPUT_INDEX unexpected type {type(field_output_board)}"
-    if hasattr(field_output_board, 'value'):
-        field_output_board.value = resolved_board_id  # type: ignore[assignment]
-else:
-    field_output_board = None  # type: ignore
+field_output_board: Union[IvkStringField, IvkBoardField] = workflow_handle.get_input_value(IDX_OUTPUT_BOARD)  # type: ignore[assignment]
+assert isinstance(field_output_board, (IvkStringField, IvkBoardField)), f"IDX_OUTPUT_BOARD unexpected type {type(field_output_board)}"
+if hasattr(field_output_board, 'value'):
+    field_output_board.value = resolved_board_id  # type: ignore[assignment]
 
 def log_field_set(idx: int, field_obj: object) -> None:
     """Log the effective value of a workflow input previously set.
@@ -382,8 +373,7 @@ log_field_set(IDX_POS_PROMPT, field_pos_prompt)
 log_field_set(IDX_NEG_PROMPT, field_neg_prompt)
 log_field_set(IDX_STEPS, field_steps)
 log_field_set(IDX_DENOISE_START, field_denoise_start)
-if field_output_board is not None and BOARD_INPUT_INDEX is not None:
-    log_field_set(BOARD_INPUT_INDEX, field_output_board)
+log_field_set(IDX_OUTPUT_BOARD, field_output_board)
 
 console.rule("Effective Configuration")
 config_tbl = Table(show_header=False, box=box.MINIMAL_DOUBLE_HEAD)
@@ -391,7 +381,7 @@ config_tbl.add_row("POSITIVE_PROMPT", positive_prompt)
 config_tbl.add_row("NEGATIVE_PROMPT", negative_prompt)
 config_tbl.add_row("STEPS", str(STEPS))
 config_tbl.add_row("DENOISING_START", f"{1 - NOISE_RATIO} (derived from NOISE_RATIO={NOISE_RATIO})")
-config_tbl.add_row("BOARD_ID (input)", resolved_board_id if BOARD_INPUT_INDEX is not None else f"(no board field) {resolved_board_id}")
+config_tbl.add_row("BOARD_ID (input)", resolved_board_id)
 console.print(config_tbl)
 
 ############################
