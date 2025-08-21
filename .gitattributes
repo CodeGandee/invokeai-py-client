@@ -1,2 +1,59 @@
-# SCM syntax highlighting & preventing 3-way merges
-pixi.lock merge=binary linguist-language=YAML linguist-generated=true
+######################################################################
+# Cross-platform line ending & diff/merge behavior
+#
+# Goal: Ensure consistent LF line endings for all text sources across
+# macOS/Linux/Windows to avoid noisy CRLF <-> LF diffs, while allowing
+# Windows-focused script types (e.g. .ps1, .bat) to retain CRLF where
+# that improves local editing ergonomics.
+#
+# After updating this file, run the following once locally to
+# normalize existing files (safe, only updates index if needed):
+#   git add --renormalize .
+#   git commit -m "chore: normalize line endings"
+######################################################################
+
+# Auto-detect text, normalize to LF in repo
+* text=auto eol=lf
+
+# Explicit common text types (makes intent crystal-clear)
+*.py      text eol=lf
+*.pyi     text eol=lf
+*.toml    text eol=lf
+*.json    text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.md      text eol=lf
+*.rst     text eol=lf
+*.ini     text eol=lf
+*.cfg     text eol=lf
+*.txt     text eol=lf
+*.sh      text eol=lf
+
+# Windows-only / primarily Windows convenience scripts may keep CRLF
+*.bat     text eol=crlf
+*.cmd     text eol=crlf
+*.ps1     text eol=crlf
+
+# Lock & data files (treat as text but keep LF)
+pixi.lock text eol=lf merge=binary linguist-language=YAML linguist-generated=true
+
+# Images & binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.bmp binary
+*.webp binary
+*.tiff binary
+*.otf binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.zip binary
+*.gz binary
+*.7z binary
+*.pdf binary
+
+# Do not alter vendored reference code’s own attributes (kept separate)
+
