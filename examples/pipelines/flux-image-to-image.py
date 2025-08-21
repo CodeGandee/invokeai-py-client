@@ -1,59 +1,64 @@
 #!/usr/bin/env python
 """Minimal FLUX image-to-image example.
 
-This script executes a FLUX image-to-image workflow. Below is a map of the
-settable inputs discovered from the workflow's form layout.
+This script executes a FLUX image-to-image workflow. Below is an ASCII
+representation of the current GUI form layout (fields in depth‑first order):
 
-  +--------------------------------------------------+
-  |               FLUX Image-to-Image                |
-  +--------------------------------------------------+
-  |                                                  |
-  |  Model (Dropdown)                                |
-  |  +--------------------------------------------+  |
-  |  | flux1-schnell                              |  |
-  |  +--------------------------------------------+  |
-  |                                                  |
-  |  Image (Upload)                                  |
-  |  +--------------------------------------------+  |
-  |  | [  Image Preview (1024x1024)             ] |  |
-  |  +--------------------------------------------+  |
-  |                                                  |
-  |  T5 Encoder (Dropdown)                           |
-  |  +--------------------------------------------+  |
-  |  | t5_bnb_int8_quantized_encoder              |  |
-  |  +--------------------------------------------+  |
-  |                                                  |
-  |  CLIP Embed (Dropdown)                           |
-  |  +--------------------------------------------+  |
-  |  | clip-vit-large-patch14                     |  |
-  |  +--------------------------------------------+  |
-  |                                                  |
-  |  VAE (Dropdown)                                  |
-  |  +--------------------------------------------+  |
-  |  | FLUX.1-schnell_ae                          |  |
-  |  +--------------------------------------------+  |
-  |                                                  |
-  |  Positive Prompt (Text)                          |
-  |  +--------------------------------------------+  |
-  |  | good looking girl                          |  |
-  |  +--------------------------------------------+  |
-  |                                                  |
-  |  Negative Prompt (Text)                          |
-  |  +--------------------------------------------+  |
-  |  | naked, adult                               |  |
-  |  +--------------------------------------------+  |
-  |                                                  |
-  |  Num Steps (Number)                              |
-  |  +--------------------------------------------+  |
-  |  | 10                                         |  |
-  |  +--------------------------------------------+  |
-  |                                                  |
-  |  Denoising Start (Number)                        |
-  |  +--------------------------------------------+  |
-  |  | 0.4                                        |  |
-  |  +--------------------------------------------+  |
-  |                                                  |
-  +--------------------------------------------------+
+    +------------------------------------------------------------------+
+    |                      FLUX Image-to-Image                         |
+    +------------------------------------------------------------------+
+    |                                                                  |
+    |  Model (dev variant recommended for Image-to-Image)              |
+    |  +------------------------------------------------------------+  |
+    |  | flux1-schnell                                              |  |
+    |  +------------------------------------------------------------+  |
+    |                                                                  |
+    |  Image (Upload)                                                  |
+    |  +------------------------------------------------------------+  |
+    |  | [ Image Preview (1024x1024) ]                               |  |
+    |  +------------------------------------------------------------+  |
+    |                                                                  |
+    |  T5 Encoder (Dropdown)                                           |
+    |  +------------------------------------------------------------+  |
+    |  | t5_bnb_int8_quantized_encoder                              |  |
+    |  +------------------------------------------------------------+  |
+    |                                                                  |
+    |  CLIP Embed (Dropdown)                                           |
+    |  +------------------------------------------------------------+  |
+    |  | clip-vit-large-patch14                                     |  |
+    |  +------------------------------------------------------------+  |
+    |                                                                  |
+    |  VAE (Dropdown)                                                  |
+    |  +------------------------------------------------------------+  |
+    |  | FLUX.1-schnell_ae                                          |  |
+    |  +------------------------------------------------------------+  |
+    |                                                                  |
+    |  Positive Prompt (Text)                                          |
+    |  +------------------------------------------------------------+  |
+    |  | good looking girl                                          |  |
+    |  +------------------------------------------------------------+  |
+    |                                                                  |
+    |  Negative Prompt (Text)                                          |
+    |  +------------------------------------------------------------+  |
+    |  | naked, adult                                               |  |
+    |  +------------------------------------------------------------+  |
+    |                                                                  |
+    |  Num Steps (Number)                                              |
+    |  +------------------------------------------------------------+  |
+    |  | 10                                                         |  |
+    |  +------------------------------------------------------------+  |
+    |                                                                  |
+    |  Denoising Start (Number)                                        |
+    |  +------------------------------------------------------------+  |
+    |  | 0.4                                                        |  |
+    |  +------------------------------------------------------------+  |
+    |                                                                  |
+    |  Board (Dropdown)                                                |
+    |  +------------------------------------------------------------+  |
+    |  | None (Uncategorized)                                       |  |
+    |  +------------------------------------------------------------+  |
+    |                                                                  |
+    +------------------------------------------------------------------+
 
 Intentionally tiny: no defensive error handling, no model lookup heuristics.
 Steps:
@@ -69,9 +74,24 @@ Run (InvokeAI at default URL):
 from __future__ import annotations
 
 from pathlib import Path
+import os
+import tempfile
 from rich.console import Console
 from rich.table import Table
 from rich import box
+from typing import Union, Any
+
+# Field type imports for explicit typing of workflow inputs
+from invokeai_py_client.ivk_fields import (
+    IvkStringField,
+    IvkIntegerField,
+    IvkFloatField,
+    IvkBoardField,
+)
+from invokeai_py_client.ivk_fields.models import IvkModelIdentifierField  # type: ignore
+from invokeai_py_client.workflow.workflow_handle import OutputMapping  # type: ignore
+from invokeai_py_client.board.board_handle import BoardHandle  # type: ignore
+from invokeai_py_client.models import IvkImage  # type: ignore
 
 # Assumes execution from repository root (pixi run ...). Paths are relative.
 
@@ -88,6 +108,14 @@ BOARD_ID = "none"                            # 'none' => uncategorized board
 SAMPLE_IMAGE_FILENAME = "8079126e-6cb0-4d47-956a-0eec6b71c600.png"
 
 #############################################
+# OUTPUT / SAVE CONFIG (EXTERNAL RESOURCE)
+#############################################
+# Directory where generated images will be saved. Treat this as an external
+# resource configurable by the user of this script. Defaults to system temp.
+OUTPUT_DIR = Path(os.getenv("INVOKEAI_EXAMPLE_OUTPUT_DIR") or tempfile.gettempdir())
+SAVE_IMAGES = True   # Toggle saving
+
+#############################################
 # EXECUTION / POLL PARAMETERS
 #############################################
 POLL_INTERVAL_SEC = 2.0       # Queue polling interval
@@ -96,8 +124,8 @@ TIMEOUT_SEC = 300.0           # Overall wait timeout
 #############################################
 # GENERATION PARAMETERS
 #############################################
-STEPS = 15                    # num_steps
-NOISE_RATIO = 0.7             # 0..1, used to derive denoising_start = 1 - NOISE_RATIO
+STEPS = 10                    # num_steps
+NOISE_RATIO = 0.8             # 0..1, used to derive denoising_start = 1 - NOISE_RATIO
 NEGATIVE_PROMPT_DEFAULT = "blurry, low quality, distorted"
 
 #############################################
@@ -111,61 +139,86 @@ POSITIVE_PROMPT = (
     "The atmosphere is serene and joyful. Cinematic, high detail, soft fabric texture, warm, glowing sunlight."
 )
 
+# Use console for pretty printing
+console: Console = Console()
 
-console = Console()
-client = InvokeAIClient.from_url(INVOKEAI_BASE_URL)
+# Initialize the InvokeAI client, connect to InvokeAI server
+client: InvokeAIClient = InvokeAIClient.from_url(INVOKEAI_BASE_URL)
 
 # 1. Pick sample & upload image to 'none' board
-chosen_image_path = IMAGE_DIR / SAMPLE_IMAGE_FILENAME
-chosen_image_bytes = chosen_image_path.read_bytes()
-board_handle = client.board_repo.get_board_handle(BOARD_ID)
-uploaded_image = board_handle.upload_image_data(image_data=chosen_image_bytes, filename=chosen_image_path.name)
+chosen_image_path: Path = IMAGE_DIR / SAMPLE_IMAGE_FILENAME
+chosen_image_bytes: bytes = chosen_image_path.read_bytes()
+# Obtain handle (repository normalizes 'none')
+board_handle: BoardHandle = client.board_repo.get_board_handle(BOARD_ID)
+uploaded_image: IvkImage = board_handle.upload_image_data(image_data=chosen_image_bytes, filename=chosen_image_path.name)
 
 # 2. Load workflow definition & create handle
-workflow_definition = WorkflowDefinition.from_file(str(WORKFLOW_PATH))
+workflow_definition: WorkflowDefinition = WorkflowDefinition.from_file(str(WORKFLOW_PATH))
 workflow_handle = client.workflow_repo.create_workflow(workflow_definition)
 
 ############################
 # INPUT DISCOVERY & MAPPING
 ############################
-synced_models = workflow_handle.sync_dnn_model(by_name=True, by_base=True)
-console.rule("Model Synchronization")
-console.print(f"[bold green]Models synchronized:[/bold green] {len(synced_models)}")
-if synced_models:
-    tbl = Table(show_header=True, header_style="bold cyan", box=box.SIMPLE)
-    tbl.add_column("Original Name")
-    tbl.add_column("Original Key")
-    tbl.add_column("Resolved Name")
-    tbl.add_column("Resolved Key")
-    for orig, resolved in synced_models:
-        try:
-            tbl.add_row(
-                getattr(orig, 'name', '?'),
-                getattr(orig, 'key', '?'),
-                getattr(resolved, 'name', '?'),
-                getattr(resolved, 'key', '?'),
-            )
-        except Exception:  # pragma: no cover
-            continue
-    console.print(tbl)
 
+# Default models in workflow json may not exists in remote, so we need to:
+# Sync any model identifier fields so they reference models the server knows:
+#   by_name=True  -> try exact model name match first (precise)
+#   by_base=True  -> fallback: match by base/architecture if name fails
+# Returns list[(orig,resolved)] for changed fields (empty if already valid).
+synced_models = workflow_handle.sync_dnn_model(by_name=True, by_base=True)
+
+if True:    # for easy switch off
+    console.rule("Model Synchronization")
+    console.print(f"[bold green]Models synchronized:[/bold green] {len(synced_models)}")
+    if synced_models:
+        tbl = Table(show_header=True, header_style="bold cyan", box=box.SIMPLE)
+        tbl.add_column("Original Name")
+        tbl.add_column("Original Key")
+        tbl.add_column("Resolved Name")
+        tbl.add_column("Resolved Key")
+        for orig, resolved in synced_models:
+            try:
+                tbl.add_row(
+                    getattr(orig, 'name', '?'),
+                    getattr(orig, 'key', '?'),
+                    getattr(resolved, 'name', '?'),
+                    getattr(resolved, 'key', '?'),
+                )
+            except Exception:  # pragma: no cover
+                continue
+        console.print(tbl)
+
+# Retrieve all workflow inputs. Ordering is the GUI form's pre-order (depth-first)
+# traversal of its container tree: stable unless the form structure changes. If
+# the form has no nested containers, this reduces to simple top-to-bottom order.
+# Each position returns a concrete typed Ivk* field (e.g., IvkStringField,
+# IvkIntegerField, IvkModelIdentifierField) even though access uses a generic
+# getter. Indices below (IDX_*) rely on this deterministic ordering.
 inputs = workflow_handle.list_inputs()
-console.rule("Discovered Workflow Inputs")
-inputs_table = Table(show_header=True, header_style="bold magenta", box=box.SIMPLE)
-inputs_table.add_column("Idx", justify="right")
-inputs_table.add_column("Label")
-inputs_table.add_column("Field")
-inputs_table.add_column("Node")
-inputs_table.add_column("Required")
-for inp in inputs:
-    inputs_table.add_row(
-        f"{inp.input_index:02d}",
-        (inp.label or inp.field_name) or '-',
-        inp.field_name,
-        inp.node_name,
-        "Y" if inp.required else "",
-    )
-console.print(inputs_table)
+
+if True:    # for easy switch off
+    console.rule("Discovered Workflow Inputs")
+    inputs_table = Table(show_header=True, header_style="bold magenta", box=box.SIMPLE)
+    inputs_table.add_column("Idx", justify="right")
+    inputs_table.add_column("Label")
+    inputs_table.add_column("Field")
+    inputs_table.add_column("Node")
+    inputs_table.add_column("Required")
+    for inp in inputs:
+        inputs_table.add_row(
+            f"{inp.input_index:02d}",
+            (inp.label or inp.field_name) or '-',
+            inp.field_name,
+            inp.node_name,
+            "Y" if inp.required else "",
+        )
+    console.print(inputs_table)
+
+# Warn early if workflow exposes no output nodes (board fields on output-capable nodes)
+exposed_outputs = workflow_handle.list_outputs()
+if not exposed_outputs:
+    console.print("[bold yellow]Warning:[/bold yellow] This workflow exposes no output board fields in the form.\n"
+                  "Output mapping will return an empty list. Ensure the decode/save node's board field is form-exposed if you want automatic mapping.")
 
 # Depth-first indices (stable unless form structure changes)
 # ---------------------------------------------------------------------------
@@ -185,45 +238,67 @@ IDX_POS_PROMPT = 5
 IDX_NEG_PROMPT = 6
 IDX_STEPS = 7
 IDX_DENOISE_START = 8
+IDX_OUTPUT_BOARD = 9  # Board assignment for output (decode/save) node
 
-positive_prompt = POSITIVE_PROMPT
-negative_prompt = NEGATIVE_PROMPT_DEFAULT
-uploaded_name = uploaded_image.image_name
+positive_prompt: str = POSITIVE_PROMPT
+negative_prompt: str = NEGATIVE_PROMPT_DEFAULT
+uploaded_name: str = uploaded_image.image_name
 
-def set_and_log(idx: int | None, value):
-    """Set a workflow input by depth-first index and log the assignment.
+# -------------------------------------------------------------
+# Explicitly retrieve & type each workflow input field by index
+# -------------------------------------------------------------
+field_model: IvkModelIdentifierField = workflow_handle.get_input_value(IDX_MODEL)  # type: ignore[assignment]
+assert isinstance(field_model, IvkModelIdentifierField), f"IDX_MODEL expected IvkModelIdentifierField, got {type(field_model)}"
+field_image: IvkStringField = workflow_handle.get_input_value(IDX_IMAGE)  # type: ignore[assignment]
+assert isinstance(field_image, IvkStringField), f"IDX_IMAGE expected IvkStringField, got {type(field_image)}"
+field_t5: IvkModelIdentifierField = workflow_handle.get_input_value(IDX_T5)  # type: ignore[assignment]
+assert isinstance(field_t5, IvkModelIdentifierField), f"IDX_T5 expected IvkModelIdentifierField, got {type(field_t5)}"
+field_clip: IvkModelIdentifierField = workflow_handle.get_input_value(IDX_CLIP)  # type: ignore[assignment]
+assert isinstance(field_clip, IvkModelIdentifierField), f"IDX_CLIP expected IvkModelIdentifierField, got {type(field_clip)}"
+field_vae: IvkModelIdentifierField = workflow_handle.get_input_value(IDX_VAE)  # type: ignore[assignment]
+assert isinstance(field_vae, IvkModelIdentifierField), f"IDX_VAE expected IvkModelIdentifierField, got {type(field_vae)}"
+field_pos_prompt: IvkStringField = workflow_handle.get_input_value(IDX_POS_PROMPT)  # type: ignore[assignment]
+assert isinstance(field_pos_prompt, IvkStringField), f"IDX_POS_PROMPT expected IvkStringField, got {type(field_pos_prompt)}"
+field_neg_prompt: IvkStringField = workflow_handle.get_input_value(IDX_NEG_PROMPT)  # type: ignore[assignment]
+assert isinstance(field_neg_prompt, IvkStringField), f"IDX_NEG_PROMPT expected IvkStringField, got {type(field_neg_prompt)}"
+field_steps: IvkIntegerField = workflow_handle.get_input_value(IDX_STEPS)  # type: ignore[assignment]
+assert isinstance(field_steps, IvkIntegerField), f"IDX_STEPS expected IvkIntegerField, got {type(field_steps)}"
+field_denoise_start: IvkFloatField = workflow_handle.get_input_value(IDX_DENOISE_START)  # type: ignore[assignment]
+assert isinstance(field_denoise_start, IvkFloatField), f"IDX_DENOISE_START expected IvkFloatField, got {type(field_denoise_start)}"
+field_output_board: Union[IvkStringField, IvkBoardField] = workflow_handle.get_input_value(IDX_OUTPUT_BOARD)  # type: ignore[assignment]
+assert isinstance(field_output_board, (IvkStringField, IvkBoardField)), f"IDX_OUTPUT_BOARD unexpected type {type(field_output_board)}"
 
-    Parameters
-    ----------
-    idx : int | None
-        Depth-first input index (see IDX_* constants). If None, the call is ignored.
-    value : Any
-        Value to assign. Must be compatible with the underlying IvkField's ``.value``.
+# ------------------------
+# Set values (in-place)
+# ------------------------
+field_image.value = uploaded_name
+field_pos_prompt.value = positive_prompt
+field_neg_prompt.value = negative_prompt
+field_steps.value = STEPS  # type: ignore[assignment]
+field_denoise_start.value = 1 - NOISE_RATIO  # type: ignore[assignment]
+if hasattr(field_output_board, 'value'):
+    field_output_board.value = BOARD_ID  # type: ignore[assignment]
 
-    Returns
-    -------
-    None
+def log_field_set(idx: int, field_obj: object) -> None:
+    """Log the effective value of a workflow input previously set.
 
-    Notes
-    -----
-    This uses ``WorkflowHandle.set_input_value_simple`` so the existing field object
-    is preserved and only its value/attributes are updated. Validation occurs inside
-    that helper. Only the new value is printed (previous value is intentionally omitted
-    to keep the log concise).
+    This intentionally does no mutation; it demonstrates that the runtime
+    type of each index is specific, even though retrieval uses a common API.
     """
-    if idx is None:
-        console.print(f"[yellow][warn][/yellow] Skipping set; index not found for value={value!r}")
-        return
-    inp = workflow_handle.get_input(idx)
-    workflow_handle.set_input_value_simple(idx, value)
-    current = getattr(inp.field, 'value', None)
-    console.print(f"[bold blue]Set[/bold blue] input[{idx}] [italic]{(inp.label or inp.field_name)!r}[/italic] ({inp.field_name}) = {current!r}")
+    meta = workflow_handle.get_input(idx)
+    val = getattr(field_obj, 'value', None)
+    console.print(
+        f"[bold blue]Configured[/bold blue] input[{idx}] "
+        f"[italic]{(meta.label or meta.field_name)!r}[/italic] -> {val!r} (type={type(field_obj).__name__})"
+    )
 
-set_and_log(IDX_IMAGE, uploaded_name)
-set_and_log(IDX_POS_PROMPT, positive_prompt)
-set_and_log(IDX_NEG_PROMPT, negative_prompt)
-set_and_log(IDX_STEPS, STEPS)
-set_and_log(IDX_DENOISE_START, 1 - NOISE_RATIO)
+# Log configured inputs of interest
+log_field_set(IDX_IMAGE, field_image)
+log_field_set(IDX_POS_PROMPT, field_pos_prompt)
+log_field_set(IDX_NEG_PROMPT, field_neg_prompt)
+log_field_set(IDX_STEPS, field_steps)
+log_field_set(IDX_DENOISE_START, field_denoise_start)
+log_field_set(IDX_OUTPUT_BOARD, field_output_board)
 
 console.rule("Effective Configuration")
 config_tbl = Table(show_header=False, box=box.MINIMAL_DOUBLE_HEAD)
@@ -236,18 +311,72 @@ console.print(config_tbl)
 ############################
 # SUBMIT & MONITOR
 ############################
-submission_result = workflow_handle.submit_sync(board_id=BOARD_ID)
-_result = workflow_handle.wait_for_completion_sync(
-    poll_interval=POLL_INTERVAL_SEC,
-    timeout=TIMEOUT_SEC,
-    progress_callback=lambda qi: print("Status:", qi.get("status")),
-    map_outputs=False,
-)
-if isinstance(_result, tuple):  # map_outputs=True case (not used here but future-proof)
-    queue_item = _result[0]
-else:
-    queue_item = _result
+# Submit the prepared workflow graph to the server queue (sync). Returns submission
+# metadata: batch_id, list of item_ids, enqueued count, and session_id used for
+# later status tracking/event subscription.
+submission_result: dict[str, Any] = workflow_handle.submit_sync(board_id=BOARD_ID)
+
+# Poll the queue until the single enqueued item reaches a terminal state.
+# Always returns the queue item dict (status, timings, any error info). We separate
+# mapping so callers can decide if/when to resolve image outputs.
+try:
+    queue_item: dict[str, Any] = workflow_handle.wait_for_completion_sync(
+        poll_interval=POLL_INTERVAL_SEC,
+        timeout=TIMEOUT_SEC,
+        progress_callback=lambda qi: print("Status:", qi.get("status")),
+    )
+except RuntimeError as e:
+    # Capture explicit cancellation (server/user initiated) and report cleanly.
+    if "canceled" in str(e).lower():
+        console.rule("Completion")
+        console.print("[red]Workflow was canceled before completion.[/red]")
+        queue_item = {"status": "canceled", "error": str(e)}  # sentinel for downstream logic
+    else:
+        raise
+    
+# Download the image output if the workflow completed successfully.
 console.rule("Completion")
 console.print(f"Final status: [bold]{queue_item.get('status')}[/bold]")
 if queue_item.get("status") == "completed":
-    console.print(f"Outputs: [green]{len(queue_item.get('outputs') or [])}[/green]")
+    # Derive form-exposed output image mappings (node -> image names) on demand.
+    # This call performs a lightweight traversal of decode/save nodes rather than
+    # embedding outputs automatically in wait_for_completion.* returns.
+    mappings: list[OutputMapping] = workflow_handle.map_outputs_to_images(queue_item)
+    console.print(f"Outputs (form-exposed): {len(mappings)}")
+    for m in mappings:
+        console.print(f"  Node {m['node_id'][:8]} -> {len(m['image_names'])} image(s) (tier={m['tier']})")
+
+    # --- Optional: save images (separated concern) ---
+    if SAVE_IMAGES and mappings:
+        try:
+            from PIL import Image  # type: ignore
+            from io import BytesIO
+        except Exception:
+            console.print("[yellow]Pillow not installed; skipping image save.[/yellow]")
+        else:
+            OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+            console.print(f"Saving images to: {OUTPUT_DIR}")
+            saved = 0
+            for m in mappings:
+                board_id = m.get('board_id') or 'none'
+                # Acquire a board handle (cached repo lookup) for each mapping's board.
+                bh: BoardHandle = client.board_repo.get_board_handle(board_id)
+                image_names = m.get('image_names') or []
+                for name in image_names:
+                    try:
+                        # Download raw image bytes (full resolution) then deserialize via Pillow.
+                        data: bytes = bh.download_image(name, full_resolution=True)
+                        img = Image.open(BytesIO(data))  # type: ignore[assignment]
+                        dest: Path = OUTPUT_DIR / name
+                        try:
+                            img.save(dest)
+                        except Exception:
+                            dest = dest.with_suffix('.png')
+                            img.save(dest, format='PNG')
+                        saved += 1
+                        console.print(f"[green]Saved[/green] {dest}")
+                    except Exception as e:  # pragma: no cover
+                        console.print(f"[red]Failed {name}: {e}[/red]")
+            console.print(f"Saved {saved} file(s).")
+else:
+    console.print("[red]Workflow did not complete successfully.[/red]")

@@ -135,8 +135,27 @@ def configure_workflow(workflow: Any, models: dict[str, Any], *, steps: int) -> 
     sched_idx = find_input(lambda i: i.field_name == "scheduler" and node_type_map.get(i.node_id, "") == "denoise_latents")
     if sched_idx is not None:
         updates[sched_idx] = SCHEDULER
-    workflow.set_many(updates)
-    print(f"[INFO] Applied {len(updates)} updates")
+    # set_many removed: apply explicitly
+    for idx, val in updates.items():
+        try:
+            workflow._set_input_value_simple_impl(idx, val)  # type: ignore[attr-defined]
+        except AttributeError:
+            fld = workflow.get_input_value(idx)
+            if hasattr(fld, 'value') and not isinstance(val, dict):
+                try:
+                    fld.value = val  # type: ignore[attr-defined]
+                except Exception:
+                    pass
+            elif isinstance(val, dict):
+                for k, v in val.items():
+                    if hasattr(fld, k):
+                        try:
+                            setattr(fld, k, v)
+                        except Exception:
+                            pass
+        except Exception as e:
+            print(f"[WARN] could not set input {idx}: {e}")
+    print(f"[INFO] Applied {len(updates)} updates (explicit loop; set_many removed)")
     for row in workflow.preview():
         print(f"  [{row['index']:02d}] {row['label']} ({row['type']}): {row['value']}")
 

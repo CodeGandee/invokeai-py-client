@@ -215,7 +215,7 @@
       ## Example Workflows (data/workflows/)
       - sdxl-text-to-image.json → call-wf-sdxl-text-to-image.json
       - sdxl-flux-refine.json → call-wf-sdxl-flux-refine.json
-      - flux-image-to-image.json → call-wf-flux-image-to-image-1.json
+      - flux-image-to-image.json → call-wf-flux-image-to-image.json
     
       ## Recent Implementation (Aug 19 commit 53de014)
       Fixed workflow field update pattern to properly merge dicts preserving keys (name, label, description). JSONPath now points to entire field dict, not just .value. Added comprehensive tests for SDXL, FLUX, image-to-image workflows.

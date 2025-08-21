@@ -301,12 +301,7 @@ class WorkflowHandle:
                 node = nodes.get(node_id, {})
                 node_data = node.get("data", {})
                 node_type = node_data.get("type", "unknown")
-
-                # Get labels
-                node_label = node_data.get("label", "")
-                if not node_label:
-                    # Use node type as fallback
-                    node_label = node_type
+                node_label = node_data.get("label", "") or node_type
 
                 # Get field info from node inputs
                 field_info = node_data.get("inputs", {}).get(field_name, {})
@@ -418,7 +413,7 @@ class WorkflowHandle:
     # ------------------------------------------------------------------
     # Index-centric convenience APIs (non-breaking additions)
     # ------------------------------------------------------------------
-    def set_input_value_simple(self, index: int, value: Any) -> WorkflowHandle:
+    def _set_input_value_simple_impl(self, index: int, value: Any) -> WorkflowHandle:
         """Convenience setter using only the depth-first input index.
 
         This avoids requiring the user to understand field classes. It maps
@@ -436,8 +431,8 @@ class WorkflowHandle:
         wf_input = self.get_input(index)
         field_obj = wf_input.field
         try:
-            # Model identifier style (no unified .value)
-            from invokeai_py_client.ivk_fields.models import IvkModelIdentifierField  # local import to avoid cycles
+            from invokeai_py_client.ivk_fields.models import IvkModelIdentifierField  # local import
+            from invokeai_py_client.ivk_fields.resources import IvkImageField
             if isinstance(field_obj, IvkModelIdentifierField):
                 if not isinstance(value, dict):
                     raise TypeError("Model field expects dict with keys (key, hash, name, base, type, submodel_type)")
@@ -446,65 +441,35 @@ class WorkflowHandle:
                         setattr(field_obj, k, v)
                 wf_input.validate_input()
                 return self
-
-            # Fields with a simple `.value` attribute
+            if isinstance(field_obj, IvkImageField) and isinstance(value, dict):
+                img_name = value.get("image_name") or value.get("value")
+                if img_name:
+                    field_obj.value = img_name  # type: ignore[attr-defined]
+                    wf_input.validate_input()
+                    return self
             if hasattr(field_obj, "value") and not isinstance(value, dict):
                 field_obj.value = value  # type: ignore[attr-defined]
                 wf_input.validate_input()
                 return self
-
-            # Dict update for complex/composite fields
             if isinstance(value, dict):
-                # Shallow attribute merge: only update existing attributes
                 for k, v in value.items():
                     if hasattr(field_obj, k):
                         setattr(field_obj, k, v)
                 wf_input.validate_input()
                 return self
-
             raise TypeError(f"Unsupported value type {type(value).__name__} for input {index}")
         except Exception as e:  # Re-wrap with friendly context
             raise ValueError(f"Failed to set input {index}: {e}") from e
 
-    def set_many(self, updates: dict[int, Any]) -> WorkflowHandle:
-        """Atomically apply multiple index -> value updates.
+    def set_input_value_simple(self, index: int, value: Any) -> WorkflowHandle:  # deprecated public name
+        """Deprecated.
 
-        If any update fails validation, all prior changes are rolled back.
+        This convenience API has been disabled to force explicit field usage via
+        `get_input_value()` + mutation or `set_input_value()` with a fully
+        constructed field instance. Keeping the original implementation under
+        `_set_input_value_simple_impl` for potential future re‑enablement.
         """
-        # Snapshot originals (shallow copy of field state via model_dump / attrs)
-        snapshots: dict[int, Any] = {}
-        for idx in updates.keys():
-            inp = self.get_input(idx)
-            fld = inp.field
-            if hasattr(fld, "model_dump"):
-                try:
-                    state = fld.model_dump()  # type: ignore[attr-defined]
-                except Exception:
-                    state = {}
-            else:
-                state = {k: getattr(fld, k) for k in dir(fld) if not k.startswith("_") and not callable(getattr(fld, k))}
-            snapshots[idx] = (fld, state)
-        try:
-            for idx, val in updates.items():
-                self.set_input_value_simple(idx, val)
-        except Exception:
-            # Rollback
-            for idx, (fld, state) in snapshots.items():
-                if hasattr(fld, "model_validate"):
-                    try:
-                        new_obj = fld.__class__.model_validate(state)  # type: ignore[attr-defined]
-                        self.set_input_value(idx, new_obj)
-                        continue
-                    except Exception:
-                        pass
-                for k, v in state.items():
-                    if hasattr(fld, k):
-                        try:
-                            setattr(fld, k, v)
-                        except Exception:
-                            pass
-            raise
-        return self
+        raise NotImplementedError("set_input_value_simple() is disabled; use set_input_value() with a field instance")
 
     def preview(self) -> list[dict[str, Any]]:
         """Return lightweight summary of current inputs (index, label, type, value-preview)."""
@@ -1122,8 +1087,7 @@ class WorkflowHandle:
         timeout: float = 60.0,
         progress_callback: Callable[[dict[str, Any]], None] | None = None,
         queue_id: str = "default",
-        map_outputs: bool = False
-    ) -> dict[str, Any] | tuple[dict[str, Any], list[OutputMapping]]:
+    ) -> dict[str, Any]:
         """
         Wait for workflow completion synchronously.
 
@@ -1137,14 +1101,11 @@ class WorkflowHandle:
             Callback for progress updates.
         queue_id : str
             The queue ID to poll.
-        map_outputs : bool
-            If True, also return the output-to-image mapping.
 
         Returns
         -------
-        dict[str, Any] | tuple[dict[str, Any], list[OutputMapping]]
-            The completed queue item, or tuple of (queue_item, output_mappings)
-            if map_outputs is True.
+        dict[str, Any]
+            The completed queue item.
 
         Raises
         ------
@@ -1155,13 +1116,11 @@ class WorkflowHandle:
             
         Examples
         --------
-        >>> # Get just the queue item
-        >>> queue_item = workflow.wait_for_completion_sync()
-        >>> 
-        >>> # Get queue item and output mappings
-        >>> queue_item, mappings = workflow.wait_for_completion_sync(map_outputs=True)
-        >>> for mapping in mappings:
-        ...     print(f"Output {mapping['input_index']}: {mapping['image_names']}")
+    >>> queue_item = workflow.wait_for_completion_sync()
+    >>> # To derive image mappings (if needed):
+    >>> mappings = workflow.map_outputs_to_images(queue_item)
+    >>> for mapping in mappings:
+    ...     print(mapping['image_names'])
         """
         if not self.item_id:
             raise RuntimeError("No job submitted to wait for")
@@ -1186,9 +1145,6 @@ class WorkflowHandle:
             
             # Check if completed
             if current_status == "completed":
-                if map_outputs:
-                    mappings = self.map_outputs_to_images(queue_item)
-                    return queue_item, mappings
                 return queue_item
             elif current_status == "failed":
                 error_msg = queue_item.get("error", "Unknown error")
@@ -1206,8 +1162,7 @@ class WorkflowHandle:
         self, 
         timeout: float | None = None,
         queue_id: str = "default",
-        map_outputs: bool = False
-    ) -> dict[str, Any] | tuple[dict[str, Any], list[OutputMapping]]:
+    ) -> dict[str, Any]:
         """
         Wait for workflow completion asynchronously with real-time events.
 
@@ -1220,14 +1175,11 @@ class WorkflowHandle:
             Maximum time to wait in seconds. None for no timeout.
         queue_id : str, optional
             The queue ID to monitor (default: "default").
-        map_outputs : bool
-            If True, also return the output-to-image mapping.
 
         Returns
         -------
-        dict[str, Any] | tuple[dict[str, Any], list[OutputMapping]]
-            The completed queue item, or tuple of (queue_item, output_mappings)
-            if map_outputs is True.
+        dict[str, Any]
+            The completed queue item.
 
         Raises
         ------
@@ -1242,10 +1194,11 @@ class WorkflowHandle:
         >>> completed_item = await workflow.wait_for_completion(timeout=60.0)
         >>> print(f"Status: {completed_item['status']}")
         >>> 
-        >>> # With output mapping
-        >>> queue_item, mappings = await workflow.wait_for_completion(map_outputs=True)
-        >>> for mapping in mappings:
-        ...     print(f"Output {mapping['label']}: {mapping['image_names']}")
+    >>> # To derive mappings afterwards:
+    >>> queue_item = await workflow.wait_for_completion()
+    >>> mappings = workflow.map_outputs_to_images(queue_item)
+    >>> for mapping in mappings:
+    ...     print(mapping['image_names'])
         """
         if not self.session_id:
             raise RuntimeError("No job submitted to wait for")
@@ -1301,10 +1254,6 @@ class WorkflowHandle:
             # Unsubscribe from queue
             await sio.emit("unsubscribe_queue", {"queue_id": queue_id})
             
-            # Map outputs if requested
-            if map_outputs:
-                mappings = self.map_outputs_to_images(result)
-                return result, mappings
             return result
             
         except asyncio.TimeoutError as exc:
@@ -1542,110 +1491,6 @@ class WorkflowHandle:
             None, self.cancel, queue_id
         )
 
-    def get_uploaded_assets(self) -> list[str]:
-        """
-        Get list of assets uploaded for this workflow.
-
-        Returns
-        -------
-        List[str]
-            Names of uploaded assets.
-        """
-        return self.uploaded_assets.copy()
-
-    def cleanup_inputs(self) -> Any:  # Would return CleanupResult
-        """
-        Clean up uploaded input assets.
-
-        Returns
-        -------
-        CleanupResult
-            Result with deleted count and any failures.
-        """
-        raise NotImplementedError
-
-    def cleanup_outputs(
-        self, delete_from_board: bool = True, delete_images: bool = True
-    ) -> Any:  # Would return CleanupResult
-        """
-        Clean up generated outputs.
-
-        Parameters
-        ----------
-        delete_from_board : bool
-            Whether to remove from boards.
-        delete_images : bool
-            Whether to delete image files.
-
-        Returns
-        -------
-        CleanupResult
-            Result with deleted count and any failures.
-        """
-        raise NotImplementedError
-
-    def cleanup_queue_items(self) -> Any:  # Would return CleanupResult
-        """
-        Clean up completed queue items.
-
-        Returns
-        -------
-        CleanupResult
-            Result with pruned count.
-        """
-        raise NotImplementedError
-
-    def reset(self) -> None:
-        """
-        Reset the workflow to initial state.
-
-        Clears all inputs, outputs, and job information,
-        allowing the workflow to be reconfigured and rerun.
-        """
-        # Reset all input values
-        from invokeai_py_client.ivk_fields import (
-            IvkStringField, IvkIntegerField, IvkFloatField, IvkBooleanField,
-            IvkEnumField, IvkBoardField, IvkImageField
-        )
-        for inp in self.inputs:
-            if isinstance(inp.field, (IvkStringField, IvkIntegerField, IvkFloatField, IvkBooleanField, IvkEnumField, IvkBoardField, IvkImageField)):
-                inp.field.value = None  # type: ignore[attr-defined]
-
-        # Clear job and assets
-        self.job = None
-        self.uploaded_assets.clear()
-
-    def clone(self) -> WorkflowHandle:
-        """
-        Create a copy of this workflow handle.
-
-        Returns
-        -------
-        WorkflowHandle
-            A new workflow instance with the same definition
-            but cleared inputs/outputs.
-        """
-        # Create new instance with same definition
-        new_handle = WorkflowHandle(self.client, self.definition)
-        return new_handle
-
-    def to_dict(self) -> dict[str, Any]:
-        """
-        Export the workflow configuration with current input values.
-
-        Returns
-        -------
-        Dict[str, Any]
-            Workflow definition with current input values.
-        """
-        # Get base definition
-        data = self.definition.to_dict()
-
-        # Update with current input values
-        # This would map the input values back to the nodes
-        # Placeholder for now
-
-        return data
 
     def _convert_to_api_format(self, board_id: str | None = None) -> dict[str, Any]:
         """
@@ -1785,7 +1630,9 @@ class WorkflowHandle:
                 
                 # Only include the field if it has a non-None value
                 if field_value is not None:
-                    # Sanitize stale embedded model identifiers (hidden / non-form fields)
+                    # Normalize image field shape: server expects {'image_name': <filename>} for image inputs
+                    if field_name == 'image' and isinstance(field_value, str):
+                        field_value = {'image_name': field_value}
                     api_node[field_name] = field_value
             
             # Special handling for specific node types
@@ -2065,27 +1912,27 @@ class WorkflowHandle:
         # Get workflow outputs and create mappings
         outputs_meta: list[OutputMapping] = []
         outputs = self.list_outputs()
-        
+
         for output in outputs:
             node_id = output.node_id
             node_graph = graph_nodes.get(node_id, {})
-            
+
             # Extract board ID from the original submission graph
             board_entry = node_graph.get('board', {}) if isinstance(node_graph.get('board'), dict) else {}
             board_id = board_entry.get('board_id') or 'none'
-            
+
             # Collect images using tiered approach
             images = list(results_images.get(node_id, []))
             tier = 'results' if images else ''
-            
+
             if not images:
                 images = list(legacy_images.get(node_id, []))
                 tier = 'legacy' if images else tier
-            
+
             if not images:
                 images = descend_collect(node_id)
                 tier = 'traversal' if images else tier or 'none'
-            
+
             # Create output mapping
             mapping = OutputMapping(
                 node_id=node_id,
@@ -2097,7 +1944,7 @@ class WorkflowHandle:
                 label=output.label
             )
             outputs_meta.append(mapping)
-        
+
         return outputs_meta
     
     def get_output_image_jsonpath_templates(self) -> list[dict[str, str]]:

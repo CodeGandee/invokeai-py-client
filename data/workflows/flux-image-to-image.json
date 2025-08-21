@@ -15,7 +15,7 @@
         {"nodeId": "2981a67c-480f-4237-9384-26b68dbf912b", "fieldName": "image"           }
     ],
     "meta": {"category": "user", "version": "3.0.0"},
-    "id": "2092f9c8-7b60-425a-874f-4fe59f946190",
+    "id": "4f79d152-dbdb-40ec-94b4-c05d061756b8",
     "form": {
         "elements": {
             "root": {
@@ -25,7 +25,8 @@
                     "children": [
                         "node-field-ijo7m63hDi", "node-field-QuO8FhTq6c", "node-field-a1nav5kDNi",
                         "node-field-2lhCG395of", "node-field-ydWKtxVLEk", "node-field-mArU8Uy5GY",
-                        "node-field-DudUc3rqpl", "node-field-mcjNlse2cM", "node-field-doVk7pdRxy"
+                        "node-field-DudUc3rqpl", "node-field-mcjNlse2cM", "node-field-doVk7pdRxy",
+                        "node-field-u8YnCOcEuz"
                     ]
                 },
                 "type": "container"
@@ -123,6 +124,15 @@
                     "showDescription": true
                 },
                 "type": "node-field"
+            },
+            "node-field-u8YnCOcEuz": {
+                "id": "node-field-u8YnCOcEuz",
+                "type": "node-field",
+                "parentId": "root",
+                "data": {
+                    "fieldIdentifier": {"nodeId": "7e5172eb-48c1-44db-a770-8fd83e1435d1", "fieldName": "board"},
+                    "showDescription": true
+                }
             }
         },
         "rootElementId": "root"
@@ -159,7 +169,7 @@
                 "notes": "",
                 "type": "flux_vae_decode",
                 "inputs": {
-                    "board"   : {"name": "board",    "label": "", "description": "", "value": "auto"},
+                    "board"   : {"name": "board",    "label": "", "description": "", "value": "none"},
                     "metadata": {"name": "metadata", "label": "", "description": ""                 },
                     "latents" : {"name": "latents",  "label": "", "description": ""                 },
                     "vae"     : {"name": "vae",      "label": "", "description": ""                 }
@@ -168,7 +178,7 @@
                 "isIntermediate": false,
                 "useCache": true
             },
-            "position": {"x": 1278, "y": 110}
+            "position": {"x": 1307.3333333333333, "y": 90}
         },
         {
             "id": "f8d9d7c8-9ed7-4bd7-9e42-ab0e89bfac90",
@@ -186,9 +196,9 @@
                         "label": "Model (dev variant recommended for Image-to-Image)",
                         "description": "",
                         "value": {
-                            "key" : "fe04e4c3-2287-4ba5-8c34-107d3da215ae",
-                            "hash": "blake3:8e532c2cb80971c1fc56074e63adcfcaba7b2e1c7c79afda98a459aafd4f4b87",
-                            "name": "FLUX Dev (Quantized)",
+                            "key" : "4ea8c1b5-e56c-47c0-949e-3805d06c1301",
+                            "hash": "blake3:202d1d57667fdc0b5b088a46dce7c801ffcf2e0933d4c521e272399ece17aa7b",
+                            "name": "flux1-schnell",
                             "base": "flux",
                             "type": "main"
                         }
@@ -198,7 +208,7 @@
                         "label": "",
                         "description": "",
                         "value": {
-                            "key" : "2dba546f-0753-4d9f-80c5-1c05466613c9",
+                            "key" : "cc644930-283a-464f-b48f-831e6add8ed5",
                             "hash": "blake3:38aafa42899cf4fe8b1055d17de6e7fe15af104d193da4a320e34ca24db32754",
                             "name": "t5_bnb_int8_quantized_encoder",
                             "base": "any",
@@ -210,7 +220,7 @@
                         "label": "",
                         "description": "",
                         "value": {
-                            "key" : "f4f1dc55-74f4-409a-9a0f-e419866e8347",
+                            "key" : "6fca3865-ce3f-45cd-a4d4-1086ea40504e",
                             "hash": "blake3:17c19f0ef941c3b7609a9c94a659ca5364de0be364a91d4179f0e39ba17c3b70",
                             "name": "clip-vit-large-patch14",
                             "base": "any",
@@ -222,7 +232,7 @@
                         "label": "",
                         "description": "",
                         "value": {
-                            "key" : "ef6d47fe-94c7-4d59-a520-3429162431a8",
+                            "key" : "53fdb8d0-6376-44b4-a02f-d25fdb375451",
                             "hash": "blake3:ce21cb76364aa6e2421311cf4a4b5eb052a76c4f1cd207b50703d8978198a068",
                             "name": "FLUX.1-schnell_ae",
                             "base": "flux",
@@ -255,7 +265,12 @@
                         "description": "",
                         "value": 256
                     },
-                    "prompt": {"name": "prompt", "label": "Positive Prompt", "description": "", "value": ""},
+                    "prompt": {
+                        "name"       : "prompt",
+                        "label"      : "Positive Prompt",
+                        "description": "",
+                        "value"      : "good looking girl"
+                    },
                     "mask": {"name": "mask", "label": "", "description": ""}
                 },
                 "isOpen": true,
@@ -303,7 +318,12 @@
                         "description": "",
                         "value": 256
                     },
-                    "prompt": {"name": "prompt", "label": "Negative Prompt", "description": "", "value": ""},
+                    "prompt": {
+                        "name"       : "prompt",
+                        "label"      : "Negative Prompt",
+                        "description": "",
+                        "value"      : "naked, adult"
+                    },
                     "mask": {"name": "mask", "label": "", "description": ""}
                 },
                 "isOpen": true,
@@ -317,15 +337,15 @@
             "type": "invocation",
             "data": {
                 "id": "f14341d4-34a5-42a5-8221-acf98d82add7",
-                "type": "metadata_from_image",
                 "version": "1.0.1",
+                "nodePack": "invokeai",
                 "label": "",
                 "notes": "",
+                "type": "metadata_from_image",
+                "inputs": { "image": {"name": "image", "label": "", "description": ""} },
                 "isOpen": true,
                 "isIntermediate": true,
-                "useCache": true,
-                "nodePack": "invokeai",
-                "inputs": { "image": {"name": "image", "label": "", "description": ""} }
+                "useCache": true
             },
             "position": {"x": 276.7626039605479, "y": -63.29490965287721}
         },
@@ -334,15 +354,22 @@
             "type": "invocation",
             "data": {
                 "id": "7b056f05-a4fe-40d3-b913-1a4b3897230f",
-                "type": "image",
                 "version": "1.0.2",
+                "nodePack": "invokeai",
                 "label": "",
                 "notes": "",
+                "type": "image",
+                "inputs": {
+                    "image": {
+                        "name": "image",
+                        "label": "",
+                        "description": "",
+                        "value": {"image_name": "e95bfe35-42f9-4693-968a-65ea655641a5.png"}
+                    }
+                },
                 "isOpen": true,
                 "isIntermediate": true,
-                "useCache": true,
-                "nodePack": "invokeai",
-                "inputs": { "image": {"name": "image", "label": "", "description": ""} }
+                "useCache": true
             },
             "position": {"x": -249.97263836608238, "y": 441.13453254950684}
         },
@@ -351,14 +378,11 @@
             "type": "invocation",
             "data": {
                 "id": "9c773392-5647-4f2b-958e-9da1707b6e6a",
-                "type": "flux_denoise_meta",
                 "version": "1.0.1",
+                "nodePack": "invokeai",
                 "label": "",
                 "notes": "",
-                "isOpen": true,
-                "isIntermediate": true,
-                "useCache": true,
-                "nodePack": "invokeai",
+                "type": "flux_denoise_meta",
                 "inputs": {
                     "metadata": {"name": "metadata", "label": "", "description": ""},
                     "latents": {"name": "latents", "label": "", "description": ""},
@@ -390,14 +414,17 @@
                     "cfg_scale_end_step": {"name": "cfg_scale_end_step", "label": "", "description": "", "value": -1},
                     "width": {"name": "width", "label": "", "description": "", "value": 1024},
                     "height": {"name": "height", "label": "", "description": "", "value": 1024},
-                    "num_steps": {"name": "num_steps", "label": "", "description": "", "value": 30},
+                    "num_steps": {"name": "num_steps", "label": "", "description": "", "value": 10},
                     "guidance": {"name": "guidance", "label": "", "description": "", "value": 4},
                     "seed": {"name": "seed", "label": "", "description": "", "value": 0},
                     "control": {"name": "control", "label": "", "description": ""},
                     "controlnet_vae": {"name": "controlnet_vae", "label": "", "description": ""},
                     "ip_adapter": {"name": "ip_adapter", "label": "", "description": ""},
                     "kontext_conditioning": {"name": "kontext_conditioning", "label": "", "description": ""}
-                }
+                },
+                "isOpen": true,
+                "isIntermediate": true,
+                "useCache": true
             },
             "position": {"x": 825.8834556930959, "y": 85.12161027257513}
         }

@@ -101,7 +101,7 @@ These artifact links are part of the design narrative so downstream readers can 
 |----------|--------------------------|----------------------------------------|
 | SDXL Flux Refine | `data/workflows/sdxl-flux-refine.json` | `data/api-calls/call-wf-sdxl-flux-refine.json` |
 | SDXL Text to Image | `data/workflows/sdxl-text-to-image.json` | `data/api-calls/call-wf-sdxl-text-to-image.json` |
-| FLUX Image to Image | `data/workflows/flux-image-to-image.json` | `data/api-calls/call-wf-flux-image-to-image-1.json` |
+| FLUX Image to Image | `data/workflows/flux-image-to-image.json` | `data/api-calls/call-wf-flux-image-to-image.json` |
 
 (If response examples are later curated, they can be linked in a parallel column without altering core assumptions.)
 

@@ -357,15 +357,15 @@ class BoardRepository:
         >>> uncategorized = board_repo.get_uncategorized_board()
         >>> print(f"Uncategorized images: {uncategorized.image_count}")
         """
-        # Get the image count for uncategorized
+        # Derive image count for uncategorized (sentinel id 'none') by listing image names
+        count = 0
         try:
-            response = self._client._make_request(
-                "GET", "/boards/uncategorized/images_count"
-            )
-            count = response.json().get("count", 0)
+            resp = self._client._make_request("GET", "/boards/none/image_names")
+            data = resp.json()
+            if isinstance(data, list):
+                count = len(data)
         except requests.HTTPError:
-            count = 0
-
+            pass
         return Board.uncategorized(image_count=count)
 
     def get_uncategorized_handle(self) -> BoardHandle:

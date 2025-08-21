@@ -86,12 +86,22 @@ class BoardHandle:
             If the board no longer exists.
         """
         if self.is_uncategorized:
-            # Uncategorized board always exists, just update count
-            response = self.client._make_request("GET", "/boards/uncategorized/images_count")
-            self.board.image_count = response.json()["count"]
-        else:
-            response = self.client._make_request("GET", f"/boards/{self.board_id}/")
-            self.board = Board(**response.json())
+            # Special-case: uncategorized board is a sentinel (id 'none') and
+            # not a real board resource. There is no images_count endpoint.
+            # We derive the count by listing its image names.
+            try:
+                resp = self.client._make_request("GET", "/boards/none/image_names")
+                data = resp.json()
+                if isinstance(data, list):
+                    self.board.image_count = len(data)
+            except requests.HTTPError:
+                # Leave existing count if request fails
+                pass
+            return
+
+        # Normal board: fetch latest metadata
+        response = self.client._make_request("GET", f"/boards/{self.board_id}/")
+        self.board = Board(**response.json())
 
     def list_images(
         self,

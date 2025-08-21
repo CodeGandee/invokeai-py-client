@@ -130,7 +130,7 @@ See runnable scripts in `examples/` and template workflows in `data/workflows/`.
 |----------|---------------|---------------------------|
 | SDXL Flux Refine | `data/workflows/sdxl-flux-refine.json` | `data/api-calls/call-wf-sdxl-flux-refine.json` |
 | SDXL Text To Image | `data/workflows/sdxl-text-to-image.json` | `data/api-calls/call-wf-sdxl-text-to-image.json` |
-| FLUX Image To Image | `data/workflows/flux-image-to-image.json` | `data/api-calls/call-wf-flux-image-to-image-1.json` |
+| FLUX Image To Image | `data/workflows/flux-image-to-image.json` | `data/api-calls/call-wf-flux-image-to-image.json` |
 
 ---
 ## 🚦 Execution Patterns

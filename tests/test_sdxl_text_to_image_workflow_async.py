@@ -168,8 +168,24 @@ def configure_workflow(workflow: Any, models: dict[str, Any]) -> None:
     if sched_idx is not None:
         updates[sched_idx] = SCHEDULER
 
-    print(f"[INFO] Applying {len(updates)} updates via set_many()")
-    workflow.set_many(updates)
+    print(f"[INFO] Applying {len(updates)} updates (explicit loop; set_many removed)")
+    for idx, val in updates.items():
+        try:
+            workflow._set_input_value_simple_impl(idx, val)  # type: ignore[attr-defined]
+        except AttributeError:
+            # Fallback: direct field mutation when possible
+            fld = workflow.get_input_value(idx)
+            if hasattr(fld, 'value') and not isinstance(val, dict):
+                try:
+                    fld.value = val  # type: ignore[attr-defined]
+                except Exception:
+                    pass
+            elif isinstance(val, dict):
+                for k, v in val.items():
+                    if hasattr(fld, k):
+                        setattr(fld, k, v)
+        except Exception as e:
+            print(f"[WARN] could not set input {idx}: {e}")
     print("[DEBUG] Input preview (index label type value):")
     for row in workflow.preview():
         print(f"  [{row['index']:02d}] {row['label']} ({row['type']}): {row['value']}")

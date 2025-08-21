@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-"""End-to-end FLUX image-to-image workflow test using new convenience APIs.
+"""End-to-end FLUX image-to-image workflow test using index-centric APIs.
 
-This variant of the original test focuses on exercising the new index-centric
-APIs: set_input_value_simple(), set_many(), preview(). It performs:
-  1. Board creation
-  2. Test image generation & upload
-  3. Workflow load
-  4. Bulk input configuration via set_many()
-  5. Submission & monitoring
-  6. Cleanup
+Previously exercised deprecated convenience APIs (set_input_value_simple, set_many);
+these have been removed/disabled. This test now performs:
+    1. Board creation
+    2. Test image generation & upload
+    3. Workflow load
+    4. Input configuration via explicit loop
+    5. Submission & monitoring
+    6. Cleanup
 
 Run (assuming InvokeAI running @ 127.0.0.1:9090):
   pixi run -e dev python tests/test_flux_i2i_submission_new_api.py
@@ -147,17 +147,8 @@ def model_dict(model) -> dict:
     }
 
 
-def configure_inputs_via_set_many(workflow, models: dict[str, Any], image: IvkImage, board_id: str):
-    """Configure inputs without hard-coded node UUIDs.
-
-    Heuristics specific to flux-image-to-image workflow:
-      - Positive prompt: first string input with label including 'Positive Prompt'
-      - Negative prompt: first string input with label including 'Negative Prompt'
-      - Model-related fields: any exposed input whose node_type == 'flux_model_loader' and field_name in model fields
-      - Image input: node_type == 'image' and field_name == 'image'
-      - Sampler params: node_type == 'flux_denoise_meta'
-      - Board field: node_type == 'flux_vae_decode' and field_name == 'board'
-    """
+def configure_inputs(workflow, models: dict[str, Any], image: IvkImage, board_id: str):
+    """Configure inputs without hard-coded node UUIDs (replaces removed set_many)."""
     node_type_map = _build_node_type_map(workflow)
     inputs = list(workflow.list_inputs())
 
@@ -215,8 +206,26 @@ def configure_inputs_via_set_many(workflow, models: dict[str, Any], image: IvkIm
     if board_idx is not None:
         updates[board_idx] = board_id
 
-    print(f"[INFO] Applying {len(updates)} input updates atomically via set_many() (dynamic discovery)")
-    workflow.set_many(updates)
+    print(f"[INFO] Applying {len(updates)} input updates (explicit loop; set_many removed)")
+    for idx, val in updates.items():
+        try:
+            workflow._set_input_value_simple_impl(idx, val)  # type: ignore[attr-defined]
+        except AttributeError:
+            fld = workflow.get_input_value(idx)
+            if hasattr(fld, 'value') and not isinstance(val, dict):
+                try:
+                    fld.value = val  # type: ignore[attr-defined]
+                except Exception:
+                    pass
+            elif isinstance(val, dict):
+                for k, v in val.items():
+                    if hasattr(fld, k):
+                        try:
+                            setattr(fld, k, v)
+                        except Exception:
+                            pass
+        except Exception as e:
+            print(f"[WARN] could not set input {idx}: {e}")
     print("[DEBUG] Input preview after updates:")
     for row in workflow.preview():
         print(f"  [{row['index']:02d}] {row['label']} ({row['type']}): {row['value']}")
@@ -324,7 +333,7 @@ def main() -> int:
         cleanup_board(client, board_id_val)
         return 1
     # Configure via new API
-    configure_inputs_via_set_many(workflow, models, uploaded, board_id_val)
+    configure_inputs(workflow, models, uploaded, board_id_val)
     # Save API graph for debug
     try:
         api_graph = workflow._convert_to_api_format(board_id_val)
