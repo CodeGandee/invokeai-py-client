@@ -240,7 +240,8 @@ def submit_and_wait(client: InvokeAIClient, workflow, board_id: str) -> bool:
             print(f"  {idx}: {msgs}")
         return False
     try:
-        result = workflow.submit_sync(board_id=board_id)
+        # board_id now must be set via form input; call without board override
+        result = workflow.submit_sync()
     except Exception as e:
         print(f"[ERROR] submit failed: {e}")
         return False
@@ -336,7 +337,7 @@ def main() -> int:
     configure_inputs(workflow, models, uploaded, board_id_val)
     # Save API graph for debug
     try:
-        api_graph = workflow._convert_to_api_format(board_id_val)
+        api_graph = workflow._convert_to_api_format()
         Path('tmp').mkdir(exist_ok=True)
         with open('tmp/flux_i2i_api_graph_new_api.json', 'w') as f:
             json.dump(api_graph, f, indent=2)

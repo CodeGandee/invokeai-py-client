@@ -80,6 +80,7 @@ from rich.console import Console
 from rich.table import Table
 from rich import box
 from typing import Union, Any
+from PIL import Image
 
 # Field type imports for explicit typing of workflow inputs
 from invokeai_py_client.ivk_fields import (
@@ -97,6 +98,19 @@ from invokeai_py_client.models import IvkImage  # type: ignore
 
 from invokeai_py_client import InvokeAIClient  # noqa: E402
 from invokeai_py_client.workflow import WorkflowDefinition  # noqa: E402
+
+# ============================================================================
+# NOTE FOR INTERACTIVE (e.g. Jupyter) USERS
+# ----------------------------------------------------------------------------
+# We expose a placeholder variable `final_image` which will be populated with a
+# Pillow Image instance of the FIRST generated output (if any) at the end of
+# the script. This makes it easy to inspect the result inline in a notebook:
+#
+#   display(final_image)
+#
+# If generation fails or produces no images, it will remain None.
+# ============================================================================
+final_image: Image.Image | None = None  # Will hold a PIL.Image.Image after successful run
 
 #############################################
 # SERVER / PATH CONFIG
@@ -125,7 +139,7 @@ TIMEOUT_SEC = 300.0           # Overall wait timeout
 # GENERATION PARAMETERS
 #############################################
 STEPS = 10                    # num_steps
-NOISE_RATIO = 0.8             # 0..1, used to derive denoising_start = 1 - NOISE_RATIO
+NOISE_RATIO = 0.85             # 0..1, used to derive denoising_start = 1 - NOISE_RATIO
 NEGATIVE_PROMPT_DEFAULT = "blurry, low quality, distorted"
 
 #############################################
@@ -247,37 +261,53 @@ uploaded_name: str = uploaded_image.image_name
 # -------------------------------------------------------------
 # Explicitly retrieve & type each workflow input field by index
 # -------------------------------------------------------------
+
+# Model field
 field_model: IvkModelIdentifierField = workflow_handle.get_input_value(IDX_MODEL)  # type: ignore[assignment]
 assert isinstance(field_model, IvkModelIdentifierField), f"IDX_MODEL expected IvkModelIdentifierField, got {type(field_model)}"
+
+# Image field
 field_image: IvkStringField = workflow_handle.get_input_value(IDX_IMAGE)  # type: ignore[assignment]
 assert isinstance(field_image, IvkStringField), f"IDX_IMAGE expected IvkStringField, got {type(field_image)}"
+field_image.value = uploaded_name  # Set immediately after retrieval
+
+# T5 encoder field
 field_t5: IvkModelIdentifierField = workflow_handle.get_input_value(IDX_T5)  # type: ignore[assignment]
 assert isinstance(field_t5, IvkModelIdentifierField), f"IDX_T5 expected IvkModelIdentifierField, got {type(field_t5)}"
+
+# CLIP field
 field_clip: IvkModelIdentifierField = workflow_handle.get_input_value(IDX_CLIP)  # type: ignore[assignment]
 assert isinstance(field_clip, IvkModelIdentifierField), f"IDX_CLIP expected IvkModelIdentifierField, got {type(field_clip)}"
+
+# VAE field
 field_vae: IvkModelIdentifierField = workflow_handle.get_input_value(IDX_VAE)  # type: ignore[assignment]
 assert isinstance(field_vae, IvkModelIdentifierField), f"IDX_VAE expected IvkModelIdentifierField, got {type(field_vae)}"
+
+# Positive prompt field
 field_pos_prompt: IvkStringField = workflow_handle.get_input_value(IDX_POS_PROMPT)  # type: ignore[assignment]
 assert isinstance(field_pos_prompt, IvkStringField), f"IDX_POS_PROMPT expected IvkStringField, got {type(field_pos_prompt)}"
+field_pos_prompt.value = positive_prompt  # Set immediately
+
+# Negative prompt field
 field_neg_prompt: IvkStringField = workflow_handle.get_input_value(IDX_NEG_PROMPT)  # type: ignore[assignment]
 assert isinstance(field_neg_prompt, IvkStringField), f"IDX_NEG_PROMPT expected IvkStringField, got {type(field_neg_prompt)}"
+field_neg_prompt.value = negative_prompt  # Set immediately
+
+# Steps field
 field_steps: IvkIntegerField = workflow_handle.get_input_value(IDX_STEPS)  # type: ignore[assignment]
 assert isinstance(field_steps, IvkIntegerField), f"IDX_STEPS expected IvkIntegerField, got {type(field_steps)}"
+field_steps.value = STEPS  # type: ignore[assignment]  # Set immediately
+
+# Denoise start field
 field_denoise_start: IvkFloatField = workflow_handle.get_input_value(IDX_DENOISE_START)  # type: ignore[assignment]
 assert isinstance(field_denoise_start, IvkFloatField), f"IDX_DENOISE_START expected IvkFloatField, got {type(field_denoise_start)}"
+field_denoise_start.value = 1 - NOISE_RATIO  # type: ignore[assignment]  # Set immediately
+
+# Output board field
 field_output_board: Union[IvkStringField, IvkBoardField] = workflow_handle.get_input_value(IDX_OUTPUT_BOARD)  # type: ignore[assignment]
 assert isinstance(field_output_board, (IvkStringField, IvkBoardField)), f"IDX_OUTPUT_BOARD unexpected type {type(field_output_board)}"
-
-# ------------------------
-# Set values (in-place)
-# ------------------------
-field_image.value = uploaded_name
-field_pos_prompt.value = positive_prompt
-field_neg_prompt.value = negative_prompt
-field_steps.value = STEPS  # type: ignore[assignment]
-field_denoise_start.value = 1 - NOISE_RATIO  # type: ignore[assignment]
 if hasattr(field_output_board, 'value'):
-    field_output_board.value = BOARD_ID  # type: ignore[assignment]
+    field_output_board.value = BOARD_ID  # type: ignore[assignment]  # Set immediately
 
 def log_field_set(idx: int, field_obj: object) -> None:
     """Log the effective value of a workflow input previously set.
@@ -314,7 +344,7 @@ console.print(config_tbl)
 # Submit the prepared workflow graph to the server queue (sync). Returns submission
 # metadata: batch_id, list of item_ids, enqueued count, and session_id used for
 # later status tracking/event subscription.
-submission_result: dict[str, Any] = workflow_handle.submit_sync(board_id=BOARD_ID)
+submission_result: dict[str, Any] = workflow_handle.submit_sync()
 
 # Poll the queue until the single enqueued item reaches a terminal state.
 # Always returns the queue item dict (status, timings, any error info). We separate
@@ -349,7 +379,6 @@ if queue_item.get("status") == "completed":
     # --- Optional: save images (separated concern) ---
     if SAVE_IMAGES and mappings:
         try:
-            from PIL import Image  # type: ignore
             from io import BytesIO
         except Exception:
             console.print("[yellow]Pillow not installed; skipping image save.[/yellow]")
@@ -359,24 +388,34 @@ if queue_item.get("status") == "completed":
             saved = 0
             for m in mappings:
                 board_id = m.get('board_id') or 'none'
-                # Acquire a board handle (cached repo lookup) for each mapping's board.
                 bh: BoardHandle = client.board_repo.get_board_handle(board_id)
                 image_names = m.get('image_names') or []
-                for name in image_names:
-                    try:
-                        # Download raw image bytes (full resolution) then deserialize via Pillow.
-                        data: bytes = bh.download_image(name, full_resolution=True)
-                        img = Image.open(BytesIO(data))  # type: ignore[assignment]
-                        dest: Path = OUTPUT_DIR / name
+                # Current FLUX image-to-image workflow decode node emits at most one image
+                # (image_output). We still treat it as a list for forward compatibility with
+                # possible collection outputs that could yield multiple names.
+                if not image_names:
+                    continue
+                name = image_names[0]
+                try:
+                    data: bytes = bh.download_image(name, full_resolution=True)
+                    img = Image.open(BytesIO(data))  # type: ignore[assignment]
+                    if final_image is None:
                         try:
-                            img.save(dest)
+                            final_image = img.copy()
                         except Exception:
-                            dest = dest.with_suffix('.png')
-                            img.save(dest, format='PNG')
-                        saved += 1
-                        console.print(f"[green]Saved[/green] {dest}")
-                    except Exception as e:  # pragma: no cover
-                        console.print(f"[red]Failed {name}: {e}[/red]")
+                            final_image = img
+                    dest: Path = OUTPUT_DIR / name
+                    try:
+                        img.save(dest)
+                    except Exception:
+                        dest = dest.with_suffix('.png')
+                        img.save(dest, format='PNG')
+                    saved += 1
+                    console.print(f"[green]Saved[/green] {dest}")
+                except Exception as e:  # pragma: no cover
+                    console.print(f"[red]Failed {name}: {e}[/red]")
             console.print(f"Saved {saved} file(s).")
+            if final_image is not None:
+                console.print("[bold cyan]In-memory PIL Image available as variable 'final_image' (first generated image).[/bold cyan]")
 else:
     console.print("[red]Workflow did not complete successfully.[/red]")

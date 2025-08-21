@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import os
 import sys
-import json
 import time
 from pathlib import Path
 from typing import Optional, Any
@@ -215,7 +214,7 @@ def submit_and_monitor(client: InvokeAIClient, workflow: Any) -> bool:
     
     try:
         # Submit the workflow
-        result = workflow.submit_sync(board_id="none")
+        result = workflow.submit_sync()
     except Exception as e:
         print(f"[ERROR] Submission failed: {e}")
         return False
@@ -319,13 +318,7 @@ def main() -> int:
     # Configure workflow inputs
     configure_workflow(workflow, models)
     
-    # Debug: Save the API graph
-    api_graph = workflow._convert_to_api_format("none")
-    debug_path = Path("tmp/sdxl_flux_refine_api_graph.json")
-    debug_path.parent.mkdir(exist_ok=True)
-    with open(debug_path, "w") as f:
-        json.dump(api_graph, f, indent=2)
-    print(f"\n[DEBUG] Saved API graph to {debug_path}")
+    # Debug API graph generation removed; no file output
     
     # Submit and monitor
     success = submit_and_monitor(client, workflow)

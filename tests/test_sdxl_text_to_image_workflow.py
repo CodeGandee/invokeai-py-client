@@ -14,7 +14,6 @@ Design goals:
 from __future__ import annotations
 
 import sys
-import json
 import time
 import asyncio
 import socket
@@ -169,7 +168,7 @@ def submit_and_monitor_sync(client: InvokeAIClient, workflow: Any) -> bool:
             print(f"[SYNC][ERROR] input {idx}: {', '.join(errs)}")
         return False
     try:
-        result = workflow.submit_sync(board_id=BOARD_ID)
+        result = workflow.submit_sync()
     except Exception as e:
         print(f"[SYNC][ERROR] submission failed: {e}")
         return False
@@ -233,13 +232,7 @@ async def run_async_workflow(client: InvokeAIClient) -> bool:
         return False
     print(f"[ASYNC][OK] workflow '{workflow.definition.name}' inputs={len(workflow.inputs)}")
     configure_workflow(workflow, models, steps=NUM_STEPS_ASYNC)
-    try:
-        api_graph = workflow._convert_to_api_format(BOARD_ID)
-        DEBUG_GRAPH_ASYNC.parent.mkdir(exist_ok=True)
-        with open(DEBUG_GRAPH_ASYNC, "w") as f:
-            json.dump(api_graph, f, indent=2)
-    except Exception:
-        pass
+    # Debug API graph generation removed (private method usage deprecated)
 
     synth = {"denoise_steps": 0, "printed_keys": False}
     def on_started(evt: dict[str, Any]):
@@ -277,7 +270,6 @@ async def run_async_workflow(client: InvokeAIClient) -> bool:
     print("\n[ASYNC][SUBMIT]")
     try:
         submission = await workflow.submit(
-            board_id=BOARD_ID,
             subscribe_events=True,
             on_invocation_started=on_started,
             on_invocation_progress=on_progress,
@@ -330,13 +322,7 @@ def run_sync_workflow(client: InvokeAIClient) -> bool:
         return False
     print(f"[SYNC][OK] workflow '{workflow.definition.name}' inputs={len(workflow.inputs)}")
     configure_workflow(workflow, models, steps=NUM_STEPS_SYNC)
-    try:
-        api_graph = workflow._convert_to_api_format(BOARD_ID)
-        DEBUG_GRAPH_SYNC.parent.mkdir(exist_ok=True)
-        with open(DEBUG_GRAPH_SYNC, "w") as f:
-            json.dump(api_graph, f, indent=2)
-    except Exception:
-        pass
+    # Debug API graph generation removed (private method usage deprecated)
     return submit_and_monitor_sync(client, workflow)
 
 

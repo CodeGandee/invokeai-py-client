@@ -274,8 +274,8 @@ class BoardHandle:
         image_data: bytes,
         filename: str | None = None,
         is_intermediate: bool = False,
-    # Default to USER category so uploads appear under the GUI's Assets tab
-    image_category: ImageCategory = ImageCategory.USER,
+        # Default to USER category so uploads appear under the GUI's Assets tab
+        image_category: ImageCategory = ImageCategory.USER,
         session_id: str | None = None,
     ) -> IvkImage:
         """

@@ -1,31 +1,31 @@
 {
-    "item_id": 121,
+    "item_id": 229,
     "status": "completed",
     "priority": 0,
-    "batch_id": "b819e389-9162-47a0-90bd-0d0e339c4365",
+    "batch_id": "0f0ce9c8-e9ff-464f-9005-1ff1de3d9495",
     "origin": "workflows",
     "destination": "gallery",
-    "session_id": "13af375b-d708-4f92-a252-8f9476344c2e",
-    "created_at": "2025-08-19 10:28:28.486",
-    "updated_at": "2025-08-19 10:28:41.622",
-    "started_at": "2025-08-19 10:28:28.510",
-    "completed_at": "2025-08-19 10:28:41.622",
+    "session_id": "7676b0ac-153f-4373-932f-0d2196e367ad",
+    "created_at": "2025-08-21 07:19:51.147",
+    "updated_at": "2025-08-21 07:20:13.763",
+    "started_at": "2025-08-21 07:19:51.163",
+    "completed_at": "2025-08-21 07:20:13.763",
     "queue_id": "default",
     "field_values": [],
     "is_api_validation_run": false,
     "session": {
-        "id": "13af375b-d708-4f92-a252-8f9476344c2e",
+        "id": "7676b0ac-153f-4373-932f-0d2196e367ad",
         "graph": {
-            "id": "9d50f79b-1257-48e7-a1fc-e30e57928f49",
+            "id": "a6de3430-1243-4974-8d80-41d681609f3b",
             "nodes": {
                 "sdxl_model_loader:PwBr7RXRsy": {
                     "id": "sdxl_model_loader:PwBr7RXRsy",
                     "is_intermediate": true,
                     "use_cache": true,
                     "model": {
-                        "key" : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                        "hash": "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                        "name": "albedobaseXL_v21",
+                        "key" : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                        "hash": "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                        "name": "juggernautXL_v9Rundiffusionphoto2",
                         "base": "sdxl",
                         "type": "main"
                     },
@@ -118,7 +118,6 @@
                     "type": "core_metadata"
                 },
                 "canvas_output:JbPTiAJ26r": {
-                    "board": {"board_id": "abf4afa1-5797-48a0-8e4c-f072b51f2151"},
                     "id": "canvas_output:JbPTiAJ26r",
                     "is_intermediate": false,
                     "use_cache": false,
@@ -243,45 +242,45 @@
             ]
         },
         "execution_graph": {
-            "id": "aa76b256-a8a2-4607-afda-b2c5be199faf",
+            "id": "9164707b-28ab-48ee-a484-9a334dde1f25",
             "nodes": {
-                "fafd222a-316a-40e5-b0b2-296d2c9c636a": {
-                    "id": "fafd222a-316a-40e5-b0b2-296d2c9c636a",
+                "af703cbe-f169-4c67-a43e-3b4ae045ea27": {
+                    "id": "af703cbe-f169-4c67-a43e-3b4ae045ea27",
                     "is_intermediate": true,
                     "use_cache": true,
                     "model": {
-                        "key" : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                        "hash": "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                        "name": "albedobaseXL_v21",
+                        "key" : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                        "hash": "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                        "name": "juggernautXL_v9Rundiffusionphoto2",
                         "base": "sdxl",
                         "type": "main"
                     },
                     "type": "sdxl_model_loader"
                 },
-                "880072b2-2f3f-4722-bf92-bbb53d8fd2af": {
-                    "id": "880072b2-2f3f-4722-bf92-bbb53d8fd2af",
+                "b32e96bf-9402-4149-baf3-623f88f07d1d": {
+                    "id": "b32e96bf-9402-4149-baf3-623f88f07d1d",
                     "is_intermediate": true,
                     "use_cache": true,
                     "value": "deep space, high quality, colorful",
                     "type": "string"
                 },
-                "2c159334-1cff-4342-b6f7-13eede50c3ac": {
-                    "id": "2c159334-1cff-4342-b6f7-13eede50c3ac",
+                "ba4e490f-36ee-4ae1-86cc-a65b98071087": {
+                    "id": "ba4e490f-36ee-4ae1-86cc-a65b98071087",
                     "is_intermediate": true,
                     "use_cache": false,
                     "low": 0,
                     "high": 2147483647,
                     "type": "rand_int"
                 },
-                "cddd3aac-2f84-4efc-ac67-a29144aa1fa2": {
-                    "id": "cddd3aac-2f84-4efc-ac67-a29144aa1fa2",
+                "ccff5cca-b693-4058-a177-a942357d9b1f": {
+                    "id": "ccff5cca-b693-4058-a177-a942357d9b1f",
                     "is_intermediate": true,
                     "use_cache": true,
                     "value": "earth, star war, blurry",
                     "type": "string"
                 },
-                "716a36e8-e579-4548-afa1-13da3a5eb549": {
-                    "id": "716a36e8-e579-4548-afa1-13da3a5eb549",
+                "7ad7473d-2527-4cb3-a5f3-140ef01ff8a7": {
+                    "id": "7ad7473d-2527-4cb3-a5f3-140ef01ff8a7",
                     "is_intermediate": true,
                     "use_cache": true,
                     "prompt": "deep space, high quality, colorful",
@@ -294,17 +293,17 @@
                     "target_height": 1024,
                     "clip": {
                         "tokenizer": {
-                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                            "name"         : "albedobaseXL_v21",
+                            "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                            "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                            "name"         : "juggernautXL_v9Rundiffusionphoto2",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "tokenizer"
                         },
                         "text_encoder": {
-                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                            "name"         : "albedobaseXL_v21",
+                            "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                            "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                            "name"         : "juggernautXL_v9Rundiffusionphoto2",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "text_encoder"
@@ -314,17 +313,17 @@
                     },
                     "clip2": {
                         "tokenizer": {
-                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                            "name"         : "albedobaseXL_v21",
+                            "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                            "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                            "name"         : "juggernautXL_v9Rundiffusionphoto2",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "tokenizer_2"
                         },
                         "text_encoder": {
-                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                            "name"         : "albedobaseXL_v21",
+                            "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                            "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                            "name"         : "juggernautXL_v9Rundiffusionphoto2",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "text_encoder_2"
@@ -334,18 +333,18 @@
                     },
                     "type": "sdxl_compel_prompt"
                 },
-                "fa23b376-11ca-438f-b919-b1695ab42b36": {
-                    "id": "fa23b376-11ca-438f-b919-b1695ab42b36",
+                "bd7d4f55-ffc5-4b18-ad54-2eca3129aa59": {
+                    "id": "bd7d4f55-ffc5-4b18-ad54-2eca3129aa59",
                     "is_intermediate": true,
                     "use_cache": true,
-                    "seed": 1776185488,
+                    "seed": 427480069,
                     "width": 768,
                     "height": 1024,
                     "use_cpu": true,
                     "type": "noise"
                 },
-                "d648a095-508a-430c-ae35-5c36d4a48f6f": {
-                    "id": "d648a095-508a-430c-ae35-5c36d4a48f6f",
+                "5ce19c4b-15a3-422a-8905-7637de809df8": {
+                    "id": "5ce19c4b-15a3-422a-8905-7637de809df8",
                     "is_intermediate": true,
                     "use_cache": true,
                     "prompt": "earth, star war, blurry",
@@ -358,17 +357,17 @@
                     "target_height": 1024,
                     "clip": {
                         "tokenizer": {
-                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                            "name"         : "albedobaseXL_v21",
+                            "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                            "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                            "name"         : "juggernautXL_v9Rundiffusionphoto2",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "tokenizer"
                         },
                         "text_encoder": {
-                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                            "name"         : "albedobaseXL_v21",
+                            "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                            "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                            "name"         : "juggernautXL_v9Rundiffusionphoto2",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "text_encoder"
@@ -378,17 +377,17 @@
                     },
                     "clip2": {
                         "tokenizer": {
-                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                            "name"         : "albedobaseXL_v21",
+                            "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                            "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                            "name"         : "juggernautXL_v9Rundiffusionphoto2",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "tokenizer_2"
                         },
                         "text_encoder": {
-                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                            "name"         : "albedobaseXL_v21",
+                            "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                            "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                            "name"         : "juggernautXL_v9Rundiffusionphoto2",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "text_encoder_2"
@@ -398,17 +397,17 @@
                     },
                     "type": "sdxl_compel_prompt"
                 },
-                "69344e07-fd1a-4bfe-873b-b2ebd58e1836": {
-                    "id": "69344e07-fd1a-4bfe-873b-b2ebd58e1836",
+                "66e7f05f-8ca4-41a6-bd47-f03a29197121": {
+                    "id": "66e7f05f-8ca4-41a6-bd47-f03a29197121",
                     "is_intermediate": true,
                     "use_cache": true,
                     "collection": [
-                        {"conditioning_name": "ConditioningFieldData_dc4e3768-d72b-4d1b-aa9a-94a9d8c48fb1"}
+                        {"conditioning_name": "ConditioningFieldData_e8e6facc-b416-4979-9d72-d82c7f31c5fb"}
                     ],
                     "type": "collect"
                 },
-                "76ac0d9c-8f92-46f7-a8f3-2ee694707767": {
-                    "id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767",
+                "5ac2f5e3-86df-4762-b663-9076d6c2673b": {
+                    "id": "5ac2f5e3-86df-4762-b663-9076d6c2673b",
                     "is_intermediate": true,
                     "use_cache": true,
                     "generation_mode": "sdxl_txt2img",
@@ -416,7 +415,7 @@
                     "negative_prompt": "earth, star war, blurry",
                     "width": 768,
                     "height": 1024,
-                    "seed": 1776185488,
+                    "seed": 427480069,
                     "rand_device": "cpu",
                     "cfg_scale": 7.5,
                     "cfg_rescale_multiplier": 0,
@@ -428,26 +427,26 @@
                     "negative_style_prompt": "naked",
                     "type": "core_metadata"
                 },
-                "03b476de-571f-4316-aae5-db885133c75d": {
-                    "id": "03b476de-571f-4316-aae5-db885133c75d",
+                "1dacdfd3-560f-4097-805a-4e320f9eaf92": {
+                    "id": "1dacdfd3-560f-4097-805a-4e320f9eaf92",
                     "is_intermediate": true,
                     "use_cache": true,
                     "collection": [
-                        {"conditioning_name": "ConditioningFieldData_d1dd7994-59cf-4d1b-be9c-a5fd22246014"}
+                        {"conditioning_name": "ConditioningFieldData_c03cd4b4-bbf7-43e9-99aa-c953fee02ff0"}
                     ],
                     "type": "collect"
                 },
-                "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1": {
-                    "id": "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1",
+                "638f1ee2-063f-437e-991f-b4a978245357": {
+                    "id": "638f1ee2-063f-437e-991f-b4a978245357",
                     "is_intermediate": true,
                     "use_cache": true,
                     "positive_conditioning": [
-                        {"conditioning_name": "ConditioningFieldData_dc4e3768-d72b-4d1b-aa9a-94a9d8c48fb1"}
+                        {"conditioning_name": "ConditioningFieldData_e8e6facc-b416-4979-9d72-d82c7f31c5fb"}
                     ],
                     "negative_conditioning": [
-                        {"conditioning_name": "ConditioningFieldData_d1dd7994-59cf-4d1b-be9c-a5fd22246014"}
+                        {"conditioning_name": "ConditioningFieldData_c03cd4b4-bbf7-43e9-99aa-c953fee02ff0"}
                     ],
-                    "noise": {"latents_name": "Tensor_3a72469e-5b70-43bc-b12a-095077bb3c79", "seed": 1776185488},
+                    "noise": {"latents_name": "Tensor_ab3d496b-8aba-45c2-bf07-92f991651b18", "seed": 427480069},
                     "steps": 30,
                     "cfg_scale": 7.5,
                     "denoising_start": 0,
@@ -455,17 +454,17 @@
                     "scheduler": "dpmpp_3m_k",
                     "unet": {
                         "unet": {
-                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                            "name"         : "albedobaseXL_v21",
+                            "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                            "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                            "name"         : "juggernautXL_v9Rundiffusionphoto2",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "unet"
                         },
                         "scheduler": {
-                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                            "name"         : "albedobaseXL_v21",
+                            "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                            "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                            "name"         : "juggernautXL_v9Rundiffusionphoto2",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "scheduler"
@@ -476,15 +475,14 @@
                     "cfg_rescale_multiplier": 0,
                     "type": "denoise_latents"
                 },
-                "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08": {
-                    "board": {"board_id": "abf4afa1-5797-48a0-8e4c-f072b51f2151"},
+                "551347fe-1cc9-4958-b387-287479279ce9": {
                     "metadata": {
                         "generation_mode": "sdxl_txt2img",
                         "positive_prompt": "deep space, high quality, colorful",
                         "negative_prompt": "earth, star war, blurry",
                         "width": 768,
                         "height": 1024,
-                        "seed": 1776185488,
+                        "seed": 427480069,
                         "rand_device": "cpu",
                         "cfg_scale": 7.5,
                         "cfg_rescale_multiplier": 0,
@@ -496,15 +494,15 @@
                         "negative_style_prompt": "naked",
                         "app_version": "6.3.0"
                     },
-                    "id": "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08",
+                    "id": "551347fe-1cc9-4958-b387-287479279ce9",
                     "is_intermediate": false,
                     "use_cache": false,
-                    "latents": {"latents_name": "Tensor_a7e6745a-49d1-44ff-95fe-54a03cd964c6"},
+                    "latents": {"latents_name": "Tensor_00cca2c0-f558-4766-9c02-8c73ef7160d8"},
                     "vae": {
                         "vae": {
-                            "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                            "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                            "name"         : "albedobaseXL_v21",
+                            "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                            "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                            "name"         : "juggernautXL_v9Rundiffusionphoto2",
                             "base"         : "sdxl",
                             "type"         : "main",
                             "submodel_type": "vae"
@@ -519,128 +517,128 @@
             },
             "edges": [
                 {
-                    "source"     : {"node_id": "fafd222a-316a-40e5-b0b2-296d2c9c636a", "field": "clip"},
-                    "destination": {"node_id": "716a36e8-e579-4548-afa1-13da3a5eb549", "field": "clip"}
+                    "source"     : {"node_id": "af703cbe-f169-4c67-a43e-3b4ae045ea27", "field": "clip"},
+                    "destination": {"node_id": "7ad7473d-2527-4cb3-a5f3-140ef01ff8a7", "field": "clip"}
                 },
                 {
-                    "source"     : {"node_id": "fafd222a-316a-40e5-b0b2-296d2c9c636a", "field": "clip2"},
-                    "destination": {"node_id": "716a36e8-e579-4548-afa1-13da3a5eb549", "field": "clip2"}
+                    "source"     : {"node_id": "af703cbe-f169-4c67-a43e-3b4ae045ea27", "field": "clip2"},
+                    "destination": {"node_id": "7ad7473d-2527-4cb3-a5f3-140ef01ff8a7", "field": "clip2"}
                 },
                 {
-                    "source"     : {"node_id": "880072b2-2f3f-4722-bf92-bbb53d8fd2af", "field": "value" },
-                    "destination": {"node_id": "716a36e8-e579-4548-afa1-13da3a5eb549", "field": "prompt"}
+                    "source"     : {"node_id": "b32e96bf-9402-4149-baf3-623f88f07d1d", "field": "value" },
+                    "destination": {"node_id": "7ad7473d-2527-4cb3-a5f3-140ef01ff8a7", "field": "prompt"}
                 },
                 {
-                    "source"     : {"node_id": "880072b2-2f3f-4722-bf92-bbb53d8fd2af", "field": "value"},
-                    "destination": {"node_id": "716a36e8-e579-4548-afa1-13da3a5eb549", "field": "style"}
+                    "source"     : {"node_id": "b32e96bf-9402-4149-baf3-623f88f07d1d", "field": "value"},
+                    "destination": {"node_id": "7ad7473d-2527-4cb3-a5f3-140ef01ff8a7", "field": "style"}
                 },
                 {
-                    "source"     : {"node_id": "2c159334-1cff-4342-b6f7-13eede50c3ac", "field": "value"},
-                    "destination": {"node_id": "fa23b376-11ca-438f-b919-b1695ab42b36", "field": "seed" }
+                    "source"     : {"node_id": "ba4e490f-36ee-4ae1-86cc-a65b98071087", "field": "value"},
+                    "destination": {"node_id": "bd7d4f55-ffc5-4b18-ad54-2eca3129aa59", "field": "seed" }
                 },
                 {
-                    "source"     : {"node_id": "fafd222a-316a-40e5-b0b2-296d2c9c636a", "field": "clip"},
-                    "destination": {"node_id": "d648a095-508a-430c-ae35-5c36d4a48f6f", "field": "clip"}
+                    "source"     : {"node_id": "af703cbe-f169-4c67-a43e-3b4ae045ea27", "field": "clip"},
+                    "destination": {"node_id": "5ce19c4b-15a3-422a-8905-7637de809df8", "field": "clip"}
                 },
                 {
-                    "source"     : {"node_id": "fafd222a-316a-40e5-b0b2-296d2c9c636a", "field": "clip2"},
-                    "destination": {"node_id": "d648a095-508a-430c-ae35-5c36d4a48f6f", "field": "clip2"}
+                    "source"     : {"node_id": "af703cbe-f169-4c67-a43e-3b4ae045ea27", "field": "clip2"},
+                    "destination": {"node_id": "5ce19c4b-15a3-422a-8905-7637de809df8", "field": "clip2"}
                 },
                 {
-                    "source"     : {"node_id": "cddd3aac-2f84-4efc-ac67-a29144aa1fa2", "field": "value" },
-                    "destination": {"node_id": "d648a095-508a-430c-ae35-5c36d4a48f6f", "field": "prompt"}
+                    "source"     : {"node_id": "ccff5cca-b693-4058-a177-a942357d9b1f", "field": "value" },
+                    "destination": {"node_id": "5ce19c4b-15a3-422a-8905-7637de809df8", "field": "prompt"}
                 },
                 {
-                    "source"     : {"node_id": "cddd3aac-2f84-4efc-ac67-a29144aa1fa2", "field": "value"},
-                    "destination": {"node_id": "d648a095-508a-430c-ae35-5c36d4a48f6f", "field": "style"}
+                    "source"     : {"node_id": "ccff5cca-b693-4058-a177-a942357d9b1f", "field": "value"},
+                    "destination": {"node_id": "5ce19c4b-15a3-422a-8905-7637de809df8", "field": "style"}
                 },
                 {
-                    "source"     : {"node_id": "716a36e8-e579-4548-afa1-13da3a5eb549", "field": "conditioning"},
-                    "destination": {"node_id": "69344e07-fd1a-4bfe-873b-b2ebd58e1836", "field": "item"        }
+                    "source"     : {"node_id": "7ad7473d-2527-4cb3-a5f3-140ef01ff8a7", "field": "conditioning"},
+                    "destination": {"node_id": "66e7f05f-8ca4-41a6-bd47-f03a29197121", "field": "item"        }
                 },
                 {
-                    "source"     : {"node_id": "880072b2-2f3f-4722-bf92-bbb53d8fd2af", "field": "value"          },
-                    "destination": {"node_id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767", "field": "positive_prompt"}
+                    "source"     : {"node_id": "b32e96bf-9402-4149-baf3-623f88f07d1d", "field": "value"          },
+                    "destination": {"node_id": "5ac2f5e3-86df-4762-b663-9076d6c2673b", "field": "positive_prompt"}
                 },
                 {
-                    "source": {"node_id": "880072b2-2f3f-4722-bf92-bbb53d8fd2af", "field": "value"},
-                    "destination": {"node_id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767", "field": "positive_style_prompt"}
+                    "source": {"node_id": "b32e96bf-9402-4149-baf3-623f88f07d1d", "field": "value"},
+                    "destination": {"node_id": "5ac2f5e3-86df-4762-b663-9076d6c2673b", "field": "positive_style_prompt"}
                 },
                 {
-                    "source"     : {"node_id": "2c159334-1cff-4342-b6f7-13eede50c3ac", "field": "value"},
-                    "destination": {"node_id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767", "field": "seed" }
+                    "source"     : {"node_id": "ba4e490f-36ee-4ae1-86cc-a65b98071087", "field": "value"},
+                    "destination": {"node_id": "5ac2f5e3-86df-4762-b663-9076d6c2673b", "field": "seed" }
                 },
                 {
-                    "source"     : {"node_id": "cddd3aac-2f84-4efc-ac67-a29144aa1fa2", "field": "value"          },
-                    "destination": {"node_id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767", "field": "negative_prompt"}
+                    "source"     : {"node_id": "ccff5cca-b693-4058-a177-a942357d9b1f", "field": "value"          },
+                    "destination": {"node_id": "5ac2f5e3-86df-4762-b663-9076d6c2673b", "field": "negative_prompt"}
                 },
                 {
-                    "source"     : {"node_id": "fa23b376-11ca-438f-b919-b1695ab42b36", "field": "width"},
-                    "destination": {"node_id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767", "field": "width"}
+                    "source"     : {"node_id": "bd7d4f55-ffc5-4b18-ad54-2eca3129aa59", "field": "width"},
+                    "destination": {"node_id": "5ac2f5e3-86df-4762-b663-9076d6c2673b", "field": "width"}
                 },
                 {
-                    "source"     : {"node_id": "fa23b376-11ca-438f-b919-b1695ab42b36", "field": "height"},
-                    "destination": {"node_id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767", "field": "height"}
+                    "source"     : {"node_id": "bd7d4f55-ffc5-4b18-ad54-2eca3129aa59", "field": "height"},
+                    "destination": {"node_id": "5ac2f5e3-86df-4762-b663-9076d6c2673b", "field": "height"}
                 },
                 {
-                    "source"     : {"node_id": "d648a095-508a-430c-ae35-5c36d4a48f6f", "field": "conditioning"},
-                    "destination": {"node_id": "03b476de-571f-4316-aae5-db885133c75d", "field": "item"        }
+                    "source"     : {"node_id": "5ce19c4b-15a3-422a-8905-7637de809df8", "field": "conditioning"},
+                    "destination": {"node_id": "1dacdfd3-560f-4097-805a-4e320f9eaf92", "field": "item"        }
                 },
                 {
-                    "source"     : {"node_id": "fafd222a-316a-40e5-b0b2-296d2c9c636a", "field": "unet"},
-                    "destination": {"node_id": "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1", "field": "unet"}
+                    "source"     : {"node_id": "af703cbe-f169-4c67-a43e-3b4ae045ea27", "field": "unet"},
+                    "destination": {"node_id": "638f1ee2-063f-437e-991f-b4a978245357", "field": "unet"}
                 },
                 {
-                    "source": {"node_id": "69344e07-fd1a-4bfe-873b-b2ebd58e1836", "field": "collection"},
-                    "destination": {"node_id": "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1", "field": "positive_conditioning"}
+                    "source": {"node_id": "66e7f05f-8ca4-41a6-bd47-f03a29197121", "field": "collection"},
+                    "destination": {"node_id": "638f1ee2-063f-437e-991f-b4a978245357", "field": "positive_conditioning"}
                 },
                 {
-                    "source": {"node_id": "03b476de-571f-4316-aae5-db885133c75d", "field": "collection"},
-                    "destination": {"node_id": "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1", "field": "negative_conditioning"}
+                    "source": {"node_id": "1dacdfd3-560f-4097-805a-4e320f9eaf92", "field": "collection"},
+                    "destination": {"node_id": "638f1ee2-063f-437e-991f-b4a978245357", "field": "negative_conditioning"}
                 },
                 {
-                    "source"     : {"node_id": "fa23b376-11ca-438f-b919-b1695ab42b36", "field": "noise"},
-                    "destination": {"node_id": "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1", "field": "noise"}
+                    "source"     : {"node_id": "bd7d4f55-ffc5-4b18-ad54-2eca3129aa59", "field": "noise"},
+                    "destination": {"node_id": "638f1ee2-063f-437e-991f-b4a978245357", "field": "noise"}
                 },
                 {
-                    "source"     : {"node_id": "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1", "field": "latents"},
-                    "destination": {"node_id": "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08", "field": "latents"}
+                    "source"     : {"node_id": "638f1ee2-063f-437e-991f-b4a978245357", "field": "latents"},
+                    "destination": {"node_id": "551347fe-1cc9-4958-b387-287479279ce9", "field": "latents"}
                 },
                 {
-                    "source"     : {"node_id": "fafd222a-316a-40e5-b0b2-296d2c9c636a", "field": "vae"},
-                    "destination": {"node_id": "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08", "field": "vae"}
+                    "source"     : {"node_id": "af703cbe-f169-4c67-a43e-3b4ae045ea27", "field": "vae"},
+                    "destination": {"node_id": "551347fe-1cc9-4958-b387-287479279ce9", "field": "vae"}
                 },
                 {
-                    "source"     : {"node_id": "76ac0d9c-8f92-46f7-a8f3-2ee694707767", "field": "metadata"},
-                    "destination": {"node_id": "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08", "field": "metadata"}
+                    "source"     : {"node_id": "5ac2f5e3-86df-4762-b663-9076d6c2673b", "field": "metadata"},
+                    "destination": {"node_id": "551347fe-1cc9-4958-b387-287479279ce9", "field": "metadata"}
                 }
             ]
         },
         "executed": [
-            "neg_cond_collect:XpoW9rXd61",
-            "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1",
-            "716a36e8-e579-4548-afa1-13da3a5eb549",
-            "pos_cond_collect:sles8A43dq",
-            "cddd3aac-2f84-4efc-ac67-a29144aa1fa2",
-            "denoise_latents:TRC0Y88EWe",
-            "fa23b376-11ca-438f-b919-b1695ab42b36",
             "neg_cond:5ZtbrHJgrO",
-            "69344e07-fd1a-4bfe-873b-b2ebd58e1836",
-            "2c159334-1cff-4342-b6f7-13eede50c3ac",
-            "484ecc77-b7a0-4e19-b793-cc313f20fbe6",
-            "03b476de-571f-4316-aae5-db885133c75d",
             "canvas_output:JbPTiAJ26r",
-            "fe37ca02-b720-41f8-a10c-5ab7f110e336",
-            "880072b2-2f3f-4722-bf92-bbb53d8fd2af",
-            "positive_prompt:kjUMdcg0zO",
-            "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08",
-            "core_metadata:gSiDdR3ubW",
-            "d648a095-508a-430c-ae35-5c36d4a48f6f",
-            "fafd222a-316a-40e5-b0b2-296d2c9c636a",
+            "ccff5cca-b693-4058-a177-a942357d9b1f",
+            "b32e96bf-9402-4149-baf3-623f88f07d1d",
+            "af703cbe-f169-4c67-a43e-3b4ae045ea27",
+            "denoise_latents:TRC0Y88EWe",
+            "bd7d4f55-ffc5-4b18-ad54-2eca3129aa59",
+            "484ecc77-b7a0-4e19-b793-cc313f20fbe6",
+            "pos_cond_collect:sles8A43dq",
+            "7ad7473d-2527-4cb3-a5f3-140ef01ff8a7",
+            "ba4e490f-36ee-4ae1-86cc-a65b98071087",
             "sdxl_model_loader:PwBr7RXRsy",
             "pos_cond:o9T4cKV8xt",
             "noise:f4Bv4UWa22",
-            "76ac0d9c-8f92-46f7-a8f3-2ee694707767"
+            "neg_cond_collect:XpoW9rXd61",
+            "638f1ee2-063f-437e-991f-b4a978245357",
+            "5ac2f5e3-86df-4762-b663-9076d6c2673b",
+            "5ce19c4b-15a3-422a-8905-7637de809df8",
+            "66e7f05f-8ca4-41a6-bd47-f03a29197121",
+            "positive_prompt:kjUMdcg0zO",
+            "core_metadata:gSiDdR3ubW",
+            "551347fe-1cc9-4958-b387-287479279ce9",
+            "fe37ca02-b720-41f8-a10c-5ab7f110e336",
+            "1dacdfd3-560f-4097-805a-4e320f9eaf92"
         ],
         "executed_history": [
             "sdxl_model_loader:PwBr7RXRsy",
@@ -657,20 +655,20 @@
             "canvas_output:JbPTiAJ26r"
         ],
         "results": {
-            "fafd222a-316a-40e5-b0b2-296d2c9c636a": {
+            "af703cbe-f169-4c67-a43e-3b4ae045ea27": {
                 "unet": {
                     "unet": {
-                        "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                        "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                        "name"         : "albedobaseXL_v21",
+                        "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                        "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                        "name"         : "juggernautXL_v9Rundiffusionphoto2",
                         "base"         : "sdxl",
                         "type"         : "main",
                         "submodel_type": "unet"
                     },
                     "scheduler": {
-                        "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                        "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                        "name"         : "albedobaseXL_v21",
+                        "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                        "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                        "name"         : "juggernautXL_v9Rundiffusionphoto2",
                         "base"         : "sdxl",
                         "type"         : "main",
                         "submodel_type": "scheduler"
@@ -680,17 +678,17 @@
                 },
                 "clip": {
                     "tokenizer": {
-                        "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                        "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                        "name"         : "albedobaseXL_v21",
+                        "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                        "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                        "name"         : "juggernautXL_v9Rundiffusionphoto2",
                         "base"         : "sdxl",
                         "type"         : "main",
                         "submodel_type": "tokenizer"
                     },
                     "text_encoder": {
-                        "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                        "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                        "name"         : "albedobaseXL_v21",
+                        "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                        "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                        "name"         : "juggernautXL_v9Rundiffusionphoto2",
                         "base"         : "sdxl",
                         "type"         : "main",
                         "submodel_type": "text_encoder"
@@ -700,17 +698,17 @@
                 },
                 "clip2": {
                     "tokenizer": {
-                        "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                        "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                        "name"         : "albedobaseXL_v21",
+                        "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                        "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                        "name"         : "juggernautXL_v9Rundiffusionphoto2",
                         "base"         : "sdxl",
                         "type"         : "main",
                         "submodel_type": "tokenizer_2"
                     },
                     "text_encoder": {
-                        "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                        "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                        "name"         : "albedobaseXL_v21",
+                        "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                        "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                        "name"         : "juggernautXL_v9Rundiffusionphoto2",
                         "base"         : "sdxl",
                         "type"         : "main",
                         "submodel_type": "text_encoder_2"
@@ -720,9 +718,9 @@
                 },
                 "vae": {
                     "vae": {
-                        "key"          : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                        "hash"         : "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                        "name"         : "albedobaseXL_v21",
+                        "key"          : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                        "hash"         : "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                        "name"         : "juggernautXL_v9Rundiffusionphoto2",
                         "base"         : "sdxl",
                         "type"         : "main",
                         "submodel_type": "vae"
@@ -731,48 +729,48 @@
                 },
                 "type": "sdxl_model_loader_output"
             },
-            "880072b2-2f3f-4722-bf92-bbb53d8fd2af": {
+            "b32e96bf-9402-4149-baf3-623f88f07d1d": {
                 "value": "deep space, high quality, colorful",
                 "type" : "string_output"
             },
-            "716a36e8-e579-4548-afa1-13da3a5eb549": {
-                "conditioning": {"conditioning_name": "ConditioningFieldData_dc4e3768-d72b-4d1b-aa9a-94a9d8c48fb1"},
+            "7ad7473d-2527-4cb3-a5f3-140ef01ff8a7": {
+                "conditioning": {"conditioning_name": "ConditioningFieldData_e8e6facc-b416-4979-9d72-d82c7f31c5fb"},
                 "type": "conditioning_output"
             },
-            "69344e07-fd1a-4bfe-873b-b2ebd58e1836": {
-                "collection": [ {"conditioning_name": "ConditioningFieldData_dc4e3768-d72b-4d1b-aa9a-94a9d8c48fb1"} ],
+            "66e7f05f-8ca4-41a6-bd47-f03a29197121": {
+                "collection": [ {"conditioning_name": "ConditioningFieldData_e8e6facc-b416-4979-9d72-d82c7f31c5fb"} ],
                 "type": "collect_output"
             },
-            "2c159334-1cff-4342-b6f7-13eede50c3ac": {"value": 1776185488, "type": "integer_output"},
-            "fa23b376-11ca-438f-b919-b1695ab42b36": {
-                "noise": {"latents_name": "Tensor_3a72469e-5b70-43bc-b12a-095077bb3c79", "seed": 1776185488},
+            "ba4e490f-36ee-4ae1-86cc-a65b98071087": {"value": 427480069, "type": "integer_output"},
+            "bd7d4f55-ffc5-4b18-ad54-2eca3129aa59": {
+                "noise": {"latents_name": "Tensor_ab3d496b-8aba-45c2-bf07-92f991651b18", "seed": 427480069},
                 "width": 768,
                 "height": 1024,
                 "type": "noise_output"
             },
-            "cddd3aac-2f84-4efc-ac67-a29144aa1fa2": {"value": "earth, star war, blurry", "type": "string_output"},
-            "d648a095-508a-430c-ae35-5c36d4a48f6f": {
-                "conditioning": {"conditioning_name": "ConditioningFieldData_d1dd7994-59cf-4d1b-be9c-a5fd22246014"},
+            "ccff5cca-b693-4058-a177-a942357d9b1f": {"value": "earth, star war, blurry", "type": "string_output"},
+            "5ce19c4b-15a3-422a-8905-7637de809df8": {
+                "conditioning": {"conditioning_name": "ConditioningFieldData_c03cd4b4-bbf7-43e9-99aa-c953fee02ff0"},
                 "type": "conditioning_output"
             },
-            "03b476de-571f-4316-aae5-db885133c75d": {
-                "collection": [ {"conditioning_name": "ConditioningFieldData_d1dd7994-59cf-4d1b-be9c-a5fd22246014"} ],
+            "1dacdfd3-560f-4097-805a-4e320f9eaf92": {
+                "collection": [ {"conditioning_name": "ConditioningFieldData_c03cd4b4-bbf7-43e9-99aa-c953fee02ff0"} ],
                 "type": "collect_output"
             },
-            "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1": {
-                "latents": {"latents_name": "Tensor_a7e6745a-49d1-44ff-95fe-54a03cd964c6"},
+            "638f1ee2-063f-437e-991f-b4a978245357": {
+                "latents": {"latents_name": "Tensor_00cca2c0-f558-4766-9c02-8c73ef7160d8"},
                 "width": 768,
                 "height": 1024,
                 "type": "latents_output"
             },
-            "76ac0d9c-8f92-46f7-a8f3-2ee694707767": {
+            "5ac2f5e3-86df-4762-b663-9076d6c2673b": {
                 "metadata": {
                     "generation_mode": "sdxl_txt2img",
                     "positive_prompt": "deep space, high quality, colorful",
                     "negative_prompt": "earth, star war, blurry",
                     "width": 768,
                     "height": 1024,
-                    "seed": 1776185488,
+                    "seed": 427480069,
                     "rand_device": "cpu",
                     "cfg_scale": 7.5,
                     "cfg_rescale_multiplier": 0,
@@ -786,8 +784,8 @@
                 },
                 "type": "metadata_output"
             },
-            "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08": {
-                "image": {"image_name": "e90ee7ec-2cb8-473d-b02c-f3b2f4bc9bda.png"},
+            "551347fe-1cc9-4958-b387-287479279ce9": {
+                "image": {"image_name": "fe4089fd-1187-4883-b180-8aaf2fc317ba.png"},
                 "width": 768,
                 "height": 1024,
                 "type": "image_output"
@@ -795,32 +793,32 @@
         },
         "errors": {},
         "prepared_source_mapping": {
-            "fafd222a-316a-40e5-b0b2-296d2c9c636a": "sdxl_model_loader:PwBr7RXRsy",
-            "880072b2-2f3f-4722-bf92-bbb53d8fd2af": "positive_prompt:kjUMdcg0zO",
-            "2c159334-1cff-4342-b6f7-13eede50c3ac": "fe37ca02-b720-41f8-a10c-5ab7f110e336",
-            "cddd3aac-2f84-4efc-ac67-a29144aa1fa2": "484ecc77-b7a0-4e19-b793-cc313f20fbe6",
-            "716a36e8-e579-4548-afa1-13da3a5eb549": "pos_cond:o9T4cKV8xt",
-            "fa23b376-11ca-438f-b919-b1695ab42b36": "noise:f4Bv4UWa22",
-            "d648a095-508a-430c-ae35-5c36d4a48f6f": "neg_cond:5ZtbrHJgrO",
-            "69344e07-fd1a-4bfe-873b-b2ebd58e1836": "pos_cond_collect:sles8A43dq",
-            "76ac0d9c-8f92-46f7-a8f3-2ee694707767": "core_metadata:gSiDdR3ubW",
-            "03b476de-571f-4316-aae5-db885133c75d": "neg_cond_collect:XpoW9rXd61",
-            "6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1": "denoise_latents:TRC0Y88EWe",
-            "1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08": "canvas_output:JbPTiAJ26r"
+            "af703cbe-f169-4c67-a43e-3b4ae045ea27": "sdxl_model_loader:PwBr7RXRsy",
+            "b32e96bf-9402-4149-baf3-623f88f07d1d": "positive_prompt:kjUMdcg0zO",
+            "ba4e490f-36ee-4ae1-86cc-a65b98071087": "fe37ca02-b720-41f8-a10c-5ab7f110e336",
+            "ccff5cca-b693-4058-a177-a942357d9b1f": "484ecc77-b7a0-4e19-b793-cc313f20fbe6",
+            "7ad7473d-2527-4cb3-a5f3-140ef01ff8a7": "pos_cond:o9T4cKV8xt",
+            "bd7d4f55-ffc5-4b18-ad54-2eca3129aa59": "noise:f4Bv4UWa22",
+            "5ce19c4b-15a3-422a-8905-7637de809df8": "neg_cond:5ZtbrHJgrO",
+            "66e7f05f-8ca4-41a6-bd47-f03a29197121": "pos_cond_collect:sles8A43dq",
+            "5ac2f5e3-86df-4762-b663-9076d6c2673b": "core_metadata:gSiDdR3ubW",
+            "1dacdfd3-560f-4097-805a-4e320f9eaf92": "neg_cond_collect:XpoW9rXd61",
+            "638f1ee2-063f-437e-991f-b4a978245357": "denoise_latents:TRC0Y88EWe",
+            "551347fe-1cc9-4958-b387-287479279ce9": "canvas_output:JbPTiAJ26r"
         },
         "source_prepared_mapping": {
-            "sdxl_model_loader:PwBr7RXRsy"        : ["fafd222a-316a-40e5-b0b2-296d2c9c636a"],
-            "positive_prompt:kjUMdcg0zO"          : ["880072b2-2f3f-4722-bf92-bbb53d8fd2af"],
-            "fe37ca02-b720-41f8-a10c-5ab7f110e336": ["2c159334-1cff-4342-b6f7-13eede50c3ac"],
-            "484ecc77-b7a0-4e19-b793-cc313f20fbe6": ["cddd3aac-2f84-4efc-ac67-a29144aa1fa2"],
-            "pos_cond:o9T4cKV8xt"                 : ["716a36e8-e579-4548-afa1-13da3a5eb549"],
-            "noise:f4Bv4UWa22"                    : ["fa23b376-11ca-438f-b919-b1695ab42b36"],
-            "neg_cond:5ZtbrHJgrO"                 : ["d648a095-508a-430c-ae35-5c36d4a48f6f"],
-            "pos_cond_collect:sles8A43dq"         : ["69344e07-fd1a-4bfe-873b-b2ebd58e1836"],
-            "core_metadata:gSiDdR3ubW"            : ["76ac0d9c-8f92-46f7-a8f3-2ee694707767"],
-            "neg_cond_collect:XpoW9rXd61"         : ["03b476de-571f-4316-aae5-db885133c75d"],
-            "denoise_latents:TRC0Y88EWe"          : ["6ae43859-2af3-4b40-a4fa-f2f5e7c9edf1"],
-            "canvas_output:JbPTiAJ26r"            : ["1ce5aaf1-f6ec-44c0-be64-9fa01d53ae08"]
+            "sdxl_model_loader:PwBr7RXRsy"        : ["af703cbe-f169-4c67-a43e-3b4ae045ea27"],
+            "positive_prompt:kjUMdcg0zO"          : ["b32e96bf-9402-4149-baf3-623f88f07d1d"],
+            "fe37ca02-b720-41f8-a10c-5ab7f110e336": ["ba4e490f-36ee-4ae1-86cc-a65b98071087"],
+            "484ecc77-b7a0-4e19-b793-cc313f20fbe6": ["ccff5cca-b693-4058-a177-a942357d9b1f"],
+            "pos_cond:o9T4cKV8xt"                 : ["7ad7473d-2527-4cb3-a5f3-140ef01ff8a7"],
+            "noise:f4Bv4UWa22"                    : ["bd7d4f55-ffc5-4b18-ad54-2eca3129aa59"],
+            "neg_cond:5ZtbrHJgrO"                 : ["5ce19c4b-15a3-422a-8905-7637de809df8"],
+            "pos_cond_collect:sles8A43dq"         : ["66e7f05f-8ca4-41a6-bd47-f03a29197121"],
+            "core_metadata:gSiDdR3ubW"            : ["5ac2f5e3-86df-4762-b663-9076d6c2673b"],
+            "neg_cond_collect:XpoW9rXd61"         : ["1dacdfd3-560f-4097-805a-4e320f9eaf92"],
+            "denoise_latents:TRC0Y88EWe"          : ["638f1ee2-063f-437e-991f-b4a978245357"],
+            "canvas_output:JbPTiAJ26r"            : ["551347fe-1cc9-4958-b387-287479279ce9"]
         }
     },
     "workflow": {
@@ -850,9 +848,9 @@
                             "label": "",
                             "description": "",
                             "value": {
-                                "key" : "dd2447e2-c52a-43d5-b618-2cc6a185df81",
-                                "hash": "blake3:d7df40aa5a3c10c8afe5df3c672e07a00e7e0890a38f4e6442b56eb8f5107270",
-                                "name": "albedobaseXL_v21",
+                                "key" : "914b2e5a-b8d3-4da1-965f-b3775bbc5745",
+                                "hash": "blake3:7bb02e9351409debc5727aeeb83f77340931d3c8f86d2d6c69f67af8de20dd74",
+                                "name": "juggernautXL_v9Rundiffusionphoto2",
                                 "base": "sdxl",
                                 "type": "main"
                             }
@@ -1393,7 +1391,7 @@
                         "children": [
                             "node-field-evRPjpa27N", "node-field-pl5X3lkU3P", "node-field-H8rUUWYjSH",
                             "node-field-9LuWurUcYe", "node-field-A4rGCtrNvu", "node-field-wm3QalQko4",
-                            "node-field-P6A77fMyN2", "node-field-i44ZkjITYG"
+                            "node-field-P6A77fMyN2", "node-field-i44ZkjITYG", "node-field-TnkdOXZfRG"
                         ]
                     },
                     "type": "container"
@@ -1471,6 +1469,15 @@
                     "parentId": "root",
                     "data": {
                         "fieldIdentifier": {"nodeId": "sdxl_model_loader:PwBr7RXRsy", "fieldName": "model"},
+                        "showDescription": true
+                    },
+                    "type": "node-field"
+                },
+                "node-field-TnkdOXZfRG": {
+                    "id": "node-field-TnkdOXZfRG",
+                    "parentId": "root",
+                    "data": {
+                        "fieldIdentifier": {"nodeId": "canvas_output:JbPTiAJ26r", "fieldName": "board"},
                         "showDescription": true
                     },
                     "type": "node-field"
