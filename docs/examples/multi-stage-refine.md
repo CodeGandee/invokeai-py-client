@@ -85,12 +85,20 @@ for m in wf.map_outputs_to_images(result):
     print(f"node={m['node_id'][:8]} board={m.get('board_id')} images={m.get('image_names', [])}")
 ```
 
+The `map_outputs_to_images()` method analyzes the workflow execution result to identify which nodes produced images and maps them to their board destinations and filenames. This is essential for tracking outputs in multi-stage pipelines.
+
 ## How it works
 
 1) Each exported workflow JSON is immutable. The client copies it and substitutes only values for inputs you set.
 2) Inputs are discovered by a depth-first traversal of the Form tree; the index ordering is the public, stable API.
 3) submit_sync() enqueues; wait_for_completion_sync() polls until a terminal status or timeout.
 4) map_outputs_to_images() correlates output-capable nodes to their produced image names and board destinations.
+
+### Output Mapping Visualization
+
+The following diagram illustrates how workflow outputs are mapped to images and boards:
+
+![Output Mapping Flow](output-mapping.svg)
 
 ## Common pitfalls
 
