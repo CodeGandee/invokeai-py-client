@@ -94,11 +94,13 @@ The `map_outputs_to_images()` method analyzes the workflow execution result to i
 3) submit_sync() enqueues; wait_for_completion_sync() polls until a terminal status or timeout.
 4) map_outputs_to_images() correlates output-capable nodes to their produced image names and board destinations.
 
-### Output Mapping Visualization
+### Input Discovery and Mapping
 
-The following diagram illustrates how workflow outputs are mapped to images and boards:
+The following diagram illustrates how workflow inputs are discovered through depth-first traversal of the Form tree and mapped to stable indices:
 
-![Output Mapping Flow](output-mapping.svg)
+![Input Mapping Flow](input-mapping.svg)
+
+This input discovery mechanism ensures that indices remain the stable API for accessing and setting workflow parameters, as long as the Form structure remains unchanged.
 
 ## Common pitfalls
 
