@@ -53,14 +53,16 @@ pip install -e ".[dev]"
 
 ## Dependencies
 
-The client automatically installs these core dependencies:
+The client installs these core dependencies:
 
-- **requests** - HTTP client for REST API calls
-- **python-socketio** - WebSocket support for real-time events
-- **pydantic** - Data validation and settings management
-- **Pillow** - Image processing
-- **rich** - Terminal formatting and progress bars
-- **jsonpath-ng** - JSONPath expressions for workflow parsing
+- requests — HTTP client for REST API calls
+- python-socketio — Socket.IO client for real-time events
+- pydantic — Data validation and models
+- Pillow — Image operations (used in examples)
+- rich — Terminal formatting (used in examples)
+
+Note:
+- JSONPath libraries are not required; the client performs value substitution without JSONPath.
 
 ## Verifying Installation
 
@@ -72,9 +74,15 @@ from invokeai_py_client import InvokeAIClient
 # Connect to your InvokeAI server
 client = InvokeAIClient.from_url("http://localhost:9090")
 
-# Test the connection
-print(f"Connected to InvokeAI server")
-print(f"Boards available: {len(client.board_repo.list_boards())}")
+# Quick probe (True/False)
+print("Health:", client.health_check())
+
+# List boards (requires a running server)
+try:
+    boards = client.board_repo.list_boards()
+    print(f"Boards available: {len(boards)}")
+except Exception as e:
+    print(f"Failed to list boards (is the server running?): {e}")
 ```
 
 ## Environment Setup
@@ -124,7 +132,7 @@ We recommend using a virtual environment:
 ### Windows
 
 - Use PowerShell or Windows Terminal for best results
-- Path separators: Use raw strings (`r"C:\path\to\file"`) or forward slashes
+- Path separators: Use raw strings (r"C:\path\to\file") or forward slashes
 
 ### macOS
 
@@ -162,7 +170,7 @@ For self-signed certificates:
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-client = InvokeAIClient.from_url("https://localhost:9090", verify=False)
+client = InvokeAIClient.from_url("https://localhost:9090", verify_ssl=False)
 ```
 
 !!! warning "Security Note"

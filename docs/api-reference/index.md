@@ -4,44 +4,109 @@ Complete API documentation for the InvokeAI Python Client.
 
 ## Core Components
 
-### [Client](client.md)
-Main client class for connecting to InvokeAI server and accessing repositories.
+### [📡 Client](client.md)
+**Main client interface** - Connection management, repositories, and HTTP/Socket.IO operations
+- `InvokeAIClient` class with `from_url()` helper
+- Repository properties: `board_repo`, `workflow_repo`, `dnn_model_repo`  
+- Connection methods: `health_check()`, `socketio_session()`
+- Context management and resource cleanup
 
-### [Workflow](workflow.md)
-Workflow management, input discovery, execution, and output mapping.
+### [⚡ Workflow](workflow.md)  
+**Workflow execution system** - Definition loading, input management, and job monitoring
+- `WorkflowDefinition.from_file()` for loading GUI exports
+- `WorkflowHandle` for input discovery and execution control
+- Submission methods: `submit_sync()`, `wait_for_completion_sync()`
+- Output mapping: `map_outputs_to_images()` for result extraction
 
-### [Boards](boards.md)
-Board and image management operations.
+### [🖼️ Boards](boards.md)
+**Image organization** - Board management and image operations using Repository pattern
+- `BoardRepository` for board lifecycle (create, delete, list)
+- `BoardHandle` for per-board operations (upload, download, organize)
+- Uncategorized board handling with special "none" board_id
+- Image categorization and metadata management
 
-### [Fields](fields.md)
-Type-safe field system for workflow inputs.
+### [🔧 Fields](fields.md)
+**Type-safe input system** - Pydantic-based field types for workflow inputs
+- Field categories: Primitive, Resource, Model, Complex, Enum
+- Base class: `IvkField[T]` with validation and API conversion
+- Specific types: `IvkStringField`, `IvkImageField`, `IvkModelIdentifierField`
+- Default constructability requirement for all field types
 
-### [Models](models.md)
-Data models and enumerations used throughout the library.
+### [📊 Models](models.md)
+**Data structures** - Pydantic models and enumerations for API integration  
+- Enums: `JobStatus`, `ImageCategory`, `BaseModelEnum`
+- Models: `IvkImage`, `IvkJob`, `IvkDnnModel`
+- Type-safe API response handling and serialization
+- Workflow execution state tracking
 
-### [Utilities](utilities.md)
-Practical helper patterns and recipes.
+### [🛠️ Utilities](utilities.md)
+**Helper patterns** - Practical utilities for common operations
+- Input discovery: `preview()`, index map management
+- Workflow monitoring: async submission patterns
+- Validation helpers and type-safe field access
+- Reliability patterns and error handling
 
 ## Quick Reference
 
-### Client Initialization
+### 🚀 Client Initialization & Health Check
 
 ```python
 from invokeai_py_client import InvokeAIClient
 
-# Recommended: parse URL into host/port/base_path automatically
+# Recommended: URL-based initialization with automatic parsing
 client = InvokeAIClient.from_url("http://localhost:9090")
 
-# Or explicit host/port
-client = InvokeAIClient(host="localhost", port=9090)
+# Alternative: explicit parameters
+client = InvokeAIClient(
+    host="192.168.1.100", 
+    port=9090,
+    use_https=True,
+    timeout=60.0
+)
+
+# Verify connection
+if client.health_check():
+    print("✅ InvokeAI server is reachable")
+else:
+    print("❌ Cannot connect to InvokeAI server")
 ```
 
-- URL helper implementation: [`InvokeAIClient.from_url()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L142){:target="_blank"}
-- Quick probe: [`InvokeAIClient.health_check()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L412){:target="_blank"}
+### 🎯 Essential Workflow Pattern
 
 ```python
-if client.health_check():
-    print("InvokeAI is reachable")
+from invokeai_py_client.workflow import WorkflowDefinition
+
+# 1. Load workflow definition
+definition = WorkflowDefinition.from_file("workflow.json")
+wf = client.workflow_repo.create_workflow(definition)
+
+# 2. Configure inputs by index (stable API)
+wf.get_input_value(0).value = "A beautiful landscape"  # Prompt
+wf.get_input_value(1).value = 20                       # Steps  
+
+# 3. Execute workflow
+submission = wf.submit_sync()
+result = wf.wait_for_completion_sync(timeout=180)
+
+# 4. Extract generated images
+for mapping in wf.map_outputs_to_images(result):
+    print(f"Generated: {mapping.get('image_names', [])}")
+```
+
+### 📂 Board & Image Management
+
+```python
+# List and create boards
+boards = client.board_repo.list_boards(include_uncategorized=True)
+new_board = client.board_repo.create_board("My Project")
+
+# Upload and download images
+image = new_board.upload_image("reference.jpg")
+image_data = new_board.download_image(image.image_name, full_resolution=True)
+
+# Organize images
+uncategorized = client.board_repo.get_uncategorized_handle()  
+uncategorized.move_image_to(image.image_name, new_board.board_id)
 ```
 
 ### Workflow Operations

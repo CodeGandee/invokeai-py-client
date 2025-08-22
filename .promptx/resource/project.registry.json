@@ -4,11 +4,53 @@
   "metadata": {
     "version": "2.0.0",
     "description": "project 级资源注册表",
-    "createdAt": "2025-08-22T05:28:51.061Z",
-    "updatedAt": "2025-08-22T05:28:51.070Z",
-    "resourceCount": 5
+    "createdAt": "2025-08-22T10:06:12.513Z",
+    "updatedAt": "2025-08-22T10:06:12.526Z",
+    "resourceCount": 8
   },
   "resources": [
+    {
+      "id": "documentation-workflow",
+      "source": "project",
+      "protocol": "execution",
+      "name": "Documentation Workflow 执行模式",
+      "description": "执行模式，定义具体的行为模式",
+      "reference": "@project://.promptx/resource/role/python-docuwriter/execution/documentation-workflow.execution.md",
+      "metadata": {
+        "createdAt": "2025-08-22T10:06:12.517Z",
+        "updatedAt": "2025-08-22T10:06:12.517Z",
+        "scannedAt": "2025-08-22T10:06:12.517Z",
+        "path": "role/python-docuwriter/execution/documentation-workflow.execution.md"
+      }
+    },
+    {
+      "id": "python-docuwriter",
+      "source": "project",
+      "protocol": "role",
+      "name": "Python Docuwriter 角色",
+      "description": "专业角色，提供特定领域的专业能力",
+      "reference": "@project://.promptx/resource/role/python-docuwriter/python-docuwriter.role.md",
+      "metadata": {
+        "createdAt": "2025-08-22T10:06:12.519Z",
+        "updatedAt": "2025-08-22T10:06:12.519Z",
+        "scannedAt": "2025-08-22T10:06:12.519Z",
+        "path": "role/python-docuwriter/python-docuwriter.role.md"
+      }
+    },
+    {
+      "id": "documentation-thinking",
+      "source": "project",
+      "protocol": "thought",
+      "name": "Documentation Thinking 思维模式",
+      "description": "思维模式，指导AI的思考方式",
+      "reference": "@project://.promptx/resource/role/python-docuwriter/thought/documentation-thinking.thought.md",
+      "metadata": {
+        "createdAt": "2025-08-22T10:06:12.519Z",
+        "updatedAt": "2025-08-22T10:06:12.519Z",
+        "scannedAt": "2025-08-22T10:06:12.519Z",
+        "path": "role/python-docuwriter/thought/documentation-thinking.thought.md"
+      }
+    },
     {
       "id": "web-automation",
       "source": "project",
@@ -17,9 +59,9 @@
       "description": "执行模式，定义具体的行为模式",
       "reference": "@project://.promptx/resource/role/webapi-expert/execution/web-automation.execution.md",
       "metadata": {
-        "createdAt": "2025-08-22T05:28:51.065Z",
-        "updatedAt": "2025-08-22T05:28:51.065Z",
-        "scannedAt": "2025-08-22T05:28:51.065Z",
+        "createdAt": "2025-08-22T10:06:12.520Z",
+        "updatedAt": "2025-08-22T10:06:12.520Z",
+        "scannedAt": "2025-08-22T10:06:12.520Z",
         "path": "role/webapi-expert/execution/web-automation.execution.md"
       }
     },
@@ -31,9 +73,9 @@
       "description": "知识库，提供专业知识和信息",
       "reference": "@project://.promptx/resource/role/webapi-expert/knowledge/tech-stack.knowledge.md",
       "metadata": {
-        "createdAt": "2025-08-22T05:28:51.066Z",
-        "updatedAt": "2025-08-22T05:28:51.066Z",
-        "scannedAt": "2025-08-22T05:28:51.066Z",
+        "createdAt": "2025-08-22T10:06:12.521Z",
+        "updatedAt": "2025-08-22T10:06:12.521Z",
+        "scannedAt": "2025-08-22T10:06:12.521Z",
         "path": "role/webapi-expert/knowledge/tech-stack.knowledge.md"
       }
     },
@@ -45,9 +87,9 @@
       "description": "思维模式，指导AI的思考方式",
       "reference": "@project://.promptx/resource/role/webapi-expert/thought/api-analysis.thought.md",
       "metadata": {
-        "createdAt": "2025-08-22T05:28:51.068Z",
-        "updatedAt": "2025-08-22T05:28:51.068Z",
-        "scannedAt": "2025-08-22T05:28:51.068Z",
+        "createdAt": "2025-08-22T10:06:12.523Z",
+        "updatedAt": "2025-08-22T10:06:12.523Z",
+        "scannedAt": "2025-08-22T10:06:12.523Z",
         "path": "role/webapi-expert/thought/api-analysis.thought.md"
       }
     },
@@ -59,9 +101,9 @@
       "description": "思维模式，指导AI的思考方式",
       "reference": "@project://.promptx/resource/role/webapi-expert/thought/backend-design.thought.md",
       "metadata": {
-        "createdAt": "2025-08-22T05:28:51.068Z",
-        "updatedAt": "2025-08-22T05:28:51.068Z",
-        "scannedAt": "2025-08-22T05:28:51.068Z",
+        "createdAt": "2025-08-22T10:06:12.524Z",
+        "updatedAt": "2025-08-22T10:06:12.524Z",
+        "scannedAt": "2025-08-22T10:06:12.524Z",
         "path": "role/webapi-expert/thought/backend-design.thought.md"
       }
     },
@@ -73,23 +115,23 @@
       "description": "专业角色，提供特定领域的专业能力",
       "reference": "@project://.promptx/resource/role/webapi-expert/webapi-expert.role.md",
       "metadata": {
-        "createdAt": "2025-08-22T05:28:51.069Z",
-        "updatedAt": "2025-08-22T05:28:51.069Z",
-        "scannedAt": "2025-08-22T05:28:51.069Z",
+        "createdAt": "2025-08-22T10:06:12.525Z",
+        "updatedAt": "2025-08-22T10:06:12.525Z",
+        "scannedAt": "2025-08-22T10:06:12.525Z",
         "path": "role/webapi-expert/webapi-expert.role.md"
       }
     }
   ],
   "stats": {
-    "totalResources": 5,
+    "totalResources": 8,
     "byProtocol": {
-      "execution": 1,
-      "knowledge": 1,
-      "thought": 2,
-      "role": 1
+      "execution": 2,
+      "role": 2,
+      "thought": 3,
+      "knowledge": 1
     },
     "bySource": {
-      "project": 5
+      "project": 8
     }
   }
 }

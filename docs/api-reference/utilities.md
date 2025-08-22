@@ -1,39 +1,116 @@
 # Utilities and Helper Patterns
 
-Focus
-- Practical helpers that exist in this client today.
-- To-the-point patterns you can copy into scripts.
-- Links point to concrete implementations in this repo.
+This section provides practical helper functions and patterns that exist in the current client implementation, focusing on copy-pasteable code snippets with direct links to concrete implementations in the repository. Note that previously documented utility classes like "AssetManager", "TypeConverter", "ProgressTracker", and validator classes do not exist in the codebase—instead, use the patterns documented below with WorkflowHandle, BoardRepository/BoardHandle, and the main Client class.
 
-What’s not here
-- Previous docs mentioned “AssetManager”, “TypeConverter”, “ProgressTracker”, and validator classes. These do not exist in the codebase. Use the patterns below with WorkflowHandle, BoardRepository/BoardHandle, and Client.
+## Input Discovery and Drift Management
 
-## Input discovery and drift helpers
+Utilities for managing workflow inputs and detecting changes when GUI workflows are modified.
 
-Preview configured inputs
+### `preview()` - Input Summary Display
+
 ```python
-# Quick summary of indices, types, and current values
+def preview(self) -> list[dict[str, Any]]:
+```
+
+Generate a quick summary of all workflow inputs with current values for debugging and inspection.
+
+**Returns:**
+- `list[dict]`: List of input summaries with keys:
+  - `index` (int): Stable input index
+  - `label` (str): Display name or field name
+  - `type` (str): Field type name  
+  - `value` (Any): Current field value
+  - `required` (bool): Whether input is mandatory
+
+**Example:**
+```python
+# Display all inputs with values
 rows = wf.preview()
 for r in rows:
-    print(f"[{r['index']:02d}] {r['label']} -> {r['value']}")
-```
-Source: [`WorkflowHandle.preview()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/workflow/workflow_handle.py#L475){:target="_blank"}
+    required = "* " if r['required'] else "  "
+    print(f"{required}[{r['index']:02d}] {r['label']} ({r['type']}) -> {r['value']}")
 
-Snapshot current index map (commit this to track changes after you edit the GUI Form)
-```python
-wf.export_input_index_map("index-map.json")
+# Output:
+# * [00] Positive Prompt (IvkStringField) -> A beautiful landscape
+#   [01] Negative Prompt (IvkStringField) -> blur, artifacts
+# * [02] Width (IvkIntegerField) -> 1024
 ```
-Source: [`WorkflowHandle.export_input_index_map()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/workflow/workflow_handle.py#L502){:target="_blank"}
 
-Compare a saved map against the current workflow (detect moved/missing/new inputs fast)
+**Source:** [`WorkflowHandle.preview()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/workflow/workflow_handle.py#L475){:target="_blank"}
+
+### Index Map Management - Workflow Change Detection
+
+When GUI workflows are modified, input indices can change. These utilities help track and detect changes.
+
+#### `export_input_index_map()` - Create Baseline Snapshot
+
 ```python
-report = wf.verify_input_index_map("index-map.json")
-print("Unchanged:", report["unchanged"])
-print("Moved:", report["moved"])
-print("Missing:", report["missing"])
-print("New:", report["new"])
+def export_input_index_map(self, filepath: str) -> None:
 ```
-Source: [`WorkflowHandle.verify_input_index_map()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/workflow/workflow_handle.py#L521){:target="_blank"}
+
+Export current input-to-index mapping to a file for change detection.
+
+**Parameters:**
+- `filepath` (str): Path where to save the index map JSON
+
+**Use Case:**
+- Run after finalizing GUI workflow structure
+- Commit the generated file to version control
+- Use as baseline for detecting future changes
+
+**Example:**
+```python
+# Save current input mapping
+wf.export_input_index_map("workflow-inputs.json")
+
+# Commit to version control
+# git add workflow-inputs.json
+# git commit -m "Add input index baseline for stable automation"
+```
+
+#### `verify_input_index_map()` - Detect Changes
+
+```python
+def verify_input_index_map(self, filepath: str) -> dict[str, Any]:
+```
+
+Compare current workflow inputs against a saved index map to detect changes.
+
+**Parameters:**
+- `filepath` (str): Path to previously saved index map
+
+**Returns:**
+- `dict[str, Any]`: Change report with keys:
+  - `unchanged` (list): Inputs that stayed the same
+  - `moved` (list): Inputs that changed index positions
+  - `missing` (list): Inputs that were removed
+  - `new` (list): Inputs that were added
+
+**Example:**
+```python
+# Check for workflow changes
+report = wf.verify_input_index_map("workflow-inputs.json")
+
+print(f"Unchanged inputs: {len(report['unchanged'])}")
+print(f"Moved inputs: {len(report['moved'])}")
+print(f"Missing inputs: {len(report['missing'])}")  
+print(f"New inputs: {len(report['new'])}")
+
+# Handle moved inputs
+for moved in report["moved"]:
+    old_idx = moved["old_index"] 
+    new_idx = moved["new_index"]
+    name = moved["name"]
+    print(f"Input '{name}' moved from [{old_idx}] to [{new_idx}]")
+```
+
+**Change Management Workflow:**
+1. Create baseline with `export_input_index_map()` after GUI editing
+2. Use `verify_input_index_map()` before automation scripts
+3. Update scripts if indices have changed
+4. Re-export new baseline if changes are accepted
+
+**Source:** [`WorkflowHandle.export_input_index_map()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/workflow/workflow_handle.py#L502){:target="_blank"} | [`WorkflowHandle.verify_input_index_map()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/workflow/workflow_handle.py#L521){:target="_blank"}
 
 ## Submission and monitoring patterns
 

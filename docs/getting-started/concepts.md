@@ -4,11 +4,11 @@ Understanding these key concepts will help you use the InvokeAI Python Client ef
 
 ## Workflow Definition
 
-A **WorkflowDefinition** is the JSON representation of a workflow exported from the InvokeAI GUI. It contains:
+A WorkflowDefinition is the JSON representation of a workflow exported from the InvokeAI GUI. It contains:
 
-- **Nodes**: Processing units (models, prompts, samplers, etc.)
-- **Edges**: Connections between nodes
-- **Form**: User-configurable parameters
+- Nodes: Processing units (models, prompts, samplers, etc.)
+- Edges: Connections between nodes
+- Form: User-configurable parameters
 
 ```python
 from invokeai_py_client.workflow import WorkflowDefinition
@@ -16,37 +16,27 @@ from invokeai_py_client.workflow import WorkflowDefinition
 # Load from file
 workflow_def = WorkflowDefinition.from_file("my-workflow.json")
 
-# The definition is immutable - it's never modified
-print(f"Workflow: {workflow_def.meta.get('name')}")
+# Definition metadata
+print(f"Workflow: {workflow_def.name}")       # Title from JSON
+print(f"Version: {workflow_def.version}")     # From meta.version
 print(f"Nodes: {len(workflow_def.nodes)}")
 ```
 
 !!! info "Immutability Principle"
-    The client treats workflow JSON as immutable. When you set values and submit, only the values are substituted - the graph structure never changes.
+    The client treats workflow JSON as immutable. When you set values and submit, only the values are substituted—the graph structure never changes.
 
 ## Form-Based Input Discovery
 
-The **Form** is the key to programmable workflows. Only fields added to the Form panel in the GUI are accessible from Python.
+The Form is the key to programmable workflows. Only fields added to the Form panel in the GUI are accessible from Python.
 
-```mermaid
-graph LR
-    A[GUI Workflow] --> B[Form Panel]
-    B --> C[Exposed Fields]
-    C --> D[Python Inputs]
-    
-    E[Node Settings] --> F[Not in Form]
-    F --> G[Fixed Values]
-```
-
-### Why Forms Matter
-
-- **Form fields** = Programmable inputs
-- **Non-form values** = Fixed in the workflow
-- **Best practice**: Add all parameters you want to control to the Form
+Why this matters:
+- Form fields = Programmable inputs
+- Non-form values = Fixed in the workflow
+- Best practice: Add all parameters you want to control to the Form before export
 
 ## Index-Based Access
 
-The client uses **indices** as the primary way to access inputs. Indices are determined by depth-first traversal of the Form structure.
+The client uses indices as the primary way to access inputs. Indices are determined by depth-first traversal of the Form structure (containers in order, fields top-to-bottom, recursion for nested containers).
 
 ### Index Discovery
 
@@ -55,74 +45,59 @@ The client uses **indices** as the primary way to access inputs. Indices are det
 for inp in wf.list_inputs():
     print(f"[{inp.input_index:2d}] {inp.label or inp.field_name}")
 
-# Output:
+# Example output:
 # [ 0] Positive Prompt
-# [ 1] Negative Prompt  
+# [ 1] Negative Prompt
 # [ 2] Width
 # [ 3] Height
 ```
 
-### Why Indices?
-
-- **Stability**: Indices don't change unless you restructure the Form
-- **Uniqueness**: Always unique, unlike labels or field names
-- **Performance**: Direct array access is fast
-
-### Index Ordering Rules
-
-The traversal follows these rules:
-
-1. Visit containers in order of appearance
-2. Within each container, visit fields top-to-bottom
-3. Recursively enter nested containers
-
-```
-Form Structure:          Indices:
-├── Prompt               [0]
-├── Negative Prompt      [1]
-├── Container
-│   ├── Width            [2]
-│   └── Height           [3]
-└── Steps                [4]
-```
+Why indices?
+- Stability: Indices don't change unless you restructure the Form
+- Uniqueness: Always unique, unlike labels or field names
+- Performance: Direct array access is fast
 
 ## Typed Field System
 
 Every input has a strongly-typed field class that provides validation and type safety.
 
-### Field Types
+### Field Types (common)
 
 | Field Class | Purpose | Value Type |
 |------------|---------|------------|
-| `IvkStringField` | Text inputs | `str` |
-| `IvkIntegerField` | Whole numbers | `int` |
-| `IvkFloatField` | Decimal numbers | `float` |
-| `IvkBooleanField` | Checkboxes | `bool` |
-| `IvkImageField` | Image references | `str` (name) |
-| `IvkBoardField` | Board selection | `str` (id) |
-| `IvkModelIdentifierField` | Model selection | Complex |
+| IvkStringField | Text inputs | str (via .value) |
+| IvkIntegerField | Whole numbers | int (via .value) |
+| IvkFloatField | Decimal numbers | float (via .value) |
+| IvkBooleanField | Checkboxes | bool (via .value) |
+| IvkImageField | Image references | str image_name (via .value) |
+| IvkBoardField | Board selection | str board_id (via .value) |
+| IvkModelIdentifierField | Model selection | attributes (key/hash/name/base/type) |
 
-### Working with Fields
+Working with fields:
 
 ```python
 # Get a field by index
 field = wf.get_input_value(0)
 
-# Check if it has a value property
-if hasattr(field, 'value'):
-    # Set the value with type checking
+# If the field has a .value, set it directly:
+if hasattr(field, "value"):
     field.value = "New prompt text"
-    
-# Fields validate on assignment
+
+# Example of catching a validation error (integer expected)
 try:
-    int_field.value = "not a number"  # Raises ValidationError
+    steps = wf.get_input_value(4)  # Typically an IvkIntegerField
+    if hasattr(steps, "value"):
+        steps.value = "not a number"  # Will raise ValueError
 except ValueError as e:
     print(f"Invalid value: {e}")
 ```
 
+Notes:
+- Some fields (e.g., IvkModelIdentifierField, IvkUNetField) do not use .value—set their specific attributes instead (e.g., key, name, base, type).
+
 ## Workflow Handle
 
-A **WorkflowHandle** is your interface to a loaded workflow. It provides methods to:
+A WorkflowHandle is your interface to a loaded workflow. It provides methods to:
 
 - List and access inputs
 - Set values
@@ -135,7 +110,8 @@ A **WorkflowHandle** is your interface to a loaded workflow. It provides methods
 wf = client.workflow_repo.create_workflow(workflow_def)
 
 # The handle maintains state
-wf.get_input_value(0).value = "New value"  # State is kept
+if hasattr(wf.get_input_value(0), "value"):
+    wf.get_input_value(0).value = "New value"
 
 # Submit creates a new execution
 submission = wf.submit_sync()
@@ -143,7 +119,7 @@ submission = wf.submit_sync()
 
 ## Execution Model
 
-The client supports multiple execution modes:
+The client supports multiple execution modes.
 
 ### Synchronous (Blocking)
 
@@ -163,31 +139,30 @@ async def run_async():
     result = await wf.wait_for_completion()
 ```
 
-### With Progress Monitoring
+### With Status Monitoring
 
 ```python
-# Track progress during execution
+# Track status transitions during execution
 def on_progress(queue_item):
     print(f"Status: {queue_item.get('status')}")
-    print(f"Progress: {queue_item.get('progress_percentage')}%")
 
 result = wf.wait_for_completion_sync(
     timeout=180,
-    progress_callback=on_progress
+    progress_callback=on_progress,
 )
 ```
+
+Tip: The progress callback receives the latest queue item dict. Not all servers provide a numeric percentage—log status transitions reliably.
 
 ## Output Mapping
 
 After execution, the client maps output nodes to the images they produced.
 
-### Understanding Outputs
+What counts as an output?
+1) The node can save images to a board, and
+2) Its board field is exposed in the Form (so it is discoverable and configurable)
 
-An "output" is a node that:
-1. Can save images to a board
-2. Has its board field exposed in the Form
-
-### Mapping Process
+Mapping:
 
 ```python
 # Get mappings after completion
@@ -195,43 +170,36 @@ mappings = wf.map_outputs_to_images(queue_item)
 
 # Each mapping contains:
 # - node_id: The output node
-# - board_id: Where images were saved  
+# - board_id: Where images were saved
 # - image_names: List of produced images
 # - input_index: Form index (if exposed)
+# - tier: evidence tier ("results", "legacy", "traversal", "none")
+# - label: field label for the board input
 
 for m in mappings:
-    print(f"Node {m['node_id']} produced {m.get('image_names')}")
+    print(f"Node {m['node_id'][:8]} -> {m.get('image_names')} (tier={m.get('tier')})")
 ```
 
 ## Board Management
 
 Boards organize images in InvokeAI. The client provides full board control:
 
-### Board Operations
-
 ```python
-# List all boards
+# List all boards (including uncategorized)
 boards = client.board_repo.list_boards(include_uncategorized=True)
 
-# Get a board handle
-board = client.board_repo.get_board_handle("board_id")
+# Get a board handle (use "none" for uncategorized)
+board = client.board_repo.get_board_handle("none")
 
-# Upload an image
-image_name = board.upload_image_file("input.png")
+# Upload an image file
+image = board.upload_image("input.png")   # returns IvkImage
 
 # Download an image
-data = board.download_image("image_name.png", full_resolution=True)
+data = board.download_image(image.image_name, full_resolution=True)
 ```
 
-### Special "none" Board
-
-The uncategorized board uses the ID `"none"` (string, not Python None):
-
-```python
-# Access uncategorized images
-uncategorized = client.board_repo.get_board_handle("none")
-images = uncategorized.list_images()
-```
+Special “none” board:
+- The uncategorized board uses the literal string "none". Passing None to get_board_handle is also normalized to "none".
 
 ## Model Synchronization
 
@@ -239,44 +207,22 @@ Workflows may reference models that don't exactly match server records. The clie
 
 ```python
 # Sync model references before submission
-changes = wf.sync_dnn_model(
-    field_indices=[0],  # Model field index
-    by_name=True,       # Match by model name
-    by_base=True        # Fall back to base model
-)
+changes = wf.sync_dnn_model(by_name=True, by_base=True)
 
-# Changes show what was updated
 for old, new in changes:
-    print(f"Updated: {old} -> {new}")
+    print(f"Updated: {getattr(old,'name','')} -> {getattr(new,'name','')}")
 ```
 
 ## Design Principles
 
-The client follows these core principles:
-
-### 1. Immutable Workflows
-- Original JSON is never modified
-- Only values are substituted at submission
-- Graph structure remains exactly as designed
-
-### 2. Index-Based Stability
-- Indices are the authoritative way to access inputs
-- Labels and names are for display only
-- Indices stay stable until Form restructuring
-
-### 3. Type Safety
-- Every field has a concrete type
-- Validation happens on assignment
-- No dynamic type changes after discovery
-
-### 4. Explicit Operations
-- No hidden mutations or side effects
-- Clear method names and return values
-- Predictable error handling
+- Immutable Workflows: Original JSON is never modified; only values are substituted on submit.
+- Index-Based Stability: Indices are the authoritative way to access inputs; labels/names are for display only.
+- Type Safety: Every field has a concrete type; validation occurs on assignment.
+- Explicit Operations: No hidden mutations or side effects; clear, predictable behavior.
 
 ## Common Patterns
 
-### Pattern: Snapshot Indices
+Snapshot indices for reuse in scripts:
 
 ```python
 # After discovering inputs once, snapshot the indices
@@ -291,31 +237,30 @@ wf.get_input_value(IDX_PROMPT).value = "New prompt"
 wf.get_input_value(IDX_STEPS).value = 30
 ```
 
-### Pattern: Batch Processing
+Batch processing:
 
 ```python
-# Process multiple inputs through the same workflow
 for item in dataset:
     # Set inputs
-    wf.get_input_value(IDX_PROMPT).value = item['prompt']
-    wf.get_input_value(IDX_WIDTH).value = item['width']
-    
+    wf.get_input_value(IDX_PROMPT).value = item["prompt"]
+    wf.get_input_value(IDX_WIDTH).value = item["width"]
+
     # Submit and track
     submission = wf.submit_sync()
     result = wf.wait_for_completion_sync()
-    
+
     # Store results
-    item['result'] = wf.map_outputs_to_images(result)
+    item["result"] = wf.map_outputs_to_images(result)
 ```
 
-### Pattern: Safe Field Access
+Safe field access helper:
 
 ```python
 def set_field_safely(wf, index, value):
-    """Set a field value with error handling"""
+    """Set a field value with error handling."""
     try:
         field = wf.get_input_value(index)
-        if hasattr(field, 'value'):
+        if hasattr(field, "value"):
             field.value = value
             return True
         else:
@@ -327,13 +272,3 @@ def set_field_safely(wf, index, value):
     except ValueError as e:
         print(f"Invalid value for field {index}: {e}")
         return False
-```
-
-## Next Steps
-
-Now that you understand the core concepts:
-
-- Explore the [User Guide](../user-guide/index.md) for detailed feature documentation
-- Check out [Examples](../examples/index.md) for complete working code
-- Review the [API Reference](../api-reference/index.md) for method details
-- Learn about [Field Types](../user-guide/field-types.md) for different input handling

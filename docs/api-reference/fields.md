@@ -1,64 +1,211 @@
 # Fields API
 
-Focus
-- Accurate, to-the-point reference for the typed field system used by workflow inputs.
-- Mirrors the current implementation in this repo.
+Comprehensive reference for the typed field system used by workflow inputs, providing type-safe input handling with Pydantic validation and API format conversion. Key implementations include [`base`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/base.py#L30){:target="_blank"} classes and mixins, [`primitives`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/primitives.py#L17){:target="_blank"} (string, int, float, bool), [`resources`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/resources.py#L21){:target="_blank"} (image, board, latents), [`models`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/models.py#L18){:target="_blank"} (UNet, CLIP, etc.), [`complex`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/complex.py#L20){:target="_blank"} (color, bbox, collections), and [`enums`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/enums.py#L79){:target="_blank"} (scheduler choices). All field classes are default-constructable; simple fields use a `.value` attribute while structured fields embed configuration directly, with API conversion handled automatically via `.to_api_format()`.
 
-Source locations
-- Base and mixins: [`ivk_fields.base`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/base.py#L30){:target="_blank"}
-- Primitive fields: [`ivk_fields.primitives`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/primitives.py#L17){:target="_blank"}
-- Resource fields: [`ivk_fields.resources`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/resources.py#L21){:target="_blank"}
-- Model fields: [`ivk_fields.models`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/models.py#L18){:target="_blank"}
-- Complex fields: [`ivk_fields.complex`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/complex.py#L20){:target="_blank"}
-- Enum fields and scheduler: [`ivk_fields.enums`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/enums.py#L79){:target="_blank"}
+## Field System Architecture
 
-Usage basics
-- All field classes are default-constructable.
-- Most simple fields keep a .value attribute you can set directly; structured fields embed their configuration directly (no separate .value).
-- Convert to InvokeAI API payload with .to_api_format(); most users don’t call this directly because WorkflowHandle handles conversion.
+The InvokeAI field system provides type-safe workflow input handling with Pydantic validation and API format conversion.
 
-## Base class and mixins
+### Base Class: `IvkField[T]`
 
 ```python
-class IvkField(Generic[T]):  # Source: [`IvkField`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/base.py#L30){:target="_blank"}
-    def validate_field(self) -> bool: ...
-    def to_api_format(self) -> dict[str, Any]: ...
-    @classmethod
-    def from_api_format(cls, data: dict[str, Any]) -> "IvkField[T]": ...
+class IvkField(Generic[T]):
 ```
 
-- PydanticFieldMixin and helper mixins provide JSON conversions and collection/image helpers where applicable:
-  - [`PydanticFieldMixin`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/base.py#L190){:target="_blank"}
-  - [`IvkCollectionFieldMixin`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/base.py#L294){:target="_blank"}
+Base class for all InvokeAI field types. This abstract-like base provides common functionality for workflow field types.
 
-## Primitive fields
+**Key Design Principles:**
+- **Default Constructability**: ALL field classes must be default-constructable (`field = MyFieldClass()`)
+- **Type Safety**: Generic typing with `T` parameter for value types  
+- **API Conversion**: Bidirectional conversion between Python objects and InvokeAI API format
+- **Validation**: Built-in field validation with Pydantic integration
+
+**Core Methods:**
+
+#### `validate_field()`
+```python
+def validate_field(self) -> bool:
+```
+Validate the current field state and values. Returns `True` if valid, `False` otherwise.
+
+#### `to_api_format()`  
+```python
+def to_api_format(self) -> dict[str, Any]:
+```
+Convert field to InvokeAI API format for workflow submission. Each field type implements format-specific conversion logic.
+
+#### `from_api_format()`
+```python
+@classmethod  
+def from_api_format(cls, data: dict[str, Any]) -> "IvkField[T]":
+```
+Create field instance from InvokeAI API response data. Used during workflow discovery and result parsing.
+
+**Source:** [`IvkField`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/base.py#L30){:target="_blank"}
+
+### Supporting Mixins
+
+#### `PydanticFieldMixin`
+Provides Pydantic integration for JSON serialization, validation, and model features.
+- Enables `to_json_dict()` and `from_json_dict()` methods
+- Integrates with Pydantic's validation system
+- Supports model configuration and field constraints
+
+#### `IvkCollectionFieldMixin`
+Specialized mixin for collection-type fields with list operations.
+- Provides `append()`, `remove()`, `extend()`, `clear()` methods  
+- Implements `__len__()`, `__getitem__()`, `__iter__()` for list-like behavior
+- Handles collection validation and constraints
+
+**Sources:**
+- [`PydanticFieldMixin`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/base.py#L190){:target="_blank"}  
+- [`IvkCollectionFieldMixin`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/base.py#L294){:target="_blank"}
+
+### Field Categories
+
+Fields are organized into categories based on their data types and usage patterns:
+
+| Category | Purpose | Value Storage |
+|----------|---------|---------------|
+| **Primitive** | Basic types (string, int, float, bool) | `.value` attribute |
+| **Resource** | References (images, boards, latents) | `.value` attribute |  
+| **Model** | Model configurations (UNet, CLIP, etc.) | Direct attributes |
+| **Complex** | Structured data (color, bbox, collections) | Varies by type |
+| **Enum** | Choice fields with predefined options | `.value` attribute |
+
+## Primitive Fields
+
+Primitive fields handle basic data types with optional validation constraints and Pydantic integration.
+
+### `IvkStringField` - Text Input
 
 ```python
-class IvkStringField(BaseModel, PydanticFieldMixin, IvkField[str]):  # [src/invokeai_py_client/ivk_fields/primitives.py:17]
-    value: str | None = None
-    min_length: int | None = None
-    max_length: int | None = None
-    def to_api_format(self) -> dict[str, Any]:  # {"value": value}
-    def validate_field(self) -> bool: ...
-
-class IvkIntegerField(..., IvkField[int]):      # [src/invokeai_py_client/ivk_fields/primitives.py:78]
-    value: int | None = None
-    minimum: int | None = None
-    maximum: int | None = None
-    multiple_of: int | None = None
-
-class IvkFloatField(..., IvkField[float]):      # [src/invokeai_py_client/ivk_fields/primitives.py:144]
-    value: float | None = None
-    minimum: float | None = None
-    maximum: float | None = None
-
-class IvkBooleanField(..., IvkField[bool]):     # [src/invokeai_py_client/ivk_fields/primitives.py:204]
-    value: bool | None = None
+class IvkStringField(BaseModel, PydanticFieldMixin, IvkField[str]):
 ```
 
-Notes
-- Validation is enforced via Pydantic validators and validate_field().
-- to_api_format() yields the correct shape for the server’s invocation schema.
+Text field with optional length constraints and validation.
+
+**Attributes:**
+- `value` (str | None): The string value, defaults to None
+- `min_length` (int | None): Minimum character length constraint  
+- `max_length` (int | None): Maximum character length constraint
+
+**API Format:**
+```json
+{"value": "example text"}
+```
+
+**Example:**
+```python
+# Basic text field
+prompt_field = IvkStringField()
+prompt_field.value = "A beautiful landscape painting"
+
+# With constraints  
+title_field = IvkStringField(min_length=1, max_length=100)
+title_field.value = "My Artwork"
+
+# Validation
+assert title_field.validate_field() == True
+```
+
+**Source:** [`IvkStringField`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/primitives.py#L17){:target="_blank"}
+
+### `IvkIntegerField` - Numeric Input (Integers)
+
+```python  
+class IvkIntegerField(BaseModel, PydanticFieldMixin, IvkField[int]):
+```
+
+Integer field with optional range and multiple constraints.
+
+**Attributes:**
+- `value` (int | None): The integer value, defaults to None
+- `minimum` (int | None): Minimum allowed value
+- `maximum` (int | None): Maximum allowed value  
+- `multiple_of` (int | None): Value must be multiple of this number
+
+**Example:**
+```python
+# Step count field with range
+steps_field = IvkIntegerField()
+steps_field.value = 20
+steps_field.minimum = 1
+steps_field.maximum = 100
+
+# Seed field
+seed_field = IvkIntegerField(minimum=0)
+seed_field.value = 42
+
+# Even numbers only
+even_field = IvkIntegerField(multiple_of=2)
+even_field.value = 16
+```
+
+**Source:** [`IvkIntegerField`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/primitives.py#L78){:target="_blank"}
+
+### `IvkFloatField` - Numeric Input (Decimals)
+
+```python
+class IvkFloatField(BaseModel, PydanticFieldMixin, IvkField[float]):
+```
+
+Float field with optional range constraints for decimal values.
+
+**Attributes:**
+- `value` (float | None): The float value, defaults to None
+- `minimum` (float | None): Minimum allowed value
+- `maximum` (float | None): Maximum allowed value
+
+**Example:**
+```python
+# CFG scale with typical range
+cfg_field = IvkFloatField()
+cfg_field.value = 7.5
+cfg_field.minimum = 1.0
+cfg_field.maximum = 20.0
+
+# Denoise strength for img2img
+denoise_field = IvkFloatField(minimum=0.0, maximum=1.0)  
+denoise_field.value = 0.8
+```
+
+**Source:** [`IvkFloatField`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/primitives.py#L144){:target="_blank"}
+
+### `IvkBooleanField` - True/False Toggle
+
+```python
+class IvkBooleanField(BaseModel, PydanticFieldMixin, IvkField[bool]):
+```
+
+Boolean field for true/false values, typically used for feature toggles.
+
+**Attributes:**
+- `value` (bool | None): The boolean value, defaults to None
+
+**Example:**
+```python
+# Seamless tiling option
+seamless_field = IvkBooleanField()  
+seamless_field.value = True
+
+# High-resolution fix
+hires_field = IvkBooleanField(value=False)
+```
+
+**Source:** [`IvkBooleanField`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/primitives.py#L204){:target="_blank"}
+
+### Validation and API Conversion
+
+**Validation Process:**
+- Pydantic validates types and constraints automatically on assignment
+- `validate_field()` performs additional field-specific validation
+- Constraint violations raise `ValidationError` exceptions
+
+**API Format Conversion:**
+- `to_api_format()` converts to InvokeAI server format
+- Most primitives use simple `{"value": actual_value}` structure
+- Automatic type coercion ensures compatibility
 
 ## Resource fields
 

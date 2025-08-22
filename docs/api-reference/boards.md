@@ -1,35 +1,209 @@
 # Boards API
 
-Focus
-- Accurate, to-the-point reference for managing boards and images with the current client code.
-- Matches the implemented signatures and behaviors.
-
-Source locations
-- Board repository: [`BoardRepository`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_repo.py#L21){:target="_blank"}
-- Board handle: [`BoardHandle`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_handle.py#L23){:target="_blank"}
+Complete reference for board and image management using the Repository pattern, covering board lifecycle operations, image upload/download, and organizational features. Key implementations include [`BoardRepository`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_repo.py#L21){:target="_blank"} for board management and [`BoardHandle`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_handle.py#L23){:target="_blank"} for per-board operations.
 
 ## BoardRepository
 
-Create, list, update, and resolve boards. Returns BoardHandle for per-board operations.
+Repository for managing boards and their lifecycle. Implements the Repository pattern to separate board operations from the main client interface.
+
+### Core Board Management Methods
+
+#### `list_boards()` - Retrieve All Boards
 
 ```python
-class BoardRepository:
-    def list_boards(self, all: bool = True, include_uncategorized: bool = False) -> list[Board]: ...
-    def get_board_by_id(self, board_id: str) -> Board | None: ...
-    def get_boards_by_name(self, name: str) -> list[Board]: ...
-    def create_board(self, name: str, is_private: bool = False) -> BoardHandle: ...
-    def delete_board(self, board_id: str, delete_images: bool = False) -> bool: ...
-    def get_board_handle(self, board_id: str | None) -> BoardHandle: ...
-    def get_board_handle_by_name(self, name: str) -> BoardHandle | None: ...
-    def get_uncategorized_board(self) -> Board: ...
-    def get_uncategorized_handle(self) -> BoardHandle: ...
-    def update_board(self, board_id: str, name: str | None = None, is_private: bool | None = None) -> Board | None: ...
+def list_boards(self, all: bool = True, include_uncategorized: bool = False) -> list[Board]:
 ```
 
-Notes
-- include_uncategorized=False by default. Use get_uncategorized_board()/get_uncategorized_handle() for the sentinel uncategorized board (board_id="none").
-- create_board returns a BoardHandle for the created board. The underlying API expects query params board_name and is_private.
-- delete_board(board_id, delete_images=False): If delete_images=False, images are moved to uncategorized; True deletes images. You cannot delete the uncategorized board.
+List all available boards with optional filtering.
+
+**Parameters:**
+- `all` (bool): Include all boards regardless of visibility (default: True)
+- `include_uncategorized` (bool): Whether to include the special uncategorized board (default: False)
+
+**Returns:**
+- `list[Board]`: List of Board objects with metadata and image counts
+
+**Example:**
+```python
+# Get all boards excluding uncategorized
+boards = client.board_repo.list_boards()
+
+# Include uncategorized board
+all_boards = client.board_repo.list_boards(include_uncategorized=True)
+
+# Find boards with images
+active_boards = [b for b in boards if b.image_count > 0]
+```
+
+#### `create_board()` - Create New Board
+
+```python  
+def create_board(self, name: str, is_private: bool = False) -> BoardHandle:
+```
+
+Create a new board and return its handle for immediate operations.
+
+**Parameters:**
+- `name` (str): Display name for the board
+- `is_private` (bool): Whether the board should be private (default: False)
+
+**Returns:**
+- `BoardHandle`: Handle for performing operations on the created board
+
+**Example:**
+```python
+# Create public board
+renders_board = client.board_repo.create_board("Project Renders")
+print(f"Created board: {renders_board.board_name}")
+
+# Create private board
+private_board = client.board_repo.create_board("Personal", is_private=True)
+
+# Immediately upload to new board
+image = private_board.upload_image("secret.png")
+```
+
+#### `delete_board()` - Remove Board
+
+```python
+def delete_board(self, board_id: str, delete_images: bool = False) -> bool:
+```
+
+Delete a board with optional image handling.
+
+**Parameters:**
+- `board_id` (str): ID of the board to delete
+- `delete_images` (bool): If False, moves images to uncategorized; if True, deletes images (default: False)
+
+**Returns:**
+- `bool`: True if deletion succeeded, False otherwise
+
+**Important Notes:**
+- Cannot delete the uncategorized board (board_id="none")
+- By default, images are preserved by moving to uncategorized
+- Use `delete_images=True` to permanently remove images
+
+**Example:**
+```python
+# Safe delete - preserve images
+success = client.board_repo.delete_board("old-project")
+
+# Delete board and all its images (permanent)
+client.board_repo.delete_board("temp-board", delete_images=True)
+```
+
+### Board Lookup and Resolution Methods
+
+#### `get_board_by_id()` - Direct ID Lookup
+
+```python
+def get_board_by_id(self, board_id: str) -> Board | None:
+```
+
+Retrieve a specific board by its ID.
+
+**Parameters:**
+- `board_id` (str): Unique board identifier
+
+**Returns:**
+- `Board | None`: Board object if found, None if not found
+
+#### `get_boards_by_name()` - Name-Based Search
+
+```python
+def get_boards_by_name(self, name: str) -> list[Board]:
+```
+
+Find boards matching a specific name (may return multiple results).
+
+**Parameters:**
+- `name` (str): Board name to search for
+
+**Returns:**
+- `list[Board]`: List of matching boards (can be empty)
+
+### Handle Creation Methods
+
+#### `get_board_handle()` - Primary Handle Factory
+
+```python
+def get_board_handle(self, board_id: str | None) -> BoardHandle:
+```
+
+Create a handle for performing operations on a specific board.
+
+**Parameters:**
+- `board_id` (str | None): Board ID, use "none" or None for uncategorized
+
+**Returns:**
+- `BoardHandle`: Handle for board operations
+
+**Example:**
+```python
+# Get handle for specific board
+handle = client.board_repo.get_board_handle("my-board-123")
+
+# Get uncategorized handle
+uncategorized = client.board_repo.get_board_handle(None)
+# or
+uncategorized = client.board_repo.get_board_handle("none")
+```
+
+#### `get_board_handle_by_name()` - Name-Based Handle
+
+```python  
+def get_board_handle_by_name(self, name: str) -> BoardHandle | None:
+```
+
+Get handle for first board matching the given name.
+
+**Parameters:**
+- `name` (str): Board name to search for
+
+**Returns:**
+- `BoardHandle | None`: Handle if board found, None otherwise
+
+### Uncategorized Board Helpers
+
+#### `get_uncategorized_board()` & `get_uncategorized_handle()`
+
+```python
+def get_uncategorized_board(self) -> Board:
+def get_uncategorized_handle(self) -> BoardHandle:
+```
+
+Convenience methods for accessing the special uncategorized board.
+
+**Example:**
+```python
+# Direct uncategorized access
+uncat_board = client.board_repo.get_uncategorized_board()
+uncat_handle = client.board_repo.get_uncategorized_handle()
+
+# Upload to Assets tab (uncategorized)
+image = uncat_handle.upload_image("reference.jpg")
+```
+
+#### `update_board()` - Modify Board Properties
+
+```python
+def update_board(
+    self, 
+    board_id: str, 
+    name: str | None = None, 
+    is_private: bool | None = None
+) -> Board | None:
+```
+
+Update board name and/or privacy settings.
+
+**Parameters:**
+- `board_id` (str): ID of board to update  
+- `name` (str | None): New name for the board (optional)
+- `is_private` (bool | None): New privacy setting (optional)
+
+**Returns:**
+- `Board | None`: Updated board object if successful, None otherwise
 
 Implementation details
 - `list_boards`: [`BoardRepository.list_boards()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_repo.py#L59){:target="_blank"}
