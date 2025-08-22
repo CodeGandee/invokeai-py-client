@@ -5,10 +5,10 @@ Complete API documentation for the InvokeAI Python Client.
 ## Core Components
 
 ### [Client](client.md)
-Main client class for connecting to InvokeAI server and managing sessions.
+Main client class for connecting to InvokeAI server and accessing repositories.
 
 ### [Workflow](workflow.md)
-Workflow management, execution, and input handling.
+Workflow management, input discovery, execution, and output mapping.
 
 ### [Boards](boards.md)
 Board and image management operations.
@@ -20,7 +20,7 @@ Type-safe field system for workflow inputs.
 Data models and enumerations used throughout the library.
 
 ### [Utilities](utilities.md)
-Helper functions and utility classes.
+Practical helper patterns and recipes.
 
 ## Quick Reference
 
@@ -29,15 +29,19 @@ Helper functions and utility classes.
 ```python
 from invokeai_py_client import InvokeAIClient
 
-# Basic connection
-client = InvokeAIClient(base_url="http://localhost:9090")
+# Recommended: parse URL into host/port/base_path automatically
+client = InvokeAIClient.from_url("http://localhost:9090")
 
-# With configuration
-client = InvokeAIClient(
-    base_url="http://localhost:9090",
-    api_key="your-api-key",
-    timeout=30
-)
+# Or explicit host/port
+client = InvokeAIClient(host="localhost", port=9090)
+```
+
+- URL helper implementation: [`InvokeAIClient.from_url()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L142){:target="_blank"}
+- Quick probe: [`InvokeAIClient.health_check()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L412){:target="_blank"}
+
+```python
+if client.health_check():
+    print("InvokeAI is reachable")
 ```
 
 ### Workflow Operations
@@ -45,67 +49,84 @@ client = InvokeAIClient(
 ```python
 from invokeai_py_client.workflow import WorkflowDefinition
 
-# Load workflow
+# Load workflow definition from file and create a handle
 wf = client.workflow_repo.create_workflow(
     WorkflowDefinition.from_file("workflow.json")
 )
 
-# Execute
+# Discover inputs (indices are the stable public handle)
+for inp in wf.list_inputs():
+    print(f"[{inp.input_index:02d}] {inp.label or inp.field_name}")
+
+# Set values on typed fields (example)
+fld = wf.get_input_value(0)
+if hasattr(fld, "value"):
+    fld.value = "A cinematic sunset over snowy mountains"
+
+# Submit and wait (blocking convenience)
 submission = wf.submit_sync()
-result = wf.wait_for_completion_sync(submission)
+queue_item = wf.wait_for_completion_sync(timeout=180)
+
+# Map outputs to images (per node)
+for m in wf.map_outputs_to_images(queue_item):
+    print(m["node_id"], m.get("image_names"))
 ```
 
 ### Board Management
 
 ```python
-# Get board
-board = client.board_repo.get_board_handle("my_board")
+# Resolve a board and upload/download images
+boards = client.board_repo.list_boards(include_uncategorized=True)
 
-# Upload image
-image_name = board.upload_image_file("image.png")
+handle = client.board_repo.get_board_handle("none")  # uncategorized
 
-# Download image
-image_data = board.download_image(image_name)
+# Upload from file
+img = handle.upload_image("image.png")
+
+# Or upload from bytes
+img2 = handle.upload_image_data(open("image.png", "rb").read(), filename="image.png")
+
+# Download full-resolution image
+data = handle.download_image(img.image_name, full_resolution=True)
+open(img.image_name, "wb").write(data)
 ```
 
 ## Type System
 
-The library uses a comprehensive type system with Pydantic models:
+The library uses a strongly-typed field system with Pydantic validation:
 
-- **IvkField[T]**: Generic base for all field types
-- **Primitive Fields**: String, Integer, Float, Boolean
-- **Resource Fields**: Image, Board, Latents, Tensor
-- **Model Fields**: ModelIdentifier, UNet, CLIP, Transformer, LoRA
-- **Complex Fields**: Color, BoundingBox, Collection
+- IvkField[T]: generic base for all fields
+- Primitive: IvkStringField, IvkIntegerField, IvkFloatField, IvkBooleanField
+- Resource: IvkImageField, IvkBoardField, IvkLatentsField, IvkTensorField
+- Models/Configs: IvkModelIdentifierField, IvkUNetField, IvkCLIPField, IvkTransformerField, IvkLoRAField
+- Complex: IvkColorField, IvkBoundingBoxField, IvkCollectionField
+- Enums: IvkEnumField, IvkSchedulerField, SchedulerName
 
-## Error Handling
-
-```python
-from invokeai_py_client.exceptions import (
-    InvokeAIError,
-    ConnectionError,
-    WorkflowError,
-    BoardError,
-    ValidationError
-)
-
-try:
-    result = wf.submit_sync()
-except WorkflowError as e:
-    print(f"Workflow failed: {e}")
-```
+See details: [Fields](fields.md)
 
 ## Async Support
+
+Use async submission and event-driven completion:
 
 ```python
 import asyncio
 
-async def generate():
-    submission = await wf.submit_async()
-    result = await wf.wait_for_completion_async(submission)
-    return result
+async def run():
+    # Async submit with optional event subscription
+    result = await wf.submit(subscribe_events=True)
 
-result = asyncio.run(generate())
+    # Wait for completion via events (no polling)
+    done = await wf.wait_for_completion(timeout=300)
+    print("Final status:", done.get("status"))
+
+asyncio.run(run())
+```
+
+Or a hybrid stream of events while keeping a simple submit path:
+
+```python
+async for evt in wf.submit_sync_monitor_async():
+    print(evt.get("event_type"), evt.get("status") or "")
 ```
 
 ## Next Steps

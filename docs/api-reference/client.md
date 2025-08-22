@@ -1,464 +1,205 @@
 # Client API
 
-Core client class for InvokeAI server interaction.
+Focus
+- Accurate, to-the-point reference for connecting to InvokeAI, accessing repositories, making requests, and using Socket.IO events.
+- Matches the current code in this repo.
+
+Source locations
+- Client class: [`InvokeAIClient`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L33){:target="_blank"}
+- from_url constructor: [`InvokeAIClient.from_url()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L142){:target="_blank"}
+- HTTP request helper: [`InvokeAIClient._make_request()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L525){:target="_blank"}
+- Health check: [`InvokeAIClient.health_check()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L412){:target="_blank"}
+- Socket.IO connect/session: [`InvokeAIClient.connect_socketio()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L428){:target="_blank"}, [`InvokeAIClient.socketio_session()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L470){:target="_blank"}
 
 ## InvokeAIClient
 
-### Class Definition
-
+Constructor and URL helper
 ```python
 class InvokeAIClient:
-    """Main client for InvokeAI API interaction."""
-    
     def __init__(
         self,
-        base_url: str = "http://localhost:9090",
-        api_key: Optional[str] = None,
-        timeout: int = 30,
+        host: str = "localhost",
+        port: int = 9090,
+        api_key: str | None = None,
+        timeout: float = 30.0,
+        base_path: str = "/api/v1",
+        use_https: bool = False,
+        verify_ssl: bool = True,
         max_retries: int = 3,
-        verify_ssl: bool = True
-    ):
-        """
-        Initialize InvokeAI client.
-        
-        Args:
-            base_url: InvokeAI server URL
-            api_key: Optional API key for authentication
-            timeout: Request timeout in seconds
-            max_retries: Maximum retry attempts
-            verify_ssl: Verify SSL certificates
-        """
+        **kwargs: Any,
+    ) -> None: ...
+    
+    @classmethod
+    def from_url(cls, url: str, **kwargs: Any) -> "InvokeAIClient": ...
 ```
 
-### Properties
+- Use from_url() for convenience:
+  - Source: [`InvokeAIClient.from_url()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L142){:target="_blank"}
+- Base URL formed as: http(s)://{host}:{port}{base_path}
+- API key (if any) is sent as Bearer Authorization header
 
+Repositories (properties)
 ```python
 @property
-def board_repo(self) -> BoardRepository:
-    """Access board repository for image management."""
-    
+def board_repo(self) -> BoardRepository: ...
 @property
-def workflow_repo(self) -> WorkflowRepository:
-    """Access workflow repository for workflow operations."""
-    
+def workflow_repo(self) -> WorkflowRepository: ...
 @property
-def is_connected(self) -> bool:
-    """Check if client is connected to server."""
-    
-@property
-def server_version(self) -> str:
-    """Get InvokeAI server version."""
+def dnn_model_repo(self) -> DnnModelRepository: ...
 ```
+- Lazily constructed and cached on first access:
+  - [`InvokeAIClient.board_repo`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L215){:target="_blank"}
+  - [`InvokeAIClient.workflow_repo`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L251){:target="_blank"}
+  - [`InvokeAIClient.dnn_model_repo`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L281){:target="_blank"}
 
-### Connection Methods
-
+HTTP requests
 ```python
-def connect(self) -> bool:
-    """
-    Establish connection to InvokeAI server.
-    
-    Returns:
-        bool: True if connection successful
-        
-    Raises:
-        ConnectionError: If unable to connect
-    """
-
-def disconnect(self):
-    """Close connection to server."""
-
-def ping(self) -> bool:
-    """
-    Check server availability.
-    
-    Returns:
-        bool: True if server is responsive
-    """
-
-def get_server_info(self) -> Dict[str, Any]:
-    """
-    Get server information and capabilities.
-    
-    Returns:
-        dict: Server information including version, features
-    """
+def _make_request(self, method: str, endpoint: str, **kwargs: Any) -> requests.Response: ...
 ```
+- Helper used across repositories/handles:
+  - Adds timeout if not provided
+  - Raises for HTTP errors
+  - Full URL = base_url + endpoint
+  - Source: [`InvokeAIClient._make_request()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L525){:target="_blank"}
 
-### Request Methods
-
+Health check
 ```python
-def _make_request(
-    self,
-    method: str,
-    endpoint: str,
-    params: Optional[Dict] = None,
-    json: Optional[Dict] = None,
-    files: Optional[Dict] = None,
-    headers: Optional[Dict] = None
-) -> requests.Response:
-    """
-    Make HTTP request to API.
-    
-    Args:
-        method: HTTP method (GET, POST, etc.)
-        endpoint: API endpoint path
-        params: Query parameters
-        json: JSON body data
-        files: Files for multipart upload
-        headers: Additional headers
-        
-    Returns:
-        Response object
-        
-    Raises:
-        InvokeAIError: On request failure
-    """
-
-async def _make_request_async(
-    self,
-    method: str,
-    endpoint: str,
-    **kwargs
-) -> aiohttp.ClientResponse:
-    """Async version of _make_request."""
+def health_check(self) -> bool: ...
 ```
+- Tries GET {base_url}/health
+- Returns True/False
+- Source: [`InvokeAIClient.health_check()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L412){:target="_blank"}
 
-### WebSocket Methods
-
+Socket.IO (async)
 ```python
-def connect_websocket(
-    self,
-    on_message: Callable[[Dict], None],
-    on_error: Optional[Callable[[Exception], None]] = None,
-    on_close: Optional[Callable[[], None]] = None
-) -> WebSocketConnection:
-    """
-    Connect to server WebSocket for real-time events.
-    
-    Args:
-        on_message: Callback for messages
-        on_error: Callback for errors
-        on_close: Callback for connection close
-        
-    Returns:
-        WebSocketConnection object
-    """
-
-def subscribe_to_queue(
-    self,
-    queue_id: str = "default",
-    callback: Optional[Callable[[Dict], None]] = None
-) -> Subscription:
-    """
-    Subscribe to queue events.
-    
-    Args:
-        queue_id: Queue identifier
-        callback: Event callback
-        
-    Returns:
-        Subscription object
-    """
+async def connect_socketio(self) -> socketio.AsyncClient: ...
+async def disconnect_socketio(self) -> None: ...
+@asynccontextmanager
+async def socketio_session(self) -> AsyncGenerator[socketio.AsyncClient, None]: ...
 ```
+- Connects to ws(s)://{host}:{port} with path /ws/socket.io
+- Use to subscribe to queue rooms and receive live events
+- Source: [`InvokeAIClient.connect_socketio()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L428){:target="_blank"}
+
+Context management
+```python
+def close(self) -> None: ...
+def __enter__(self) -> "InvokeAIClient": ...
+def __exit__(self, exc_type, exc_val, exc_tb) -> None: ...
+```
+- Ensures HTTP session closed
+- Attempts to disconnect Socket.IO if connected
+- Source: [`InvokeAIClient.close()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L493){:target="_blank"}
+
+Note on non-existent methods
+- Older docs mentioned connect(), disconnect(), ping(), get_server_info(), connect_websocket(), subscribe_to_queue(). These are not present. Use:
+  - health_check() for a quick probe
+  - _make_request("GET", "/app/version") if you need version info
+  - connect_socketio()/socketio_session() for WebSocket(SIO) usage
 
 ## Usage Examples
 
-### Basic Connection
-
+Basic connection and quick probe
 ```python
 from invokeai_py_client import InvokeAIClient
 
-# Simple connection
-client = InvokeAIClient()
+# 1) Using URL helper (recommended)
+client = InvokeAIClient.from_url("http://localhost:9090")
 
-# Custom configuration
-client = InvokeAIClient(
-    base_url="http://192.168.1.100:9090",
-    timeout=60,
-    max_retries=5
-)
+# 2) Or explicit host/port (base_path defaults to /api/v1)
+client = InvokeAIClient(host="localhost", port=9090)
 
-# With authentication
-client = InvokeAIClient(
-    base_url="https://invoke.example.com",
-    api_key="sk-abc123..."
-)
+# Quick probe
+if client.health_check():
+    print("InvokeAI reachable")
+
+# Read version (raw request)
+resp = client._make_request("GET", "/app/version")
+print(resp.json())
 ```
 
-### Server Information
-
+Create a workflow and run (blocking)
 ```python
-# Check connection
-if client.ping():
-    print("Server is available")
+from invokeai_py_client.workflow import WorkflowDefinition
 
-# Get server info
-info = client.get_server_info()
-print(f"Server version: {info['version']}")
-print(f"Available models: {info['models_count']}")
-print(f"Features: {info['features']}")
-```
-
-### Making Raw Requests
-
-```python
-# GET request
-response = client._make_request("GET", "/models/")
-models = response.json()
-
-# POST request with JSON
-data = {"name": "test_board", "description": "Test"}
-response = client._make_request("POST", "/boards/", json=data)
-board = response.json()
-
-# File upload
-with open("image.png", "rb") as f:
-    files = {"file": f}
-    response = client._make_request(
-        "POST",
-        "/images/upload",
-        files=files
-    )
-```
-
-### WebSocket Events
-
-```python
-def handle_message(msg):
-    print(f"Event: {msg.get('event')}")
-    if msg.get('event') == 'invocation_complete':
-        print(f"Completed: {msg.get('data')}")
-
-# Connect to WebSocket
-ws = client.connect_websocket(
-    on_message=handle_message,
-    on_error=lambda e: print(f"Error: {e}"),
-    on_close=lambda: print("Connection closed")
+client = InvokeAIClient.from_url("http://localhost:9090")
+wf = client.workflow_repo.create_workflow(
+    WorkflowDefinition.from_file("data/workflows/sdxl-text-to-image.json")
 )
 
-# Subscribe to queue
-subscription = client.subscribe_to_queue(
-    queue_id="default",
-    callback=handle_message
-)
+# Discover inputs and set values (indices are the stable handle)
+for inp in wf.list_inputs():
+    print(f"[{inp.input_index:02d}] {inp.label or inp.field_name}")
 
-# Later: unsubscribe
-subscription.unsubscribe()
-ws.close()
+field = wf.get_input_value(0)
+if hasattr(field, "value"):
+    field.value = "A cinematic sunset over snowy mountains"
+
+submission = wf.submit_sync()
+queue_item = wf.wait_for_completion_sync(timeout=180)
+for m in wf.map_outputs_to_images(queue_item):
+    print(m["node_id"], m.get("image_names"))
 ```
+- Mirrors the example: [`sdxl-text-to-image.py`](https://github.com/CodeGandee/invokeai-py-client/blob/main/examples/pipelines/sdxl-text-to-image.py){:target="_blank"}
 
-### Async Operations
+Boards and images
+```python
+# List boards
+boards = client.board_repo.list_boards(include_uncategorized=True)
+for b in boards:
+    print(getattr(b, "board_id", "?"), getattr(b, "board_name", ""))
 
+# Get a handle and download an image (by name)
+bh = client.board_repo.get_board_handle("none")  # uncategorized
+names = bh.list_images(limit=10)
+if names:
+    data = bh.download_image(names[0], full_resolution=True)
+    with open(names[0], "wb") as f:
+        f.write(data)
+```
+- See handle methods: [`BoardHandle`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_handle.py#L23){:target="_blank"} class
+
+Socket.IO events (async)
 ```python
 import asyncio
 
-async def async_operations():
-    # Async request
-    response = await client._make_request_async("GET", "/models/")
-    models = await response.json()
-    
-    # Async workflow execution
-    wf = client.workflow_repo.create_workflow(definition)
-    submission = await wf.submit_async()
-    result = await wf.wait_for_completion_async(submission)
-    
-    return result
-
-# Run async
-result = asyncio.run(async_operations())
-```
-
-## Configuration
-
-### Environment Variables
-
-```python
-import os
-
-# Set via environment
-os.environ['INVOKEAI_URL'] = 'http://localhost:9090'
-os.environ['INVOKEAI_API_KEY'] = 'your-key'
-
-# Client will use environment variables
-client = InvokeAIClient()  # Uses env vars
-```
-
-### Session Configuration
-
-```python
-# Configure session
-client = InvokeAIClient()
-
-# Set custom headers
-client.session.headers.update({
-    'X-Custom-Header': 'value'
-})
-
-# Configure retries
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
-
-retry_strategy = Retry(
-    total=3,
-    backoff_factor=1,
-    status_forcelist=[429, 500, 502, 503, 504]
-)
-
-adapter = HTTPAdapter(max_retries=retry_strategy)
-client.session.mount("http://", adapter)
-client.session.mount("https://", adapter)
-```
-
-## Error Handling
-
-### Exception Types
-
-```python
-from invokeai_py_client.exceptions import (
-    InvokeAIError,      # Base exception
-    ConnectionError,    # Connection failures
-    AuthenticationError,  # Auth failures
-    TimeoutError,       # Request timeouts
-    APIError           # API-specific errors
-)
-```
-
-### Error Handling Pattern
-
-```python
-try:
-    client = InvokeAIClient(base_url="http://localhost:9090")
-    client.connect()
-    
-except ConnectionError as e:
-    print(f"Failed to connect: {e}")
-    # Try fallback server
-    client = InvokeAIClient(base_url="http://backup:9090")
-    
-except AuthenticationError as e:
-    print(f"Authentication failed: {e}")
-    # Refresh token or re-authenticate
-    
-except TimeoutError as e:
-    print(f"Request timed out: {e}")
-    # Retry with longer timeout
-    
-except InvokeAIError as e:
-    print(f"API error: {e}")
-    # Handle general errors
-```
-
-## Context Manager
-
-```python
-# Automatic connection management
-with InvokeAIClient() as client:
-    # Client is connected
-    wf = client.workflow_repo.create_workflow(definition)
-    result = wf.submit_sync()
-    # Connection closed automatically
-
-# Custom context manager
-class ManagedClient:
-    def __init__(self, **kwargs):
-        self.client = InvokeAIClient(**kwargs)
-    
-    def __enter__(self):
-        self.client.connect()
-        return self.client
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.client.disconnect()
-        if exc_type:
-            print(f"Error occurred: {exc_val}")
-```
-
-## Performance Optimization
-
-### Connection Pooling
-
-```python
-# Reuse connections
-client = InvokeAIClient()
-
-# Configure pool size
-client.session.mount(
-    'http://',
-    HTTPAdapter(
-        pool_connections=10,
-        pool_maxsize=20
-    )
-)
-```
-
-### Request Batching
-
-```python
-def batch_requests(client, endpoints):
-    """Execute multiple requests efficiently."""
-    import concurrent.futures
-    
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = {
-            executor.submit(client._make_request, "GET", ep): ep
-            for ep in endpoints
-        }
+async def main():
+    client = InvokeAIClient.from_url("http://localhost:9090")
+    async with client.socketio_session() as sio:
+        await sio.emit("subscribe_queue", {"queue_id": "default"})
         
-        results = {}
-        for future in concurrent.futures.as_completed(futures):
-            endpoint = futures[future]
-            try:
-                response = future.result()
-                results[endpoint] = response.json()
-            except Exception as e:
-                results[endpoint] = {"error": str(e)}
-        
-        return results
+        @sio.on("queue_item_status_changed")
+        async def on_status(evt):
+            print("Status:", evt.get("status"))
 
-# Batch multiple endpoints
-endpoints = ["/models/", "/boards/", "/images/"]
-results = batch_requests(client, endpoints)
+        # Submit a workflow (sync submit), then wait using your own logic
+        # The server will emit events while processing
+
+        await asyncio.sleep(5)
+        await sio.emit("unsubscribe_queue", {"queue_id": "default"})
+
+asyncio.run(main())
 ```
 
-## Testing
-
-### Mock Client
-
+DNN models (read-only repo)
 ```python
-from unittest.mock import Mock, patch
+# List models (fresh API call)
+models = client.dnn_model_repo.list_models()
+print(f"Total models: {len(models)}")
 
-def test_workflow():
-    # Mock client
-    mock_client = Mock(spec=InvokeAIClient)
-    mock_client.workflow_repo.create_workflow.return_value = Mock()
-    
-    # Test workflow creation
-    wf = mock_client.workflow_repo.create_workflow("test.json")
-    assert wf is not None
-
-# Patch requests
-@patch('requests.Session')
-def test_connection(mock_session):
-    mock_session.return_value.get.return_value.ok = True
-    
-    client = InvokeAIClient()
-    assert client.ping()
+# Use sync_dnn_model during workflow prep to normalize identifiers
+wf.sync_dnn_model(by_name=True, by_base=True)
 ```
 
-## Best Practices
+## Best practices
+- Use from_url() to avoid manual host/port parsing.
+- Treat indices as the public, stable input API.
+- Keep Socket.IO connections long-lived if you need frequent events; reuse via socketio_session().
+- For uploads, prefer BoardHandle.upload_image or upload_image_data; omit board_id for uncategorized (“none” is a sentinel for read ops).
+- Handle HTTP errors raised by _make_request() and use repository methods wherever available.
 
-1. **Always use context managers** for automatic resource cleanup
-2. **Handle exceptions** appropriately for production code
-3. **Configure timeouts** based on expected operation duration
-4. **Use async methods** for concurrent operations
-5. **Cache client instances** to reuse connections
-6. **Monitor WebSocket** connections for disconnections
-7. **Implement retry logic** for transient failures
-8. **Log API interactions** for debugging
-
-## Next Steps
-
-- See [Workflow API](workflow.md) for workflow operations
-- Review [Boards API](boards.md) for image management
-- Check [Fields API](fields.md) for type system
-- Explore [Examples](../examples/index.md) for practical usage
+Cross-references
+- Workflows: [docs/api-reference/workflow.md](workflow.md)
+- Boards: [docs/api-reference/boards.md](boards.md)
+- Fields: [docs/api-reference/fields.md](fields.md)
+- Examples: [docs/examples/index.md](../examples/index.md)
