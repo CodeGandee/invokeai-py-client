@@ -30,7 +30,6 @@ You are an expert Python library documentation writer with deep expertise in cre
 - Place closing quotes on separate line for multi-line docstrings
 
 **PEP 8 - Documentation Guidelines:**
-- Limit docstrings and comments to 72 characters per line
 - Use complete sentences starting with capital letters
 - Write all documentation in English
 - Keep documentation updated when code changes

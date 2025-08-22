@@ -2,40 +2,132 @@
 
 Complete example of generating images with Stable Diffusion XL.
 
+## What you'll learn
+
+- How to load an SDXL workflow exported from the GUI.
+- How to discover and set inputs by stable index.
+- How to submit and wait for completion (blocking path).
+- How to map output nodes to generated image filenames and optionally download them.
+
+## Prerequisites
+
+- InvokeAI server running at http://localhost:9090 (or your own URL).
+- An SDXL workflow JSON exported from the GUI, saved locally (e.g., data/workflows/sdxl_text_to_image.json).
+- The workflow’s Form includes the parameters you want to control (prompt, steps, width, height, board, etc.). Indices are stable only relative to the current Form structure.
+
+## Workflow requirements (GUI)
+
+In the InvokeAI GUI, place these fields into the Form before exporting:
+- Positive Prompt (string)
+- Negative Prompt (string)
+- Seed (int)
+- Steps (int)
+- CFG Scale (float)
+- Width (int)
+- Height (int)
+- Board (board selector) for the final image node you care about
+
+Note: Labels may vary or be missing. Index is the stable handle.
+
+## Input indices at a glance (optional)
+
+```python
+from invokeai_py_client import InvokeAIClient
+from invokeai_py_client.workflow import WorkflowDefinition
+
+client = InvokeAIClient.from_url("http://localhost:9090")
+wf = client.workflow_repo.create_workflow(
+    WorkflowDefinition.from_file("data/workflows/sdxl_text_to_image.json")
+)
+
+for inp in wf.list_inputs():
+    print(f"[{inp.input_index:02d}] {inp.label or inp.field_name} :: {type(inp.field).__name__}")
+```
+
 ## Quick Start
 
 ```python
 from invokeai_py_client import InvokeAIClient
 from invokeai_py_client.workflow import WorkflowDefinition
 
-# Initialize client
-client = InvokeAIClient(base_url="http://localhost:9090")
+# 1) Initialize client (URL helper parses host/port/base_path)
+client = InvokeAIClient.from_url("http://localhost:9090")
 
-# Load SDXL workflow
-workflow_path = "data/workflows/sdxl_text_to_image.json"
+# 2) Load SDXL workflow exported from the GUI
 wf = client.workflow_repo.create_workflow(
-    WorkflowDefinition.from_file(workflow_path)
+    WorkflowDefinition.from_file("data/workflows/sdxl_text_to_image.json")
 )
 
-# Sync models to server
+# 3) Normalize model identifier fields against server inventory
 wf.sync_dnn_model(by_name=True, by_base=True)
 
-# Set generation parameters
+# 4) Set inputs by index (indices are the stable API)
 wf.get_input_value(0).value = "A majestic mountain landscape at sunset, highly detailed, 8k"
 wf.get_input_value(1).value = "blurry, low quality, distorted"
-wf.get_input_value(2).value = 42  # seed
-wf.get_input_value(3).value = 30  # steps
-wf.get_input_value(4).value = 7.0  # cfg_scale
-wf.get_input_value(5).value = 1024  # width
-wf.get_input_value(6).value = 1024  # height
+wf.get_input_value(2).value = 42     # Seed
+wf.get_input_value(3).value = 30     # Steps
+wf.get_input_value(4).value = 7.0    # CFG scale
+wf.get_input_value(5).value = 1024   # Width
+wf.get_input_value(6).value = 1024   # Height
+# If your Form exposed a Board selector for the output node, set it too:
+# wf.get_input_value(BOARD_INDEX).value = "none"  # uncategorized
 
-# Generate image
+# 5) Submit and wait (blocking)
 submission = wf.submit_sync()
-result = wf.wait_for_completion_sync(submission)
+queue_item = wf.wait_for_completion_sync(timeout=180)
+print("Final status:", queue_item.get("status"))
 
-# Get output
-images = wf.map_outputs_to_images(result)
-print(f"Generated: {images[0]}")
+# 6) Map outputs (node -> image names)
+mappings = wf.map_outputs_to_images(queue_item)
+for m in mappings:
+    print(f"node={m['node_id'][:8]} board={m.get('board_id')} images={m.get('image_names', [])}")
+```
+
+## How it works
+
+1) The exported workflow JSON is treated as immutable. The client only substitutes values you set on discovered inputs when submitting.
+2) Inputs are discovered via a depth‑first traversal of the Form tree. Indices reflect that order and are the only stable reference.
+3) submit_sync() enqueues a run; wait_for_completion_sync() polls the server until the job finishes or times out.
+4) map_outputs_to_images() correlates output-capable nodes to produced image names, optionally anchored to Form-exposed board fields.
+
+## Download results (optional)
+
+```python
+# Download the first image from the first output mapping (if present)
+if mappings and mappings[0].get("image_names"):
+    first_img = mappings[0]["image_names"][0]
+    board_id = mappings[0].get("board_id")  # may be "none" or a real ID
+    bh = client.board_repo.get_board_handle(board_id)
+    data = bh.download_image(first_img, full_resolution=True)
+    with open(first_img, "wb") as f:
+        f.write(data)
+    print("Saved:", first_img)
+```
+
+## Common pitfalls
+
+- Using labels instead of indices: Labels are not guaranteed unique or present. Always code against indices.
+- Forgetting to add fields to the Form in the GUI: Only Form-exposed inputs are discoverable and settable.
+- Uploading to uncategorized: When uploading, prefer BoardHandle for uncategorized; uploads omit board_id under the hood (“none” is a read sentinel).
+- Passing submission to wait_for_completion_sync(): Not required. Use wait_for_completion_sync(timeout=...) after submit_sync().
+
+## Troubleshooting
+
+- Validate before submit to surface per-index issues:
+```python
+errors = wf.validate_inputs()
+if errors:
+    for idx, msgs in errors.items():
+        print(f"[{idx}] {', '.join(msgs)}")
+    raise SystemExit("Fix inputs and retry")
+```
+
+- Re-discover indices after changing the GUI Form layout:
+```python
+wf.export_input_index_map("sdxl-inputs.json")
+# Later:
+report = wf.verify_input_index_map("sdxl-inputs.json")
+print("Moved:", report["moved"])
 ```
 
 ## Complete Implementation

@@ -24,72 +24,49 @@ InvokeAI Python Client is a powerful library that bridges the gap between [Invok
 
 ## Core Features
 
-<div class="grid cards" markdown>
-
--   :material-workflow: **Workflow Automation**
-
-    ---
-
-    Load exported workflow JSON and execute with full control over inputs
-
-    [:octicons-arrow-right-24: Workflow Guide](user-guide/workflow-basics.md)
-
--   :material-form-select: **Typed Field System**
-
-    ---
-
-    Strongly-typed fields with validation for strings, numbers, models, and more
-
-    [:octicons-arrow-right-24: Field Types](user-guide/field-types.md)
-
--   :material-image-multiple: **Board & Image Management**
-
-    ---
-
-    Organize outputs, upload assets, and download results programmatically
-
-    [:octicons-arrow-right-24: Board Management](user-guide/boards.md)
-
--   :material-map: **Output Mapping**
-
-    ---
-
-    Track which nodes produced which images with deterministic mapping
-
-    [:octicons-arrow-right-24: Output Mapping](user-guide/output-mapping.md)
-
-</div>
+| Feature | Description | Docs |
+|:--|:--|:--:|
+| :material-workflow: Workflow Automation | Load GUI‑exported workflow JSON and execute runs with full control over inputs and submission. | [Open](api-reference/workflow.md) |
+| :material-form-select: Typed Field System | Strongly typed fields (primitive, resource, model, enum) with Pydantic validation and API conversion. | [Open](api-reference/fields.md) |
+| :material-image-multiple: Boards & Images | Create/list boards, upload/download images, organize and move/star images via handles. | [Open](api-reference/boards.md) |
+| :material-map: Output Mapping | Map output‑capable nodes to the images they generated after execution. | [Open](api-reference/workflow.md) |
 
 ## Quick Example
+
+Prerequisites
+- InvokeAI server running (e.g., http://localhost:9090)
+- A workflow JSON exported from the GUI with the parameters you want in the Form
 
 ```python
 from invokeai_py_client import InvokeAIClient
 from invokeai_py_client.workflow import WorkflowDefinition
 
-# Connect to InvokeAI server
+# 1) Connect to InvokeAI
 client = InvokeAIClient.from_url("http://localhost:9090")
 
-# Load your exported workflow
+# 2) Load your exported workflow JSON
 wf = client.workflow_repo.create_workflow(
     WorkflowDefinition.from_file("my-workflow.json")
 )
 
-# Discover and set inputs by index
+# 3) Discover inputs (indices are the stable API; labels are advisory)
 for inp in wf.list_inputs():
-    print(f"[{inp.input_index}] {inp.label}")
+    print(f"[{inp.input_index:02d}] {inp.label or inp.field_name}")
 
-# Set values on typed fields
-prompt = wf.get_input_value(0)  # Get by stable index
-if hasattr(prompt, "value"):
-    prompt.value = "A cinematic sunset over snowy mountains"
+# 4) Set values on typed fields by index
+fld = wf.get_input_value(0)  # e.g., Positive Prompt
+if hasattr(fld, "value"):
+    fld.value = "A cinematic sunset over snowy mountains"
 
-# Submit and wait
-submission = wf.submit_sync()
+# 5) Submit and wait (blocking)
+wf.submit_sync()
 result = wf.wait_for_completion_sync(timeout=180)
 
-# Map outputs to images
-for mapping in wf.map_outputs_to_images(result):
-    print(f"Node {mapping['node_id']} -> {mapping.get('image_names')}")
+# 6) Map outputs to images
+for m in wf.map_outputs_to_images(result):
+    nid = m["node_id"][:8]
+    names = m.get("image_names", [])
+    print(f"node={nid} images={names}")
 ```
 
 ## Who Is This For?

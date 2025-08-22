@@ -4,11 +4,26 @@ Direct REST API usage examples for advanced use cases.
 
 ## Overview
 
-While the InvokeAI Python Client provides convenient abstractions, sometimes you need direct API access for:
-- Custom endpoints not yet wrapped
-- Fine-grained control over requests
-- Debugging and troubleshooting
-- Integration with other tools
+While the InvokeAI Python Client provides convenient abstractions, there are cases where direct API access is useful:
+
+- Custom endpoints not yet wrapped by the client
+- Fine-grained control over request/response payloads
+- Low-level debugging and troubleshooting
+- Integration with external systems or pipelines
+
+What you'll learn
+
+- How to make authenticated HTTP requests to the InvokeAI REST API
+- How to create sessions and enqueue workflow batches
+- How to upload/download images with multipart/form-data
+- How to manage the queue (list, cancel, prune)
+- How to monitor real-time events using Socket.IO
+
+Prerequisites
+
+- An InvokeAI server available (e.g., http://localhost:9090)
+- Familiarity with Python requests and basic HTTP
+- An exported workflow graph when enqueuing batches
 
 ## Basic API Request
 
@@ -17,14 +32,15 @@ While the InvokeAI Python Client provides convenient abstractions, sometimes you
 ```python
 from invokeai_py_client import InvokeAIClient
 
-# Initialize client
-client = InvokeAIClient(base_url="http://localhost:9090")
+# Initialize client (URL helper parses host/port/base_path)
+client = InvokeAIClient.from_url("http://localhost:9090")
 
 # Make raw API request
 response = client._make_request("GET", "/models/")
+response.raise_for_status()
 models = response.json()
 
-for model in models['models']:
+for model in models.get("models", []):
     print(f"{model['model_name']}: {model['base_model']}")
 ```
 
@@ -324,54 +340,81 @@ if items:
 
 ## WebSocket Events
 
-### Real-time Event Monitoring
+Real-time events are delivered via Socket.IO on the InvokeAI server. When working at the raw API level, prefer a Socket.IO client instead of a plain WebSocket library.
+
+Notes
+
+- The Socket.IO endpoint uses the same host/port as HTTP with path /ws/socket.io.
+- The high-level client provides an async context manager: InvokeAIClient.socketio_session(), which you can use directly.
+- If you need raw access, use python-socketio (AsyncClient).
+
+### Real-time Event Monitoring (Socket.IO)
 
 ```python
 import asyncio
-import websockets
-import json
+import socketio
 
-async def monitor_events(base_url: str):
-    """Monitor real-time events via WebSocket."""
-    ws_url = base_url.replace("http://", "ws://").replace("https://", "wss://")
-    ws_url = f"{ws_url}/ws"
-    
-    async with websockets.connect(ws_url) as websocket:
-        print("Connected to WebSocket")
-        
-        # Subscribe to events
-        subscribe_msg = {
-            "event": "subscribe_queue",
-            "data": {"queue_id": "default"}
-        }
-        await websocket.send(json.dumps(subscribe_msg))
-        
-        # Listen for events
-        while True:
-            message = await websocket.recv()
-            event = json.loads(message)
-            
-            print(f"Event: {event.get('event', 'unknown')}")
-            
-            if event.get('event') == 'invocation_started':
-                data = event.get('data', {})
-                print(f"  Started: {data.get('invocation_type')}")
-            
-            elif event.get('event') == 'invocation_complete':
-                data = event.get('data', {})
-                print(f"  Completed: {data.get('invocation_type')}")
-                
-                # Check for image output
-                if 'image' in data.get('outputs', {}):
-                    image = data['outputs']['image']
-                    print(f"  Generated: {image['image_name']}")
-            
-            elif event.get('event') == 'session_complete':
-                print("Session completed!")
-                break
+async def monitor_events(url: str = "http://localhost:9090"):
+    """Monitor real-time queue events via Socket.IO."""
+    # Create Async Socket.IO client
+    sio = socketio.AsyncClient()
 
-# Run WebSocket monitor
-asyncio.run(monitor_events("http://localhost:9090"))
+    @sio.event
+    async def connect():
+        print("Connected to Socket.IO")
+
+    @sio.event
+    async def disconnect():
+        print("Disconnected")
+
+    @sio.on("queue_item_status_changed")
+    async def on_status(evt):
+        print("Status:", evt.get("status"), "item:", evt.get("item_id"))
+
+    @sio.on("invocation_progress")
+    async def on_progress(evt):
+        # evt may include 'progress' as 0.0..1.0
+        print(f"Progress: {evt.get('progress', 0.0)*100:.0f}%",
+              "session:", evt.get("session_id"))
+
+    # Connect to host (Socket.IO server uses /ws/socket.io)
+    await sio.connect(
+        url.replace("http", "ws"),
+        transports=["websocket"],
+        socketio_path="/ws/socket.io"
+    )
+
+    # Subscribe (example channel)
+    await sio.emit("subscribe_queue", {"queue_id": "default"})
+
+    try:
+        # Keep listening for a while; in real apps, do useful work here
+        await asyncio.sleep(10)
+    finally:
+        await sio.emit("unsubscribe_queue", {"queue_id": "default"})
+        await sio.disconnect()
+
+asyncio.run(monitor_events())
+```
+
+Alternatively, using the high-level client:
+
+```python
+import asyncio
+from invokeai_py_client import InvokeAIClient
+
+async def with_client_session():
+    client = InvokeAIClient.from_url("http://localhost:9090")
+    async with client.socketio_session() as sio:
+        @sio.on("queue_item_status_changed")
+        async def on_status(evt):
+            print("Status:", evt.get("status"))
+
+        await sio.emit("subscribe_queue", {"queue_id": "default"})
+        await asyncio.sleep(10)
+        await sio.emit("unsubscribe_queue", {"queue_id": "default"})
+
+asyncio.run(with_client_session())
 ```
 
 ## Board Operations

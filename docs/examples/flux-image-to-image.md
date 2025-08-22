@@ -1,6 +1,57 @@
 # FLUX Image-to-Image
 
-Advanced image editing and transformation using FLUX models.
+Advanced image editing and transformation using FLUX models. This guide explains the end-to-end flow, how to prepare your GUI Form, which inputs to set, and how to retrieve the generated images.
+
+## What you'll learn
+
+- Map a GUI-exported FLUX img2img workflow into a Python pipeline.
+- Discover and set inputs by index (the stable public API).
+- Submit synchronously and wait for completion without websockets.
+- Map output nodes to image filenames and download the results.
+
+## Prerequisites
+
+- InvokeAI server running at http://localhost:9090 (adjust if needed).
+- FLUX img2img workflow JSON exported from the GUI, e.g.: data/workflows/flux-image-to-image.json
+- Your workflow Form includes the inputs you intend to control (image/latents, prompts, denoise strength, steps, cfg scale, board).
+
+Tip: Indices are stable only relative to the current Form tree order. If you change the Form layout, re-list inputs and update your index usage.
+
+## Form requirements (in the GUI)
+
+Place these (or equivalent) into the workflow's Form before export:
+- Image (or Latents/Image input for the img2img entry point)
+- Positive Prompt
+- Negative Prompt (optional)
+- Denoising Strength (0.0..1.0)
+- Steps (small values are common for FLUX)
+- CFG Scale (often lower than SDXL)
+- Board selector for the final output node you care about
+
+Labels are not guaranteed unique or present—indices are the stable keys.
+
+## Compatibility notes
+
+- Use InvokeAIClient.from_url(...) to build the client, not a base_url parameter.
+- Use BoardHandle.upload_image(...) or upload_image_data(...). There is no upload_image_file helper in the current API; uploads return an IvkImage—use .image_name as the value for image fields.
+- wait_for_completion_sync(...) does not require a submission argument; call it after submit_sync() with a timeout if desired.
+- Job statuses are lower-case strings (e.g., "completed").
+
+## Inspect input indices (optional)
+
+```python
+from invokeai_py_client import InvokeAIClient
+from invokeai_py_client.workflow import WorkflowDefinition
+
+client = InvokeAIClient.from_url("http://localhost:9090")
+wf = client.workflow_repo.create_workflow(
+    WorkflowDefinition.from_file("data/workflows/flux-image-to-image.json")
+)
+for inp in wf.list_inputs():
+    print(f"[{inp.input_index:02d}] {inp.label or inp.field_name} :: {type(inp.field).__name__}")
+```
+
+Record the indices relevant to your workflow version.
 
 ## Quick Start
 
@@ -8,34 +59,62 @@ Advanced image editing and transformation using FLUX models.
 from invokeai_py_client import InvokeAIClient
 from invokeai_py_client.workflow import WorkflowDefinition
 
-# Initialize client
-client = InvokeAIClient(base_url="http://localhost:9090")
+# 1) Initialize client
+client = InvokeAIClient.from_url("http://localhost:9090")
 
-# Upload source image
-board = client.board_repo.get_board_handle("flux_inputs")
-source_image = board.upload_image_file("source.png")
+# 2) Upload the source image to Uncategorized (Assets tab)
+uncat = client.board_repo.get_uncategorized_handle()
+uploaded = uncat.upload_image("source.png")      # returns IvkImage
+source_name = uploaded.image_name                # stable image identifier
 
-# Load FLUX img2img workflow
+# 3) Load the FLUX img2img workflow exported from the GUI
 wf = client.workflow_repo.create_workflow(
-    WorkflowDefinition.from_file("data/workflows/flux_img2img.json")
+    WorkflowDefinition.from_file("data/workflows/flux-image-to-image.json")
 )
 
-# Sync models
+# 4) Normalize model identifier fields against server inventory
 wf.sync_dnn_model(by_name=True, by_base=True)
 
-# Set parameters
-wf.get_input_value(0).value = source_image  # Source image
+# 5) Set inputs by index (indices shown by list_inputs(); adjust for your Form)
+wf.get_input_value(0).value = source_name
 wf.get_input_value(1).value = "Transform into cyberpunk style with neon lights"
-wf.get_input_value(2).value = 0.75  # Denoising strength
-wf.get_input_value(3).value = 4  # Steps (FLUX is fast)
-wf.get_input_value(4).value = 3.5  # CFG scale
+wf.get_input_value(2).value = 0.75   # Denoising strength
+wf.get_input_value(3).value = 4      # Steps (FLUX is fast)
+wf.get_input_value(4).value = 3.5    # CFG scale
+# Optional: If your Form exposed a board selector for the final node, set it by index:
+# wf.get_input_value(BOARD_INDEX).value = "none"  # uncategorized sentinel
 
-# Generate
+# 6) Submit and wait (blocking)
 submission = wf.submit_sync()
-result = wf.wait_for_completion_sync(submission)
-images = wf.map_outputs_to_images(result)
-print(f"Transformed: {images[0]}")
+result = wf.wait_for_completion_sync(timeout=120)
+print("Final status:", result.get("status"))
+
+# 7) Map output nodes to image filenames and download
+mappings = wf.map_outputs_to_images(result)
+for m in mappings:
+    board_id = m.get("board_id")  # may be "none"
+    for name in m.get("image_names") or []:
+        handle = client.board_repo.get_board_handle(board_id)
+        data = handle.download_image(name, full_resolution=True)
+        with open(name, "wb") as f:
+            f.write(data)
+        print("Saved:", name)
 ```
+
+## How it works
+
+1) The workflow JSON is immutable; at submit time, only the values of the discovered inputs you changed are substituted into the copied graph.
+2) Inputs are discovered by depth-first (pre-order) traversal over the Form tree; their indices are the stable public API.
+3) submit_sync() enqueues a run; wait_for_completion_sync() polls until a terminal status or timeout.
+4) map_outputs_to_images() correlates output-capable nodes to the images they produced, including the board destinations.
+
+## Common pitfalls
+
+- Using labels instead of indices: labels can be missing or duplicated.
+  Always index by input_index.
+- Not exposing the board field in the Form: expose it to control board routing per run; otherwise ensure the node writes to a valid hard-coded board id.
+- Uploading to uncategorized incorrectly: use a BoardHandle for uncategorized—uploads omit board_id; the "none" sentinel is for reads.
+- Assuming FLUX needs high step counts: FLUX is fast; start with small step counts (e.g., 2–6) and increase only as needed.
 
 ## Complete Implementation
 

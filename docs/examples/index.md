@@ -2,6 +2,13 @@
 
 Learn by example with these complete, working scripts for common use cases.
 
+## About these examples
+
+- Indices are the stable public API for workflow inputs. Always access and set inputs using their index, not labels or names.
+- Only fields placed in the GUI Form are discoverable and settable. Add the parameters you want to control to the Form before exporting the workflow JSON.
+- Use InvokeAIClient.from_url("http://host:port") to initialize the client; it parses host/port/base_path for you.
+- After changing the Form layout, re-run list_inputs() and update your index usage accordingly.
+
 ## Example Categories
 
 <div class="grid cards" markdown>
@@ -40,7 +47,8 @@ wf = client.workflow_repo.create_workflow(
 
 # Set prompt and generate
 wf.get_input_value(0).value = "A beautiful landscape"
-result = wf.wait_for_completion_sync(wf.submit_sync())
+wf.submit_sync()
+result = wf.wait_for_completion_sync(timeout=180)
 
 # Get images
 mappings = wf.map_outputs_to_images(result)
@@ -54,7 +62,8 @@ prompts = ["Sunset", "Mountains", "Ocean"]
 
 for prompt in prompts:
     wf.get_input_value(0).value = prompt
-    result = wf.wait_for_completion_sync(wf.submit_sync())
+    wf.submit_sync()
+    result = wf.wait_for_completion_sync(timeout=180)
     print(f"✓ {prompt}")
 ```
 
@@ -65,7 +74,8 @@ for steps in [20, 30, 40]:
     for cfg in [7.0, 8.5, 10.0]:
         wf.get_input_value(4).value = steps
         wf.get_input_value(5).value = cfg
-        result = wf.wait_for_completion_sync(wf.submit_sync())
+        wf.submit_sync()
+        result = wf.wait_for_completion_sync(timeout=180)
         print(f"Steps={steps}, CFG={cfg}: Done")
 ```
 
@@ -114,10 +124,8 @@ pixi run python examples/pipelines/sdxl-text-to-image.py
 
 ```python
 try:
-    result = wf.wait_for_completion_sync(
-        wf.submit_sync(),
-        timeout=180
-    )
+    wf.submit_sync()
+    result = wf.wait_for_completion_sync(timeout=180)
     if result.get('status') == 'completed':
         print("Success!")
     else:
@@ -133,21 +141,20 @@ except Exception as e:
 ```python
 def on_progress(queue_item):
     status = queue_item.get('status')
-    progress = queue_item.get('progress_percentage', 0)
-    print(f"[{progress:3.0f}%] {status}")
+    prog = queue_item.get('progress', 0.0)  # 0.0..1.0
+    print(f"[{prog*100:3.0f}%] {status}")
 
-result = wf.wait_for_completion_sync(
-    wf.submit_sync(),
-    progress_callback=on_progress
-)
+wf.submit_sync()
+result = wf.wait_for_completion_sync(timeout=180, progress_callback=on_progress)
 ```
 
 ### Image Management
 
 ```python
 # Upload source image
-board = client.board_repo.get_board_handle("inputs")
-source_name = board.upload_image_file("source.png")
+board = client.board_repo.get_board_handle("inputs")  # or get_uncategorized_handle()
+img = board.upload_image("source.png")  # returns IvkImage
+source_name = img.image_name
 
 # Use in workflow
 wf.get_input_value(IMAGE_IDX).value = source_name
@@ -209,7 +216,8 @@ def ab_test(wf, prompt, cfg_values):
         wf.get_input_value(0).value = prompt
         wf.get_input_value(5).value = cfg  # CFG index
         
-        result = wf.wait_for_completion_sync(wf.submit_sync())
+        wf.submit_sync()
+        result = wf.wait_for_completion_sync(timeout=180)
         mappings = wf.map_outputs_to_images(result)
         
         results[f"cfg_{cfg}"] = mappings

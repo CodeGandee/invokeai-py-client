@@ -1,6 +1,52 @@
 # Multi-Stage Refine
 
-Advanced techniques for progressive image enhancement using multiple refinement stages.
+Advanced techniques for progressive image enhancement using multiple refinement stages. This guide explains how to organize your workflows, which inputs to expose in the GUI Form, how indices are used, and how to run multi-stage pipelines reliably.
+
+## What you'll learn
+
+- Compose a multi-stage pipeline (base → refine → upscale) using multiple exported workflows and one Python script.
+- Discover Form-exposed inputs by index and set them type-safely.
+- Submit synchronously and wait for completion (blocking mode).
+- Map output nodes to produced image filenames and download results.
+- Manage index drift across GUI edits.
+
+## Prerequisites
+
+- InvokeAI server running at http://localhost:9090 (adjust as needed).
+- Exported workflow JSONs, e.g.:
+  - data/workflows/sdxl_base.json
+  - data/workflows/sdxl_refiner.json
+  - data/workflows/esrgan_upscale.json
+- The Form in each workflow contains the inputs you intend to control.
+
+Tip: Indices are the stable API only relative to the current Form tree. If you change Form layout (add/remove/reorder), re-list inputs and update your index constants.
+
+## Form requirements (GUI)
+
+Place representative fields into the Form before export:
+- Base (txt2img): Positive Prompt, Negative Prompt, Seed, Steps, CFG, Width, Height, Board (for final image node)
+- Refiner: Image (input from base), Prompts, Refinement Steps, Strength, CFG, Board
+- Upscale: Image, Scale, Model choice (optional), Board
+
+Labels are not guaranteed unique or present. The input index (depth-first pre-order over the Form tree) is the stable handle.
+
+## Inspect input indices (optional)
+
+```python
+from invokeai_py_client import InvokeAIClient
+from invokeai_py_client.workflow import WorkflowDefinition
+
+client = InvokeAIClient.from_url("http://localhost:9090")
+
+# Example: inspect the base workflow's inputs
+base = client.workflow_repo.create_workflow(
+    WorkflowDefinition.from_file("data/workflows/sdxl_base.json")
+)
+for inp in base.list_inputs():
+    print(f"[{inp.input_index:02d}] {inp.label or inp.field_name} :: {type(inp.field).__name__}")
+```
+
+Record the indices you will use in your script.
 
 ## Quick Start
 
@@ -8,31 +54,51 @@ Advanced techniques for progressive image enhancement using multiple refinement 
 from invokeai_py_client import InvokeAIClient
 from invokeai_py_client.workflow import WorkflowDefinition
 
-# Initialize client
-client = InvokeAIClient(base_url="http://localhost:9090")
+# 1) Initialize client (URL helper parses host/port/base_path)
+client = InvokeAIClient.from_url("http://localhost:9090")
 
-# Load multi-stage workflow
+# 2) Load a multi-stage workflow (single JSON that encapsulates refine stages)
 wf = client.workflow_repo.create_workflow(
     WorkflowDefinition.from_file("data/workflows/sdxl_with_refiner.json")
 )
 
-# Sync models
+# 3) Normalize model identifier fields against server inventory
 wf.sync_dnn_model(by_name=True, by_base=True)
 
-# Set parameters
+# 4) Set inputs by index (indices discovered via list_inputs(); adjust to your Form)
 wf.get_input_value(0).value = "Epic landscape with mountains and lakes, highly detailed"
 wf.get_input_value(1).value = "blurry, low quality"
-wf.get_input_value(2).value = 42  # seed
-wf.get_input_value(3).value = 30  # base steps
-wf.get_input_value(4).value = 15  # refiner steps
-wf.get_input_value(5).value = 0.8  # switch point
+wf.get_input_value(2).value = 42    # Seed
+wf.get_input_value(3).value = 30    # Base steps
+wf.get_input_value(4).value = 15    # Refiner steps
+wf.get_input_value(5).value = 0.8   # Switch point / handoff (if applicable)
+# Optionally set a Board field if exposed:
+# wf.get_input_value(BOARD_INDEX).value = "none"  # uncategorized
 
-# Generate with refinement
-submission = wf.submit_sync()
-result = wf.wait_for_completion_sync(submission)
-images = wf.map_outputs_to_images(result)
-print(f"Refined image: {images[0]}")
+# 5) Submit and wait (blocking)
+wf.submit_sync()
+result = wf.wait_for_completion_sync(timeout=240)
+print("Final status:", result.get("status"))
+
+# 6) Map outputs (node -> image filenames)
+for m in wf.map_outputs_to_images(result):
+    print(f"node={m['node_id'][:8]} board={m.get('board_id')} images={m.get('image_names', [])}")
 ```
+
+## How it works
+
+1) Each exported workflow JSON is immutable. The client copies it and substitutes only values for inputs you set.
+2) Inputs are discovered by a depth-first traversal of the Form tree; the index ordering is the public, stable API.
+3) submit_sync() enqueues; wait_for_completion_sync() polls until a terminal status or timeout.
+4) map_outputs_to_images() correlates output-capable nodes to their produced image names and board destinations.
+
+## Common pitfalls
+
+- Using labels/names instead of indices. Indices are the stable contract.
+- Not exposing a Board field in the Form for outputs: you then cannot dynamically route images; ensure default board is valid in the JSON.
+- Expecting wait_for_completion_sync() to take a submission parameter: it does not—call it after submit_sync() with an optional timeout.
+- Assuming refiner/upscale stages use the same indices as base: indices are per-workflow and depend on each Form's structure.
+
 
 ## Complete Implementation
 
