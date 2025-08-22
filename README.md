@@ -64,6 +64,8 @@ Input discovery relies only on a depth‑first traversal of the Form tree in the
 
 Ordering rule (plain terms): traverse containers in the order they appear; inside each, visit child fields top → bottom (and nested containers recursively). Visually: think of reading the form from top to bottom, descending into each container as you encounter it.
 
+![Input Discovery and Mapping Flow](docs/examples/input-mapping.svg)
+
 Code example (listing + index mapping only):
 
 ```python
