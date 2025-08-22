@@ -1,7 +1,7 @@
 site_name: InvokeAI Python Client
 site_description: A Python client library for interacting with InvokeAI APIs
 site_author: CodeGandee
-site_url: https://github.com/CodeGandee/invokeai-py-client
+site_url: https://codegandee.github.io/invokeai-py-client/
 repo_name: CodeGandee/invokeai-py-client
 repo_url: https://github.com/CodeGandee/invokeai-py-client
 copyright: Copyright &copy; 2024 CodeGandee
