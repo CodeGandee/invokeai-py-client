@@ -1,8 +1,14 @@
 # InvokeAI Python Client
 
+[![Documentation](https://img.shields.io/badge/docs-github.io-blue)](https://codegandee.github.io/invokeai-py-client/)
+[![PyPI](https://img.shields.io/pypi/v/invokeai-py-client)](https://pypi.org/project/invokeai-py-client/)
+[![License](https://img.shields.io/github/license/CodeGandee/invokeai-py-client)](LICENSE)
+
 > Turn an [InvokeAI](https://github.com/invoke-ai/InvokeAI) GUI workflow into a high‑throughput Python batch pipeline: export the workflow JSON and run large, parameterized image generations with minimal ceremony.
 
 Built for existing GUI users: discovers ordered form inputs, provides typed setters, submits (sync / async / streaming), and maps output nodes to produced image filenames—enabling loops, sweeps, scheduled batches, regressions, and reproducible artifacts.
+
+**[📚 Documentation](https://codegandee.github.io/invokeai-py-client/) | [🚀 Quick Start](https://codegandee.github.io/invokeai-py-client/getting-started/quickstart/) | [📖 API Reference](https://codegandee.github.io/invokeai-py-client/api-reference/) | [💡 Examples](https://codegandee.github.io/invokeai-py-client/examples/)**
 
 ---
 ## 1. Introduction, Scope & Audience
