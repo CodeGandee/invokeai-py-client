@@ -1,0 +1,163 @@
+site_name: InvokeAI Python Client
+site_description: A Python client library for interacting with InvokeAI APIs
+site_author: CodeGandee
+site_url: https://github.com/CodeGandee/invokeai-py-client
+repo_name: CodeGandee/invokeai-py-client
+repo_url: https://github.com/CodeGandee/invokeai-py-client
+copyright: Copyright &copy; 2024 CodeGandee
+
+theme:
+  name: material
+  language: en
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+    - content.tabs.link
+    - content.tooltips
+    - header.autohide
+    - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.path
+    - navigation.prune
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+  icon:
+    logo: material/robot-industrial
+    repo: fontawesome/brands/github
+
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      normalize_issue_symbols: true
+      repo_url_shorthand: true
+      user: CodeGandee
+      repo: invokeai-py-client
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      auto_append:
+        - includes/mkdocs.md
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/CodeGandee
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/invokeai-py-client/
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/extra.js
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - getting-started/index.md
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - Core Concepts: getting-started/concepts.md
+  - User Guide:
+    - user-guide/index.md
+    - Workflow Basics: user-guide/workflow-basics.md
+    - Working with Inputs: user-guide/inputs.md
+    - Field Types: user-guide/field-types.md
+    - Board Management: user-guide/boards.md
+    - Image Operations: user-guide/images.md
+    - Model Management: user-guide/models.md
+    - Execution Modes: user-guide/execution-modes.md
+    - Output Mapping: user-guide/output-mapping.md
+  - Examples:
+    - examples/index.md
+    - SDXL Text-to-Image: examples/sdxl-text-to-image.md
+    - FLUX Image-to-Image: examples/flux-image-to-image.md
+    - Multi-Stage Refinement: examples/multi-stage-refine.md
+    - Raw API Examples: examples/raw-api.md
+  - API Reference:
+    - api-reference/index.md
+    - Client: api-reference/client.md
+    - Workflow: api-reference/workflow.md
+    - Fields: api-reference/fields.md
+    - Boards: api-reference/boards.md
+    - Models: api-reference/models.md
+    - Utilities: api-reference/utilities.md
+  - Developer Guide:
+    - developer-guide/index.md
+    - Architecture: developer-guide/architecture.md
+    - Contributing: developer-guide/contributing.md
+    - Testing: developer-guide/testing.md
+    - Extension Points: developer-guide/extensions.md
+    - Upstream APIs: developer-guide/upstream-apis.md
+  - FAQ: faq.md
+  - Changelog: changelog.md

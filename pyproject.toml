@@ -231,4 +231,4 @@ exclude_lines = [
 ]
 
 [dependency-groups]
-dev = ["pytest-playwright>=0.7.0,<0.8"]
+dev = ["pytest-playwright>=0.7.0,<0.8", "mkdocs-material>=9.6.17,<10"]
