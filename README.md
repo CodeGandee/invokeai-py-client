@@ -66,6 +66,8 @@ Ordering rule (plain terms): traverse containers in the order they appear; insid
 
 ![Input Discovery and Mapping Flow](docs/examples/input-mapping.svg)
 
+> **Note**: The diagram above illustrates the depth-first input discovery process from the [sdxl-flux-refine.py](examples/pipelines/sdxl-flux-refine.py) example workflow. For more detailed workflow examples and documentation, see the [examples documentation](docs/examples/).
+
 Code example (listing + index mapping only):
 
 ```python
