@@ -73,11 +73,15 @@ Fields are organized into categories based on their data types and usage pattern
 | **Complex** | Structured data (color, bbox, collections) | Varies by type |
 | **Enum** | Choice fields with predefined options | `.value` attribute |
 
-## Primitive Fields
+## Field Types
+
+Detailed reference for all field type implementations, organized by category and usage patterns.
+
+### Primitive Fields
 
 Primitive fields handle basic data types with optional validation constraints and Pydantic integration.
 
-### `IvkStringField` - Text Input
+#### `IvkStringField` - Text Input
 
 ```python
 class IvkStringField(BaseModel, PydanticFieldMixin, IvkField[str]):
@@ -111,7 +115,7 @@ assert title_field.validate_field() == True
 
 **Source:** [`IvkStringField`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/primitives.py#L17){:target="_blank"}
 
-### `IvkIntegerField` - Numeric Input (Integers)
+#### `IvkIntegerField` - Numeric Input (Integers)
 
 ```python  
 class IvkIntegerField(BaseModel, PydanticFieldMixin, IvkField[int]):
@@ -144,7 +148,7 @@ even_field.value = 16
 
 **Source:** [`IvkIntegerField`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/primitives.py#L78){:target="_blank"}
 
-### `IvkFloatField` - Numeric Input (Decimals)
+#### `IvkFloatField` - Numeric Input (Decimals)
 
 ```python
 class IvkFloatField(BaseModel, PydanticFieldMixin, IvkField[float]):
@@ -172,7 +176,7 @@ denoise_field.value = 0.8
 
 **Source:** [`IvkFloatField`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/primitives.py#L144){:target="_blank"}
 
-### `IvkBooleanField` - True/False Toggle
+#### `IvkBooleanField` - True/False Toggle
 
 ```python
 class IvkBooleanField(BaseModel, PydanticFieldMixin, IvkField[bool]):
@@ -195,7 +199,7 @@ hires_field = IvkBooleanField(value=False)
 
 **Source:** [`IvkBooleanField`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/ivk_fields/primitives.py#L204){:target="_blank"}
 
-### Validation and API Conversion
+#### Validation and API Conversion
 
 **Validation Process:**
 - Pydantic validates types and constraints automatically on assignment
@@ -207,7 +211,7 @@ hires_field = IvkBooleanField(value=False)
 - Most primitives use simple `{"value": actual_value}` structure
 - Automatic type coercion ensures compatibility
 
-## Resource fields
+### Resource Fields
 
 ```python
 class IvkImageField(BaseModel, PydanticFieldMixin, IvkField[str], IvkImageFieldMixin]:  # [src/invokeai_py_client/ivk_fields/resources.py:21]
@@ -228,7 +232,7 @@ class IvkTensorField(..., IvkField[dict]):      # [src/invokeai_py_client/ivk_fi
     # {"value": {"tensor_name": "..."}, "type": "tensor"}
 ```
 
-## Model and configuration fields
+### Model and Configuration Fields
 
 Model identifier (simple, value-less field where the attributes themselves are the value):
 ```python
@@ -267,7 +271,7 @@ class IvkLoRAField(..., IvkField[dict]):        # [src/invokeai_py_client/ivk_fi
     weight: float = 1.0
 ```
 
-## Enum and choice fields
+### Enum and Choice Fields
 
 General enum field
 ```python
@@ -291,7 +295,7 @@ class SchedulerName(str, Enum): ...            # [src/invokeai_py_client/ivk_fie
 SCHEDULER_NAMES: list[str] = [...]
 ```
 
-## Complex fields
+### Complex Fields
 
 Colors
 ```python
@@ -323,7 +327,7 @@ class IvkCollectionField(BaseModel, PydanticFieldMixin, IvkField[list[T]], IvkCo
     # append(), remove(), extend(), clear(), __len__(), __getitem__(), etc.
 ```
 
-## Practical patterns
+## Usage Patterns
 
 Type-safe assignment in scripts
 ```python
