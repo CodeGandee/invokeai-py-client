@@ -169,7 +169,7 @@ Represents image metadata with InvokeAI-specific attributes and relationships.
 
 #### Convenience Methods
 
-##### `from_api_response()` - API Deserialization
+**`from_api_response()` - API Deserialization**
 
 ```python
 @classmethod
@@ -183,7 +183,7 @@ Create IvkImage instance from InvokeAI API response data.
 - Handles missing optional fields gracefully
 - Validates data structure and types
 
-##### `to_dict()` - Clean Serialization
+**`to_dict()` - Clean Serialization**
 
 ```python
 def to_dict(self) -> dict[str, Any]:
@@ -216,7 +216,7 @@ data = img.to_dict()
 
 **Source:** [`IvkImage`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/models.py#L117){:target="_blank"}
 
-## IvkJob (Queue item/job DTO)
+### `IvkJob` - Queue Item Model
 
 ```python
 class IvkJob(BaseModel):
@@ -245,7 +245,7 @@ class IvkJob(BaseModel):
 Note
 - The client’s workflow execution methods return raw queue item dicts from the server; use IvkJob if you need a typed wrapper in your own code.
 
-## IvkDnnModel (Model metadata)
+### `IvkDnnModel` - Model Metadata
 
 ```python
 class IvkDnnModel(BaseModel):
