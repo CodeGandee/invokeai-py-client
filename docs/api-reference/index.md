@@ -11,6 +11,10 @@ Complete API documentation for the InvokeAI Python Client.
 - Connection methods: `health_check()`, `socketio_session()`
 - Context management and resource cleanup
 
+### [⚡ Quick Client](quick.md)
+High-level convenience helpers built on top of the core APIs
+- QuickClient wrapper: copy_image_to_board(), generate_sdxl_image()
+- Uses prebuilt workflows packaged with the client
 ### [⚡ Workflow](workflow.md)  
 **Workflow execution system** - Definition loading, input management, and job monitoring
 - `WorkflowDefinition.from_file()` for loading GUI exports
