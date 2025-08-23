@@ -13,6 +13,7 @@ import requests
 
 from invokeai_py_client.board.board_handle import BoardHandle
 from invokeai_py_client.board.board_model import Board
+from invokeai_py_client.models import IvkImage  # added for image metadata lookups
 
 if TYPE_CHECKING:
     from invokeai_py_client.client import InvokeAIClient
@@ -142,7 +143,7 @@ class BoardRepository:
             return self.get_uncategorized_board()
 
         try:
-            response = self._client._make_request("GET", f"/boards/{board_id}/")
+            response = self._client._make_request("GET", f"/boards/{board_id}")
             return Board(**response.json())
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code == 404:
@@ -252,7 +253,7 @@ class BoardRepository:
         params = {"include_images": delete_images}
 
         try:
-            self._client._make_request("DELETE", f"/boards/{board_id}/", params=params)
+            self._client._make_request("DELETE", f"/boards/{board_id}", params=params)
 
             # Remove from cache if present
             if board_id in self._cached_handles:
@@ -398,6 +399,83 @@ class BoardRepository:
         """
         self._cached_handles.clear()
 
+    def get_image_by_name(self, image_name: str) -> IvkImage | None:
+        """
+        Fetch image metadata by image name.
+
+        Parameters
+        ----------
+        image_name : str
+            The server-side image identifier (e.g., 'abc-123.png').
+
+        Returns
+        -------
+        IvkImage | None
+            The image metadata if found, otherwise None.
+
+        Notes
+        -----
+        Uses GET /images/i/{image_name}. Returns None on 404.
+        """
+        try:
+            resp = self._client._make_request("GET", f"/images/i/{image_name}")
+            data = resp.json()
+            return IvkImage.from_api_response(data)
+        except requests.HTTPError as e:
+            if e.response is not None and e.response.status_code == 404:
+                return None
+            raise
+
+    def get_image_current_board_id(self, image_name: str) -> str | None:
+        """
+        Get the current board_id associated with an image.
+
+        Parameters
+        ----------
+        image_name : str
+            The image identifier.
+
+        Returns
+        -------
+        str | None
+            The board_id if associated, or None if uncategorized or not found.
+        """
+        img = self.get_image_by_name(image_name)
+        return None if img is None else img.board_id
+
+    def move_image_to_board_by_name(self, image_name: str, target_board_name: str) -> bool:
+        """
+        Move an image to a target board by board name, creating the board if necessary.
+
+        Parameters
+        ----------
+        image_name : str
+            The image identifier to move.
+        target_board_name : str
+            The destination board's name.
+
+        Returns
+        -------
+        bool
+            True if moved successfully; False if the image was not found or move failed.
+        """
+        # Resolve or create the board handle
+        handle = self.get_board_handle_by_name(target_board_name)
+        if handle is None:
+            handle = self.create_board(target_board_name)
+
+        # Determine current board handle for performing the move
+        # If image has an associated board_id, use that; otherwise use uncategorized
+        current_board_id = self.get_image_current_board_id(image_name)
+        try:
+            source_handle = self.get_board_handle(current_board_id or "none")
+        except ValueError:
+            # If current board not found, fallback to uncategorized sentinel
+            source_handle = self.get_uncategorized_handle()
+
+        # Execute move
+        return source_handle.move_image_to(image_name, handle.board_id)
+
     def update_board(
         self, board_id: str, name: str | None = None, is_private: bool | None = None
     ) -> Board | None:
@@ -439,7 +517,7 @@ class BoardRepository:
 
         try:
             response = self._client._make_request(
-                "PATCH", f"/boards/{board_id}/", json=data
+                "PATCH", f"/boards/{board_id}", json=data
             )
             board = Board(**response.json())
 

@@ -9,11 +9,11 @@ if you are not sure about the InvokeAI web APIs:
 - InvokeAI openapi json: `context\hints\invokeai-kb\invokeai-openapi.json`, use `jq` for faster search
 - InvokeAI API list: `context\hints\invokeai-kb\invokeai-api-list.md`
 
-# Task 1: revise the workflow subsystem
+# Task 1: move image to board
 
-## Task 1.1: document the current implementation
+test if you can create board using the board subsystem (`src/invokeai_py_client/board`):
+- create a board, name it "mytest", and get the board_id `target-board-id`
+- move the image `311a6fb0-c8cc-467d-812c-1d66c1c32c1c.png` to the "mytest" using `target-board-id`. 
+  - Note that, you are not given the board_id from which this image can be found, so you need to implement a method to find image metadata (IvkImage) through BoardRepository, see if such function exists and correct first.
 
-- using example workflow json: `data\workflows\sdxl-flux-refine.json`
-- example API call response: `data\api-calls\call-wf-sdxl-flux-refine.json`
-
-the current workflow subsystem parses a
+test scripts should be saved to #file:tests 
