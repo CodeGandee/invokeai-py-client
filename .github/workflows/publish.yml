@@ -7,12 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag (vX.Y.Z) to publish (optional when manually dispatching)'
+        description: 'Tag (vX.Y.Z) to publish (optional)'
         required: false
-
-concurrency:
-  group: publish-${{ github.ref }}
-  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -22,61 +18,35 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          fetch-depth: 0
-
-      - name: Determine tag/version
+          python-version: '3.11'
+      - name: Resolve tag & version
         id: meta
         shell: bash
         run: |
-          set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.tag }}" ]; then
-            RAW_TAG="${{ inputs.tag }}"
+            TAG="${{ inputs.tag }}"
           else
-            RAW_TAG="${GITHUB_REF#refs/tags/}"
+            TAG="$GITHUB_REF_NAME"
           fi
-          RAW_TAG=${RAW_TAG#v}
-          echo "tag=$RAW_TAG" >> $GITHUB_OUTPUT
-          echo "Using tag version: $RAW_TAG"
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install build deps
+          TAG=${TAG#v}
+          VERSION=$(python -c "import tomllib, pathlib;print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Tag: $TAG  Pyproject: $VERSION"
+          test "$TAG" = "$VERSION" || { echo 'Version mismatch'; exit 1; }
+      - name: Build
         run: |
           python -m pip install --upgrade pip
           pip install build twine
-
-      - name: Verify version matches tag
-        id: verify
-        shell: bash
-        run: |
-          set -euo pipefail
-          VERSION=$(python - <<'PY'
-import tomllib, pathlib
-print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])
-PY
-)
-          echo "Project version: $VERSION"
-          echo "Tag version: ${{ steps.meta.outputs.tag }}"
-          test "$VERSION" = "${{ steps.meta.outputs.tag }}" || { echo "Version mismatch"; exit 1; }
-
-      - name: Build distribution
-        run: python -m build
-
-      - name: Twine check
-        run: python -m twine check dist/*
-
-      - name: Publish to PyPI
+          python -m build
+          python -m twine check dist/*
+      - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
           verbose: true
-
       - name: Summary
-        run: |
-          echo "Published invokeai-py-client ${{ steps.meta.outputs.tag }}"
+        run: echo "Published invokeai-py-client ${{ steps.meta.outputs.tag }}"
