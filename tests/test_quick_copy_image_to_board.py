@@ -22,20 +22,24 @@ This test verifies:
 2) The copy is performed purely server-side via a tiny workflow (save_image), not client upload.
 
 Environment variables:
-- INVOKEAI_BASE_URL   (default: http://127.0.0.1:9090)
-- INVOKEAI_IMAGE_NAME (default: 311a6fb0-c8cc-467d-812c-1d66c1c32c1c.png)
+- IVK_TEST_BASE_URL          (default: http://127.0.0.1:9090)
+- IVK_TEST_TARGET_BOARD_NAME (default: quickcopy-assets)
+- IVK_TEST_IMAGE_NAME        (optional: if provided, use this; otherwise auto-pick the first uncategorized image)
 
 Test flow:
 - Ensure target board exists (create if missing).
-- Confirm source image exists on server.
+- Determine source image:
+  - If IVK_TEST_IMAGE_NAME is set, use it.
+  - Else, list uncategorized images and pick the first one.
+  - If none found, warn the user and fail the test.
 - Use QuickClient.copy_image_to_board(image_name, target_board_id).
 - Assert returned IvkImage is not None and belongs to the target board.
 - Verify via board listing with small retries for eventual consistency.
 """
 
-BASE_URL = os.environ.get("INVOKEAI_BASE_URL", "http://127.0.0.1:9090")
-IMAGE_NAME = os.environ.get("INVOKEAI_IMAGE_NAME", "311a6fb0-c8cc-467d-812c-1d66c1c32c1c.png")
-TARGET_BOARD_NAME = "quickcopy-assets"
+BASE_URL = os.environ.get("IVK_TEST_BASE_URL", "http://127.0.0.1:9090")
+TARGET_BOARD_NAME = os.environ.get("IVK_TEST_TARGET_BOARD_NAME", "quickcopy-assets")
+ENV_IMAGE_NAME = os.environ.get("IVK_TEST_IMAGE_NAME")
 
 
 def test_quick_copy_image_to_board():
@@ -50,12 +54,29 @@ def test_quick_copy_image_to_board():
         handle = repo.create_board(TARGET_BOARD_NAME)
     target_board_id = handle.board_id
 
-    # Sanity: ensure source image exists
-    src = repo.get_image_by_name(IMAGE_NAME)
-    assert src is not None, f"Source image not found on server: {IMAGE_NAME}"
+    # Resolve source image:
+    # 1) If IVK_TEST_IMAGE_NAME is provided, use it (and confirm exists)
+    # 2) Otherwise, pick the first image from uncategorized
+    if ENV_IMAGE_NAME:
+        src = repo.get_image_by_name(ENV_IMAGE_NAME)
+        if src is None:
+            console.print(f"[bold red]Specified IVK_TEST_IMAGE_NAME not found on server:[/bold red] {ENV_IMAGE_NAME}")
+            assert False, f"Source image not found on server: {ENV_IMAGE_NAME}"
+        image_name = ENV_IMAGE_NAME
+    else:
+        try:
+            uc_names = repo.get_uncategorized_handle().list_images()
+        except Exception:
+            uc_names = []
+        if not uc_names:
+            console.print("[bold yellow]No images found in Uncategorized.[/bold yellow] "
+                          "Set IVK_TEST_IMAGE_NAME to an existing image name and re-run.")
+            assert False, "No source image available: Uncategorized board is empty and no IVK_TEST_IMAGE_NAME provided"
+        image_name = uc_names[0]
+        console.print(f"[cyan]Auto-selected source image from Uncategorized:[/cyan] {image_name}")
 
     # Perform copy (server-side via tiny workflow)
-    copied = qc.copy_image_to_board(IMAGE_NAME, target_board_id)
+    copied = qc.copy_image_to_board(image_name, target_board_id)
     assert copied is not None, "Copy operation returned None (no image produced)"
 
     # Pretty-print copied image metadata via rich
