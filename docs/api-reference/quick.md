@@ -95,7 +95,7 @@ Implementation notes:
 
 ## Reference
 
-- Class: QuickClient — see source [src/invokeai_py_client/quick/quick_client.py](../../src/invokeai_py_client/quick/quick_client.py)
+- Class: QuickClient — see source [`src/invokeai_py_client/quick/quick_client.py`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/quick/quick_client.py){:target="_blank"}
 - Prebuilt Workflows:
   - copy-image.json — server-side image duplication
   - sdxl-text-to-image.json — SDXL text-to-image generation

@@ -331,7 +331,7 @@ image_name = "0712249f-1047-4314-a338-d6807920f245.png"  # example
 deleted = uncat.delete_image(image_name)  # returns True only if server reports deletion
 print("Deleted?", deleted)
 ```
-- Implementation: [`BoardHandle.delete_image()`](src/invokeai_py_client/board/board_handle.py:460)
+- Implementation: [`BoardHandle.delete_image()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_handle.py#L460){:target="_blank"}
 - Behavior: issues `DELETE /api/v1/images/i/{image_name}` and parses the response JSON (`deleted_images` list). Returns `True` only if the specified `image_name` appears in `deleted_images`; otherwise `False`. A 404 results in `False`.
 
 Resolving exact image_name
@@ -377,9 +377,9 @@ resp = client._make_request("POST", "/images/delete", json=payload)
 print(resp.json())  # -> {'deleted_images': [...], 'affected_boards': [...]}
 ```
 Upstream endpoints (reference):
-- Single delete: `DELETE /api/v1/images/i/{image_name}` (see [images router delete_image](context/refcode/InvokeAI/invokeai/app/api/routers/images.py:163))
-- Bulk delete list: `POST /api/v1/images/delete` (see [delete_images_from_list](context/refcode/InvokeAI/invokeai/app/api/routers/images.py:398))
-- Delete all uncategorized: `DELETE /api/v1/images/uncategorized` (see [delete_uncategorized_images](context/refcode/InvokeAI/invokeai/app/api/routers/images.py:422))
+- Single delete: `DELETE /api/v1/images/i/{image_name}` (see InvokeAI images router)
+- Bulk delete list: `POST /api/v1/images/delete` (see InvokeAI images router)
+- Delete all uncategorized: `DELETE /api/v1/images/uncategorized` (see InvokeAI images router)
 
 Error-handling pattern (optional)
 ```python
