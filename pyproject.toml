@@ -7,7 +7,7 @@ authors = [
 ]
 readme = "README.md"
 license = {file = "LICENSE"}
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 keywords = ["invokeai", "api", "client", "ai", "image-generation", "stable-diffusion", "flux"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -18,8 +18,6 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -43,7 +41,6 @@ dependencies = [
     "tqdm>=4.67.1",
     "pydantic>=2.5.0",
     "aiohttp>=3.8.0",
-    "typing-extensions>=4.0.0; python_version<'3.11'",
 ]
 
 [project.urls]
@@ -102,7 +99,7 @@ platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 version = "1.0.0"
 
 [tool.pixi.dependencies]
-python = ">=3.9"
+python = ">=3.11"
 # Development tools via conda for better performance
 ruff = "*"
 mypy = "*"
@@ -146,7 +143,7 @@ test = {features = ["test"], solve-group = "default"}
 
 # Python tooling configuration
 [tool.ruff]
-target-version = "py39"
+target-version = "py311"
 line-length = 88
 
 [tool.ruff.lint]
@@ -163,8 +160,6 @@ ignore = [
     "E501",  # line too long, handled by black
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
-    "UP007", # allow use of typing.Union / Optional for py39 compatibility
-    "UP045", # allow use of typing.Optional[X] instead of X | None
     "I001",  # ignore import sorting/formatting (isort) complaints
     "W291",  # ignore trailing whitespace (optional stylistic)
     "W292",  # ignore missing newline at EOF
@@ -178,7 +173,7 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
