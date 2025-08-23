@@ -4,6 +4,15 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag (vX.Y.Z) to publish (optional when manually dispatching)'
+        required: false
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -13,65 +22,24 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Build
-        run: |
-          python -m pip install --upgrade pip
-          pip install build twine
-          python -m build
-      - name: Verify version == tag
-        shell: bash
-        run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          TAG=${TAG#v}
-          VERSION=$(python - <<'PY'
-import tomllib, pathlib
-print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])
-PY
-)
-          echo "Tag: $TAG  Version: $VERSION"
-          test "$TAG" = "$VERSION" || { echo "Mismatch"; exit 1; }
-      - name: Publish
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}name: Publish to PyPI
-
-on:
-  push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag (vX.Y.Z) to publish'
-        required: false
-
-jobs:
-  build-and-publish:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Derive tag
-        id: tag
+      - name: Determine tag/version
+        id: meta
+        shell: bash
         run: |
+          set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.tag }}" ]; then
-            TAG="${{ inputs.tag }}"
+            RAW_TAG="${{ inputs.tag }}"
           else
-            TAG="${GITHUB_REF#refs/tags/}"
+            RAW_TAG="${GITHUB_REF#refs/tags/}"
           fi
-          TAG=${TAG#v}
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "Using tag $TAG"
+          RAW_TAG=${RAW_TAG#v}
+          echo "tag=$RAW_TAG" >> $GITHUB_OUTPUT
+          echo "Using tag version: $RAW_TAG"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -83,24 +51,27 @@ jobs:
           python -m pip install --upgrade pip
           pip install build twine
 
-      - name: Verify version
+      - name: Verify version matches tag
+        id: verify
+        shell: bash
         run: |
+          set -euo pipefail
           VERSION=$(python - <<'PY'
 import tomllib, pathlib
 print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])
 PY
 )
-          echo "pyproject version: $VERSION"
-          echo "tag version: ${{ steps.tag.outputs.tag }}"
-          test "$VERSION" = "${{ steps.tag.outputs.tag }}" || { echo 'Version mismatch'; exit 1; }
+          echo "Project version: $VERSION"
+          echo "Tag version: ${{ steps.meta.outputs.tag }}"
+          test "$VERSION" = "${{ steps.meta.outputs.tag }}" || { echo "Version mismatch"; exit 1; }
 
-      - name: Build
+      - name: Build distribution
         run: python -m build
 
-      - name: Check
+      - name: Twine check
         run: python -m twine check dist/*
 
-      - name: Publish
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
@@ -108,4 +79,4 @@ PY
 
       - name: Summary
         run: |
-          echo "Published invokeai-py-client ${{ steps.tag.outputs.tag }}"
+          echo "Published invokeai-py-client ${{ steps.meta.outputs.tag }}"
