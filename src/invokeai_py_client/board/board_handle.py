@@ -99,8 +99,8 @@ class BoardHandle:
                 pass
             return
 
-        # Normal board: fetch latest metadata
-        response = self.client._make_request("GET", f"/boards/{self.board_id}/")
+        # Normal board: fetch latest metadata (no trailing slash)
+        response = self.client._make_request("GET", f"/boards/{self.board_id}")
         self.board = Board(**response.json())
 
     def list_images(
@@ -153,13 +153,11 @@ class BoardHandle:
 
         # Use the appropriate endpoint for board images
         if self.is_uncategorized:
-            # Special handling for uncategorized board
-            params["categories"] = ImageCategory.GENERAL.value
-            params["is_board_id"] = "none"
-            response = self.client._make_request("GET", "/images/", params=params)
+            # Use dedicated endpoint for uncategorized board image names
+            response = self.client._make_request("GET", "/boards/none/image_names")
         else:
             response = self.client._make_request(
-                "GET", f"/boards/{self.board_id}/image_names", params=params
+                "GET", f"/boards/{self.board_id}/image_names"
             )
 
         data = response.json()
@@ -410,28 +408,62 @@ class BoardHandle:
         image_name : str
             The image to move.
         target_board_id : str
-            The target board ID (or "none" for uncategorized).
+            The target board ID. Use "none" to move to uncategorized.
 
         Returns
         -------
         bool
             True if successful.
 
+        Notes
+        -----
+        - Preferred API (as used by the InvokeAI GUI):
+          - Add to board:  POST /api/v1/board_images/        {"image_name", "board_id"}
+                            or POST /api/v1/board_images/batch {"image_names", "board_id"}
+          - Remove board:  POST /api/v1/board_images/batch/delete {"image_names"}
+        - Backward-compatibility fallback:
+          - PATCH /api/v1/images/i/{image_name} with board_id in JSON or as query param.
+
         Examples
         --------
         >>> success = board_handle.move_image_to("img-123.png", "board-456")
+        >>> success = board_handle.move_image_to("img-123.png", "none")  # to uncategorized
         """
-        data = {"board_id": target_board_id if target_board_id != "none" else None}
+        # Normalize target board
+        to_uncategorized = target_board_id in ("none", "", None)
 
+        # Try the modern board_images routes first (matches GUI behavior)
         try:
-            self.client._make_request("PATCH", f"/images/i/{image_name}", json=data)
-
-            # Update image counts
-            self.board.image_count = max(0, self.board.image_count - 1)
-
-            return True
+            if to_uncategorized:
+                # Remove association -> uncategorized
+                payload = {"image_names": [image_name]}
+                self.client._make_request("POST", "/board_images/batch/delete", json=payload)
+            else:
+                # Prefer single-image endpoint; fallback to batch if needed
+                try:
+                    payload_single = {"image_name": image_name, "board_id": target_board_id}
+                    self.client._make_request("POST", "/board_images/", json=payload_single)
+                except requests.HTTPError:
+                    payload_batch = {"image_names": [image_name], "board_id": target_board_id}
+                    self.client._make_request("POST", "/board_images/batch", json=payload_batch)
         except requests.HTTPError:
-            return False
+            # Fallback to legacy PATCH images route
+            data = {"board_id": None if to_uncategorized else target_board_id}
+            try:
+                resp = self.client._make_request("PATCH", f"/images/i/{image_name}", json=data)
+                if resp.status_code >= 400:
+                    raise requests.HTTPError(f"Bad status {resp.status_code}")
+            except requests.HTTPError:
+                # Fallback as query params
+                try:
+                    params = {"board_id": data["board_id"]}
+                    self.client._make_request("PATCH", f"/images/i/{image_name}", params=params)
+                except requests.HTTPError:
+                    return False
+
+        # Update image counts (best-effort) on the source handle
+        self.board.image_count = max(0, self.board.image_count - 1)
+        return True
 
     def remove_image(self, image_name: str) -> bool:
         """
@@ -471,17 +503,26 @@ class BoardHandle:
         bool
             True if deletion was successful.
 
-        Examples
-        --------
-        >>> success = board_handle.delete_image("img-123.png")
+        Notes
+        -----
+        The upstream API returns 200 even if the image did not exist (deleted_images empty).
+        We therefore parse the response and only return True if the image_name appears in
+        the 'deleted_images' list.
         """
         try:
-            self.client._make_request("DELETE", f"/images/i/{image_name}")
+            resp = self.client._make_request("DELETE", f"/images/i/{image_name}")
+            # Upstream returns DeleteImagesResult: {'deleted_images': [...], 'affected_boards': [...]}
+            try:
+                payload = resp.json()
+            except Exception:
+                payload = {}
+            deleted_list = payload.get("deleted_images") or []
+            deleted = image_name in deleted_list
 
-            # Update image count
-            self.board.image_count = max(0, self.board.image_count - 1)
-
-            return True
+            if deleted:
+                # Update local count only on confirmed deletion
+                self.board.image_count = max(0, self.board.image_count - 1)
+            return bool(deleted)
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code == 404:
                 return False
