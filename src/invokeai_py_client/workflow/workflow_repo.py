@@ -96,16 +96,7 @@ class WorkflowRepository:
         if validate:
             errors = self.validate_workflow_definition(definition)
             if errors:
-                if auto_fix:
-                    definition = self._attempt_fixes(definition, errors)
-                    # Re-validate after fixes
-                    remaining_errors = self.validate_workflow_definition(definition)
-                    if remaining_errors:
-                        raise ValueError(
-                            f"Could not fix all workflow issues: {'; '.join(remaining_errors)}"
-                        )
-                else:
-                    raise ValueError(f"Workflow validation failed: {'; '.join(errors)}")
+                raise ValueError(f"Workflow validation failed: {'; '.join(errors)}")
 
         # Create the workflow handle
         workflow = WorkflowHandle(self._client, definition)
@@ -194,13 +185,7 @@ class WorkflowRepository:
         structural_errors = definition.validate_workflow()
         errors.extend(structural_errors)
 
-        # Check for obsolete nodes
-        if definition.has_obsolete_nodes():
-            errors.append("Workflow contains obsolete node types")
 
-        # Check model availability
-        model_errors = self._check_model_availability(definition)
-        errors.extend(model_errors)
 
         # Check for version compatibility
         version = definition.version
@@ -209,35 +194,6 @@ class WorkflowRepository:
 
         return errors
 
-    def _check_model_availability(self, definition: WorkflowDefinition) -> list[str]:
-        """
-        Check if models referenced in the workflow are available.
-
-        Parameters
-        ----------
-        definition : WorkflowDefinition
-            The workflow definition to check.
-
-        Returns
-        -------
-        List[str]
-            List of model-related errors.
-        """
-        errors: list[str] = []
-
-        # This is a placeholder - actual implementation would:
-        # 1. Extract model references from nodes
-        # 2. Query the InvokeAI instance for available models
-        # 3. Check if each referenced model exists
-
-        # For now, we'll just check for model loader nodes
-        model_loaders = definition.get_nodes_by_type("sdxl_model_loader")
-        model_loaders.extend(definition.get_nodes_by_type("flux_model_loader"))
-
-        # In a real implementation, we'd check each model's availability
-        # via the API and report missing ones
-
-        return errors
 
     def _is_version_compatible(self, version: str) -> bool:
         """
@@ -267,86 +223,8 @@ class WorkflowRepository:
         except (ValueError, IndexError):
             return False
 
-    def _attempt_fixes(
-        self, definition: WorkflowDefinition, errors: list[str]
-    ) -> WorkflowDefinition:
-        """
-        Attempt to fix common workflow issues.
 
-        Parameters
-        ----------
-        definition : WorkflowDefinition
-            The workflow definition to fix.
-        errors : List[str]
-            The validation errors to address.
 
-        Returns
-        -------
-        WorkflowDefinition
-            The fixed workflow definition.
-        """
-        # Create a working copy
-        data = definition.to_dict()
-        modified = False
-
-        # Fix obsolete nodes if present
-        if any("obsolete" in error.lower() for error in errors):
-            data, nodes_fixed = self._fix_obsolete_nodes(data)
-            modified = modified or nodes_fixed
-
-        # Fix missing models if present
-        if any("model" in error.lower() for error in errors):
-            data, models_fixed = self._fix_missing_models(data)
-            modified = modified or models_fixed
-
-        # Return modified definition if changes were made
-        if modified:
-            return WorkflowDefinition.from_dict(data)
-
-        return definition
-
-    def _fix_obsolete_nodes(self, data: dict[str, Any]) -> tuple[dict[str, Any], bool]:
-        """
-        Fix obsolete nodes in workflow data.
-
-        Parameters
-        ----------
-        data : Dict[str, Any]
-            The workflow data to fix.
-
-        Returns
-        -------
-        tuple[Dict[str, Any], bool]
-            Fixed data and whether any changes were made.
-        """
-        # This is a placeholder - actual implementation would:
-        # 1. Identify obsolete node types
-        # 2. Replace with modern equivalents
-        # 3. Update connections as needed
-
-        return data, False
-
-    def _fix_missing_models(self, data: dict[str, Any]) -> tuple[dict[str, Any], bool]:
-        """
-        Fix missing model references in workflow data.
-
-        Parameters
-        ----------
-        data : Dict[str, Any]
-            The workflow data to fix.
-
-        Returns
-        -------
-        tuple[Dict[str, Any], bool]
-            Fixed data and whether any changes were made.
-        """
-        # This is a placeholder - actual implementation would:
-        # 1. Find model references in nodes
-        # 2. Query available models via API
-        # 3. Replace missing models with available alternatives
-        # 4. Or clear the model field to require user input
-
-        return data, False
 
     def list_available_workflows(self) -> list[dict[str, str]]:
         """

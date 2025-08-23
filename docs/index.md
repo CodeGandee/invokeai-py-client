@@ -1,15 +1,7 @@
-<div align="center">
-
 # InvokeAI Python Client
 
 **Turn InvokeAI GUI workflows into high-throughput Python batch pipelines**
 
-[![PyPI](https://img.shields.io/pypi/v/invokeai-py-client.svg)](https://pypi.org/project/invokeai-py-client/)
-[![Python Version](https://img.shields.io/pypi/pyversions/invokeai-py-client.svg)](https://pypi.org/project/invokeai-py-client/)
-[![License](https://img.shields.io/github/license/CodeGandee/invokeai-py-client.svg)](https://github.com/CodeGandee/invokeai-py-client/blob/main/LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/CodeGandee/invokeai-py-client.svg)](https://github.com/CodeGandee/invokeai-py-client/stargazers)
-
-</div>
 
 ## What is InvokeAI Python Client?
 

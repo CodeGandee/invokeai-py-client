@@ -414,63 +414,7 @@ class WorkflowHandle:
     # ------------------------------------------------------------------
     # Index-centric convenience APIs (non-breaking additions)
     # ------------------------------------------------------------------
-    def _set_input_value_simple_impl(self, index: int, value: Any) -> WorkflowHandle:
-        """Convenience setter using only the depth-first input index.
 
-        This avoids requiring the user to understand field classes. It maps
-        plain Python literals (str/int/float/bool) or small dicts onto the
-        existing typed IvkField instance *without* replacing the field object.
-
-        Rules:
-        - Primitive / resource fields having `.value`: assign directly.
-        - Model identifier field: accept dict with any subset of keys and
-          update attributes individually.
-        - Other Pydantic IvkField subclasses: if a dict is given, update
-          matching attributes (shallow only) and leave unknowns untouched.
-        - Validation errors raise ValueError with index-only context.
-        """
-        wf_input = self.get_input(index)
-        field_obj = wf_input.field
-        try:
-            from invokeai_py_client.ivk_fields.models import IvkModelIdentifierField  # local import
-            from invokeai_py_client.ivk_fields.resources import IvkImageField
-            if isinstance(field_obj, IvkModelIdentifierField):
-                if not isinstance(value, dict):
-                    raise TypeError("Model field expects dict with keys (key, hash, name, base, type, submodel_type)")
-                for k, v in value.items():
-                    if hasattr(field_obj, k):
-                        setattr(field_obj, k, v)
-                wf_input.validate_input()
-                return self
-            if isinstance(field_obj, IvkImageField) and isinstance(value, dict):
-                img_name = value.get("image_name") or value.get("value")
-                if img_name:
-                    field_obj.value = img_name  # type: ignore[attr-defined]
-                    wf_input.validate_input()
-                    return self
-            if hasattr(field_obj, "value") and not isinstance(value, dict):
-                field_obj.value = value  # type: ignore[attr-defined]
-                wf_input.validate_input()
-                return self
-            if isinstance(value, dict):
-                for k, v in value.items():
-                    if hasattr(field_obj, k):
-                        setattr(field_obj, k, v)
-                wf_input.validate_input()
-                return self
-            raise TypeError(f"Unsupported value type {type(value).__name__} for input {index}")
-        except Exception as e:  # Re-wrap with friendly context
-            raise ValueError(f"Failed to set input {index}: {e}") from e
-
-    def set_input_value_simple(self, index: int, value: Any) -> WorkflowHandle:  # deprecated public name
-        """Deprecated.
-
-        This convenience API has been disabled to force explicit field usage via
-        `get_input_value()` + mutation or `set_input_value()` with a fully
-        constructed field instance. Keeping the original implementation under
-        `_set_input_value_simple_impl` for potential future re‑enablement.
-        """
-        raise NotImplementedError("set_input_value_simple() is disabled; use set_input_value() with a field instance")
 
     def preview(self) -> list[dict[str, Any]]:
         """Return lightweight summary of current inputs (index, label, type, value-preview)."""
