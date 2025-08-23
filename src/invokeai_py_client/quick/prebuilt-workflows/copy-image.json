@@ -1,0 +1,65 @@
+{
+  "id": "quick_copy_image_workflow",
+  "name": "Quick: Copy Image To Board",
+  "author": "invokeai-py-client",
+  "description": "Minimal workflow that copies an existing stored image to a target board via save_image.",
+  "version": "1.0.0",
+  "contact": "",
+  "tags": "utility,copy,image,board",
+  "notes": "Inputs: image (ImageField referencing existing server image name), board (BoardField for destination).",
+  "exposedFields": [
+    { "nodeId": "node-save", "fieldName": "image" },
+    { "nodeId": "node-save", "fieldName": "board" }
+  ],
+  "meta": { "version": "3.0.0", "category": "user" },
+  "nodes": [
+    {
+      "id": "node-save",
+      "type": "invocation",
+      "data": {
+        "id": "node-save",
+        "version": "1.0.0",
+        "label": "Save Image (Copy)",
+        "notes": "",
+        "type": "save_image",
+        "inputs": {
+          "image": { "name": "image", "label": "Source Image" },
+          "board": { "name": "board", "label": "Destination Board" }
+        },
+        "isOpen": true,
+        "isIntermediate": false,
+        "useCache": false
+      },
+      "position": { "x": 0, "y": 0 }
+    }
+  ],
+  "edges": [],
+  "form": {
+    "elements": {
+      "root": {
+        "id": "root",
+        "type": "container",
+        "data": { "layout": "column", "children": ["field-image", "field-board"] }
+      },
+      "field-image": {
+        "id": "field-image",
+        "type": "node-field",
+        "data": {
+          "fieldIdentifier": { "nodeId": "node-save", "fieldName": "image" },
+          "showDescription": false
+        },
+        "parentId": "root"
+      },
+      "field-board": {
+        "id": "field-board",
+        "type": "node-field",
+        "data": {
+          "fieldIdentifier": { "nodeId": "node-save", "fieldName": "board" },
+          "showDescription": false
+        },
+        "parentId": "root"
+      }
+    },
+    "rootElementId": "root"
+  }
+}
