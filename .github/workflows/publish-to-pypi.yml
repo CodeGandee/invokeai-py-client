@@ -3,6 +3,9 @@ name: Publish to PyPI
 on:
   release:
     types: [published]
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       tag:
@@ -32,28 +35,26 @@ jobs:
         pip install build twine
         
     - name: Verify version matches tag
+      shell: bash
       run: |
-        # Extract version from pyproject.toml using Python 3.11+ built-in tomllib
-        PROJECT_VERSION=$(python -c "
-import tomllib
-with open('pyproject.toml', 'rb') as f:
-    data = tomllib.load(f)
-print(data['project']['version'])
-")
-        # Extract version from git tag or workflow input
+        set -euo pipefail
+        # Determine tag ref depending on trigger
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          TAG_VERSION="${{ inputs.tag }}"
-          TAG_VERSION=${TAG_VERSION#v}
+          RAW_TAG="${{ inputs.tag }}"
         else
-          TAG_VERSION=${GITHUB_REF#refs/tags/}
-          TAG_VERSION=${TAG_VERSION#v}
+          RAW_TAG="${GITHUB_REF#refs/tags/}"
         fi
-        
-        echo "Project version: $PROJECT_VERSION"
-        echo "Tag version: $TAG_VERSION"
-        
-        if [ "$PROJECT_VERSION" != "$TAG_VERSION" ]; then
-          echo "ERROR: Version mismatch between pyproject.toml ($PROJECT_VERSION) and tag ($TAG_VERSION)"
+        RAW_TAG=${RAW_TAG#v}
+        PROJECT_VERSION=$(python - <<'PY'
+import tomllib, pathlib
+data = tomllib.loads(pathlib.Path('pyproject.toml').read_text('utf-8'))
+print(data['project']['version'])
+PY
+)
+        echo "Project version: $PROJECT_VERSION";
+        echo "Tag version: $RAW_TAG";
+        if [ "$PROJECT_VERSION" != "$RAW_TAG" ]; then
+          echo "ERROR: Version mismatch between pyproject.toml ($PROJECT_VERSION) and tag ($RAW_TAG)" 1>&2
           exit 1
         fi
         
@@ -65,6 +66,7 @@ print(data['project']['version'])
         twine check dist/*
         
     - name: Publish to PyPI
+      id: publish
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
