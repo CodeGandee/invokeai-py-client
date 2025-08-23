@@ -54,7 +54,7 @@ def test_quick_sdxl_text_to_image(capsys):
     board_id = _ensure_board_id(repo, BOARD_NAME)
 
     # Execute generation
-    img = qc.generate_sdxl_image(
+    img = qc.generate_image_sdxl_t2i(
         positive_prompt=POSITIVE_PROMPT,
         negative_prompt=NEGATIVE_PROMPT,
         width=WIDTH,

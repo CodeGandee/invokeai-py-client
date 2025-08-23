@@ -157,7 +157,7 @@ class QuickClient:
         copied = self.client.board_repo.get_image_by_name(new_image_name)
         return copied
 
-    def generate_sdxl_image(
+    def generate_image_sdxl_t2i(
         self,
         positive_prompt: str,
         negative_prompt: str,

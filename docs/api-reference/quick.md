@@ -47,7 +47,7 @@ Implementation notes:
 - Submits synchronously and waits for completion
 - Maps outputs to returned image name and resolves IvkImage by name
 
-### generate_sdxl_image(
+### generate_image_sdxl_t2i(
   positive_prompt: str,
   negative_prompt: str,
   width: int,
@@ -74,7 +74,7 @@ Raises ValueError on API/workflow errors (cancellation returns None).
 
 Example:
 ```python
-img = qc.generate_sdxl_image(
+img = qc.generate_image_sdxl_t2i(
     positive_prompt="A futuristic city skyline with flying cars, cyberpunk neon, detailed architecture",
     negative_prompt="blurry, low quality, distorted, ugly",
     width=1024,

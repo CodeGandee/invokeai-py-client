@@ -13,7 +13,7 @@ Complete API documentation for the InvokeAI Python Client.
 
 ### [⚡ Quick Client](quick.md)
 High-level convenience helpers built on top of the core APIs
-- QuickClient wrapper: copy_image_to_board(), generate_sdxl_image()
+- QuickClient wrapper: copy_image_to_board(), generate_image_sdxl_t2i()
 - Uses prebuilt workflows packaged with the client
 ### [⚡ Workflow](workflow.md)  
 **Workflow execution system** - Definition loading, input management, and job monitoring
