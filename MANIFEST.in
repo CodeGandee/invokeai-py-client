@@ -1,0 +1,33 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+include pyproject.toml
+include mkdocs.yml
+
+recursive-include src/invokeai_py_client *.py
+recursive-include src/invokeai_py_client *.json
+recursive-include src/invokeai_py_client *.yaml
+recursive-include src/invokeai_py_client *.yml
+
+# Include example workflows and configurations if they exist
+recursive-include src/invokeai_py_client/quick/prebuilt-workflows *.json
+
+# Exclude unnecessary files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude __pycache__
+global-exclude .git*
+global-exclude .pytest_cache
+global-exclude .coverage
+global-exclude *.so
+global-exclude *.dylib
+
+prune tests
+prune docs
+prune .github
+prune tmp
+prune context
+prune data
+prune examples
+prune scripts
