@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from invokeai_py_client import InvokeAIClient  # type: ignore
 from invokeai_py_client.quick.quick_client import QuickClient  # type: ignore
+from rich.console import Console  # type: ignore
 
 
 """
@@ -40,6 +41,7 @@ TARGET_BOARD_NAME = "quickcopy-assets"
 def test_quick_copy_image_to_board():
     client = InvokeAIClient.from_url(BASE_URL)
     qc = QuickClient(client)
+    console = Console()
 
     # Ensure target board exists
     repo = client.board_repo
@@ -55,6 +57,15 @@ def test_quick_copy_image_to_board():
     # Perform copy (server-side via tiny workflow)
     copied = qc.copy_image_to_board(IMAGE_NAME, target_board_id)
     assert copied is not None, "Copy operation returned None (no image produced)"
+
+    # Pretty-print copied image metadata via rich
+    console.rule("[bold green]Copied Image Metadata")
+    try:
+        console.print(copied.model_dump(exclude_none=True))  # pydantic v2
+    except Exception:
+        # Fallback for any unexpected model versions
+        console.print(getattr(copied, "to_dict", lambda: {"image_name": copied.image_name, "board_id": copied.board_id})())
+
     assert copied.board_id in (target_board_id, None) or copied.board_id == target_board_id, \
         f"Copied image has unexpected board_id: {copied.board_id}, expected {target_board_id}"
 
