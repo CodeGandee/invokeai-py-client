@@ -65,6 +65,11 @@ class QuickClient:
         -----
         - Purely server-side: no bytes are downloaded to the client or re-uploaded.
         - Implemented with the workflow subsystem in sync mode.
+        - Intentional duplication: if the source image already belongs to the
+            target board, this method still runs the tiny workflow and creates a
+            NEW image (distinct image_name & metadata) on that same board. This
+            is useful for creating variants or preserving the original while
+            generating a copy without first checking board membership.
         """
 
         # 1) Validate target board exists
