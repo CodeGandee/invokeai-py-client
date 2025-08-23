@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import sys
 import time
+import json
 from pathlib import Path
 
 # Ensure local src/ is importable before third-party packages
@@ -11,7 +12,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from invokeai_py_client import InvokeAIClient  # type: ignore
 from invokeai_py_client.quick.quick_client import QuickClient  # type: ignore
-from rich.console import Console  # type: ignore
 
 
 """
@@ -42,10 +42,9 @@ TARGET_BOARD_NAME = os.environ.get("IVK_TEST_TARGET_BOARD_NAME", "quickcopy-asse
 ENV_IMAGE_NAME = os.environ.get("IVK_TEST_IMAGE_NAME")
 
 
-def test_quick_copy_image_to_board():
+def test_quick_copy_image_to_board(capsys):
     client = InvokeAIClient.from_url(BASE_URL)
     qc = QuickClient(client)
-    console = Console()
 
     # Ensure target board exists
     repo = client.board_repo
@@ -60,7 +59,8 @@ def test_quick_copy_image_to_board():
     if ENV_IMAGE_NAME:
         src = repo.get_image_by_name(ENV_IMAGE_NAME)
         if src is None:
-            console.print(f"[bold red]Specified IVK_TEST_IMAGE_NAME not found on server:[/bold red] {ENV_IMAGE_NAME}")
+            with capsys.disabled():
+                print(f"[ERROR] Specified IVK_TEST_IMAGE_NAME not found on server: {ENV_IMAGE_NAME}")
             assert False, f"Source image not found on server: {ENV_IMAGE_NAME}"
         image_name = ENV_IMAGE_NAME
     else:
@@ -69,23 +69,27 @@ def test_quick_copy_image_to_board():
         except Exception:
             uc_names = []
         if not uc_names:
-            console.print("[bold yellow]No images found in Uncategorized.[/bold yellow] "
-                          "Set IVK_TEST_IMAGE_NAME to an existing image name and re-run.")
+            with capsys.disabled():
+                print("[WARN] No images found in Uncategorized. "
+                      "Set IVK_TEST_IMAGE_NAME to an existing image name and re-run.")
             assert False, "No source image available: Uncategorized board is empty and no IVK_TEST_IMAGE_NAME provided"
         image_name = uc_names[0]
-        console.print(f"[cyan]Auto-selected source image from Uncategorized:[/cyan] {image_name}")
+        with capsys.disabled():
+            print(f"[INFO] Auto-selected source image from Uncategorized: {image_name}")
 
     # Perform copy (server-side via tiny workflow)
     copied = qc.copy_image_to_board(image_name, target_board_id)
     assert copied is not None, "Copy operation returned None (no image produced)"
 
-    # Pretty-print copied image metadata via rich
-    console.rule("[bold green]Copied Image Metadata")
-    try:
-        console.print(copied.model_dump(exclude_none=True))  # pydantic v2
-    except Exception:
-        # Fallback for any unexpected model versions
-        console.print(getattr(copied, "to_dict", lambda: {"image_name": copied.image_name, "board_id": copied.board_id})())
+    # Pretty-print copied image metadata to real stdout (bypass pytest capture)
+    with capsys.disabled():
+        print("=" * 20, "Copied Image Metadata", "=" * 20)
+        try:
+            print(json.dumps(copied.model_dump(exclude_none=True), ensure_ascii=False, indent=2))  # pydantic v2
+        except Exception:
+            # Fallback for any unexpected model versions
+            fallback = getattr(copied, "to_dict", lambda: {"image_name": copied.image_name, "board_id": copied.board_id})()
+            print(json.dumps(fallback, ensure_ascii=False, indent=2))
 
     assert copied.board_id in (target_board_id, None) or copied.board_id == target_board_id, \
         f"Copied image has unexpected board_id: {copied.board_id}, expected {target_board_id}"
