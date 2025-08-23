@@ -32,3 +32,20 @@ Then,implement a method to copy an image to another board, without removing it f
     - the image does not exist
     - other errors during API calls
   - use a tiny workflow to achieve this, the workflow is in `src\invokeai_py_client\quick\prebuilt-workflows\copy-image.json`, use that with the workflow subsystem to execute the copy operation, using sync mode.
+
+# Task 3: create an sdxl text to image in quick client
+
+Implement a method in `QuickClient` to create an SDXL text-to-image generation task, submit it, wait for it to complete, and return the resulting image metadata.
+- `QuickClient.generate_image_sdxl_t2i(positive_prompt: str, negative_prompt: str, width: int, height: int, steps: int | None, model_name : str | None, scheduler : str | None, board_id : str | None) -> IvkImage | None`
+  - positive_prompt: the positive prompt for the generation
+  - negative_prompt: the negative prompt for the generation
+  - width: the width of the generated image, will be rounded to the nearest multiple of 8
+  - height: the height of the generated image, will be rounded to the nearest multiple of 8
+  - steps: the number of steps for the generation, if not set then use workflow default
+  - model_name: the name of the model to use, if None, use the first model that has `sdxl` as its base type. Note that, the model_name will be matched to the available models in the server as a SUBSTRING MATCH, case insensitive. For example, if model_name is `dreamshaper`, and the server has a model named `DreamShaper_v10.safetensors`, then it will be matched. For multiple matches, the first one will be used.
+  - scheduler: the scheduler to use, if None, use the workflow default. Scheduler names can be found in `src\invokeai_py_client\ivk_fields\enums.py`, the `SchedulerName` enum.
+  - board_id: the board_id to save the generated image, if None, save to uncategorized board.
+  - return: the IvkImage object of the generated image, None if failed or cancelled
+  - raise ValueError if 
+    - other errors during API calls, except cancellation (return None in this case)
+  - use workflow to achieve this, the workflow is in `src\invokeai_py_client\quick\prebuilt-workflows\sdxl-text-to-image.json`, use that with the workflow subsystem to execute the generation task, using sync mode, you can check `examples\pipelines\sdxl-text-to-image.py` dir to find out how to use it (they are essentially the same workflow json).
