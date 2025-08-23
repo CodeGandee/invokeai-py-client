@@ -3,6 +3,12 @@ name: Publish to PyPI
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish (e.g., v1.0.0)'
+        required: true
+        type: string
 
 jobs:
   publish:
@@ -35,15 +41,20 @@ with open('pyproject.toml', 'rb') as f:
     data = tomllib.load(f)
 print(data['project']['version'])
 ")
-        # Extract version from git tag (remove 'v' prefix if present)
-        TAG_VERSION=${GITHUB_REF#refs/tags/}
-        TAG_VERSION=${TAG_VERSION#v}
+        # Extract version from git tag or workflow input
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          TAG_VERSION="${{ inputs.tag }}"
+          TAG_VERSION=${TAG_VERSION#v}
+        else
+          TAG_VERSION=${GITHUB_REF#refs/tags/}
+          TAG_VERSION=${TAG_VERSION#v}
+        fi
         
         echo "Project version: $PROJECT_VERSION"
         echo "Tag version: $TAG_VERSION"
         
         if [ "$PROJECT_VERSION" != "$TAG_VERSION" ]; then
-          echo "ERROR: Version mismatch between pyproject.toml ($PROJECT_VERSION) and git tag ($TAG_VERSION)"
+          echo "ERROR: Version mismatch between pyproject.toml ($PROJECT_VERSION) and tag ($TAG_VERSION)"
           exit 1
         fi
         
