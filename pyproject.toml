@@ -135,6 +135,9 @@ docs-build = "mkdocs build"
 quality = "pixi run lint && pixi run typecheck && pixi run test"
 dev-setup = "pixi run install && pixi run pre-commit-install"
 
+# Generate InvokeAI docker compose into ./build/latest-app
+generate-invokeai-compose = "bash dockers/generate-docker-compose.sh ./build/latest-app --host-models-dir ./build/invkdata/models --host-outputs-dir ./build/invkdata/outputs --host-port 19090 --host-config-yaml ./build/invkdata/invokeai.yaml --host-extra-dir ./build/invkdata/extra --with-invokeai-yaml"
+
 [tool.pixi.environments]
 default = {features = [], solve-group = "default"}
 dev = {features = ["dev"], solve-group = "default"}
