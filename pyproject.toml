@@ -30,7 +30,7 @@ classifiers = [
 dependencies = [
     "scipy>=1.16.1", 
     "opencv-python>=4.5.0", 
-    "pillow>=9.0.0", 
+    "pillow", 
     "requests>=2.32.4", 
     "python-socketio[asyncio-client]>=5.13.0", 
     "jsonpath-ng>=1.7.0", 

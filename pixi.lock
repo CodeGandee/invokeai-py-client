@@ -5609,11 +5609,11 @@ packages:
 - pypi: ./
   name: invokeai-py-client
   version: 1.0.6
-  sha256: 3411a90b321aefaa2d542c884a45395f96e9983208d78494308f546dd5ff44ac
+  sha256: a950cae5bf9e611ad4da3ebe14d2eaa2aed3ab1fe478433761e3eb1966b2cd17
   requires_dist:
   - scipy>=1.16.1
   - opencv-python>=4.5.0
-  - pillow>=9.0.0
+  - pillow
   - requests>=2.32.4
   - python-socketio[asyncio-client]>=5.13.0
   - jsonpath-ng>=1.7.0
