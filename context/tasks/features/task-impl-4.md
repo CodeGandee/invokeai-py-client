@@ -6,7 +6,7 @@
 
 if you are not sure about the InvokeAI web APIs:
 - Look for the demos first: `<workspace>/examples`
-- InvokeAI openapi json: `context\hints\invokeai-kb\invokeai-openapi.json`, use `jq` for faster search
+- InvokeAI openapi json: `context\hints\invokeai-kb\invokeai-openapi-v6.3.json`, use `jq` for faster search
 - InvokeAI API list: `context\hints\invokeai-kb\invokeai-api-list.md`
 
 # Task 1: verify the workflow submission and tracking
@@ -85,4 +85,3 @@ based on the result of previous task, you need to revise the `WorkflowHandle` to
 
 test environment:
 - a running InvokeAI system, with the web server running on `http://127.0.0.1:9090/`
-

@@ -24,7 +24,7 @@ Repository map (key locations)
   - [examples/raw-apis](examples/raw-apis)
 - Upstream API references
   - Endpoint list: [context/hints/invokeai-kb/invokeai-api-list.md](context/hints/invokeai-kb/invokeai-api-list.md)
-  - OpenAPI JSON: [context/hints/invokeai-kb/invokeai-openapi.json](context/hints/invokeai-kb/invokeai-openapi.json)
+  - OpenAPI JSON: [context/hints/invokeai-kb/invokeai-openapi-v6.3.json](context/hints/invokeai-kb/invokeai-openapi-v6.3.json)
 - Project README
   - [README.md](README.md)
 - Design notes and context
@@ -108,7 +108,7 @@ Upstream API surface (orientation)
 - Models:
   - /api/v2/models and related endpoints assist with model metadata, lookup, and installation
 - Full OpenAPI:
-  - [context/hints/invokeai-kb/invokeai-openapi.json](context/hints/invokeai-kb/invokeai-openapi.json)
+  - [context/hints/invokeai-kb/invokeai-openapi-v6.3.json](context/hints/invokeai-kb/invokeai-openapi-v6.3.json)
 
 Next steps in this developer guide set
 - 01-usage-pattern.md: step-by-step, index-centric workflow usage, boards, submission, mapping

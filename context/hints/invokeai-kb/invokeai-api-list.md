@@ -2,7 +2,7 @@
 
 This document provides a list of all available API endpoints for InvokeAI, along with their summaries and descriptions.
 
-For detailed information about all endpoints (the openapi json), refer to `context\hints\invokeai-kb\invokeai-openapi.json`.
+For detailed information about all endpoints (the openapi json), refer to `context\hints\invokeai-kb\invokeai-openapi-v6.3.json`.
 
 ## API Endpoints
 

@@ -27,7 +27,7 @@ Repository touchpoints
   - Queue demos: [examples/raw-apis/api-demo-job-queue.py](examples/raw-apis/api-demo-job-queue.py)
 - Upstream API references:
   - Endpoint list: [context/hints/invokeai-kb/invokeai-api-list.md](context/hints/invokeai-kb/invokeai-api-list.md)
-  - OpenAPI JSON: [context/hints/invokeai-kb/invokeai-openapi.json](context/hints/invokeai-kb/invokeai-openapi.json)
+  - OpenAPI JSON: [context/hints/invokeai-kb/invokeai-openapi-v6.3.json](context/hints/invokeai-kb/invokeai-openapi-v6.3.json)
 
 Coding standards
 - Maintain strongly-typed field model: new fields should have a precise Ivk*Field with a predictable `.value` type.

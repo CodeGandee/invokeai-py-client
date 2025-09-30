@@ -53,7 +53,7 @@ ws://localhost:9090/ws
 
 Full API spec available at:
 - Development: `http://localhost:9090/openapi.json`
-- Reference: `context/hints/invokeai-kb/invokeai-openapi.json`
+- Reference: `context/hints/invokeai-kb/invokeai-openapi-v6.3.json`
 
 ## Rate Limiting
 

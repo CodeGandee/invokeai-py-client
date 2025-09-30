@@ -165,7 +165,7 @@ Images and models are handled by reference:
 ### InvokeAI Test Server
 - Default: `http://localhost:9090`
 - API version: `/api/v1`
-- OpenAPI spec: `context/hints/invokeai-kb/invokeai-openapi.json`
+ - OpenAPI spec: `context/hints/invokeai-kb/invokeai-openapi-v6.3.json`
 
 ### Test Data Locations
 - Example workflows: `data/workflows/` (SDXL, FLUX templates)

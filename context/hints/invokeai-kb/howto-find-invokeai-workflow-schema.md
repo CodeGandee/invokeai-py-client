@@ -497,7 +497,7 @@ Here's a complete example analyzing the `data/workflows/example-nodes.json` work
 # analyze_workflow.sh - Complete workflow analysis script
 
 WORKFLOW_FILE="data/workflows/example-nodes.json"
-OPENAPI_FILE="context/hints/invokeai-kb/invokeai-openapi.json"
+OPENAPI_FILE="context/hints/invokeai-kb/invokeai-openapi-v6.3.json"
 INVOKEAI_SOURCE="context/refcode/InvokeAI/invokeai/app/invocations"
 OUTPUT_FILE="workflow_analysis.md"
 
@@ -831,7 +831,7 @@ class WorkflowAnalyzer:
 if __name__ == "__main__":
     analyzer = WorkflowAnalyzer(
         workflow_path="data/workflows/example-nodes.json",
-        openapi_path="context/hints/invokeai-kb/invokeai-openapi.json", 
+        openapi_path="context/hints/invokeai-kb/invokeai-openapi-v6.3.json", 
         source_dir="context/refcode/InvokeAI/invokeai/app/invocations"
     )
     

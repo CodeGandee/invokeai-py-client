@@ -7,7 +7,7 @@ Purpose
 
 Primary references
 - Endpoint list summary: [context/hints/invokeai-kb/invokeai-api-list.md](context/hints/invokeai-kb/invokeai-api-list.md)
-- Full OpenAPI spec: [context/hints/invokeai-kb/invokeai-openapi.json](context/hints/invokeai-kb/invokeai-openapi.json)
+- Full OpenAPI spec: [context/hints/invokeai-kb/invokeai-openapi-v6.3.json](context/hints/invokeai-kb/invokeai-openapi-v6.3.json)
 - Raw REST examples:
   - Boards list/details/images: [examples/raw-apis/api-demo-boards.py](examples/raw-apis/api-demo-boards.py)
   - Latest image on a board (optimized): [examples/raw-apis/api-demo-latest-image.py](examples/raw-apis/api-demo-latest-image.py)

@@ -6,7 +6,7 @@
 
 if you are not sure about the InvokeAI web APIs:
 - Look for the demos first: `<workspace>/examples`
-- InvokeAI openapi json: `context\hints\invokeai-kb\invokeai-openapi.json`, use `jq` for faster search
+- InvokeAI openapi json: `context\hints\invokeai-kb\invokeai-openapi-v6.3.json`, use `jq` for faster search
 - InvokeAI API list: `context\hints\invokeai-kb\invokeai-api-list.md`
 
 IMPORTANT:
@@ -23,4 +23,3 @@ now, implement use case 1 in `workflow-usecase`.
 Test environment:
 - you can use ``data\workflows\sdxl-flux-refine.json` as a test workflow json file.
 - you can access `127.0.0.1:9090` which is a running InvokeAI instance, to test anything related to the InvokeAI APIs.
-

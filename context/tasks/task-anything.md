@@ -6,7 +6,7 @@
 
 if you are not sure about the InvokeAI web APIs:
 - Look for the demos first: `<workspace>/examples`
-- InvokeAI openapi json: `context\hints\invokeai-kb\invokeai-openapi.json`, use `jq` for faster search
+- InvokeAI openapi json: `context\hints\invokeai-kb\invokeai-openapi-v6.3.json`, use `jq` for faster search
 - InvokeAI API list: `context\hints\invokeai-kb\invokeai-api-list.md`
 
 # Task 1: move image to board

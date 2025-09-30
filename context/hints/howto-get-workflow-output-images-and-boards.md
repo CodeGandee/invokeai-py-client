@@ -25,7 +25,7 @@ The queue item does **not** enumerate these; you must query image or board endpo
 
 ### 3. Required API Endpoints
 
-Referenced from the OpenAPI spec (`invokeai-openapi.json`) and source code (`invokeai/app/api/routers/*.py`).
+Referenced from the OpenAPI spec (`invokeai-openapi-v6.3.json`) and source code (`invokeai/app/api/routers/*.py`).
 
 | Purpose | Endpoint | Notes |
 |---------|----------|-------|
