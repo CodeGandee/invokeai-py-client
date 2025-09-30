@@ -1,0 +1,5 @@
+--2025-09-30 08:11:06--  https://civitai-delivery-worker-prod.5ac0637cfd0766c97916cefa3764fbdf.r2.cloudflarestorage.com/model/6687280/realisticfoundry2.PC0p.safetensors?X-Amz-Expires=86400
+Connecting to 127.0.0.1:7890... connected.
+Proxy request sent, awaiting response... 400 Bad Request
+2025-09-30 08:11:06 ERROR 400: Bad Request.
+

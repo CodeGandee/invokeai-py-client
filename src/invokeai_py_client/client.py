@@ -28,6 +28,7 @@ from invokeai_py_client.workflow import (
     WorkflowHandle,
     WorkflowRepository,
 )
+from invokeai_py_client.queue import QueueRepository
 
 
 class InvokeAIClient:
@@ -134,6 +135,7 @@ class InvokeAIClient:
         self._board_repo: BoardRepository | None = None
         self._workflow_repo: WorkflowRepository | None = None
         self._dnn_model_repo: DnnModelRepository | None = None
+        self._queue_repo: QueueRepository | None = None
         
         # Initialize Socket.IO client for async operations
         self._sio: socketio.AsyncClient | None = None  # type: ignore[no-any-unimported]
@@ -311,6 +313,20 @@ class InvokeAIClient:
         if self._dnn_model_repo is None:
             self._dnn_model_repo = DnnModelRepository(self)
         return self._dnn_model_repo
+
+    @property
+    def queue_repo(self) -> QueueRepository:
+        """
+        Get the queue repository instance for queue/job operations.
+
+        Returns
+        -------
+        QueueRepository
+            The queue repository instance.
+        """
+        if self._queue_repo is None:
+            self._queue_repo = QueueRepository.from_client(self)
+        return self._queue_repo
 
     def list_jobs(self, status: str | None = None, limit: int = 100) -> list[IvkJob]:
         """

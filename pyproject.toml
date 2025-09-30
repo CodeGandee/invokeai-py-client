@@ -118,14 +118,15 @@ invokeai-py-client = { path = ".", editable = true }
 [tool.pixi.tasks]
 # Development tasks
 install = "pip install -e ."
-test = "pytest tests/ -v"
-test-cov = "pytest tests/ --cov=src/invokeai_py_client --cov-report=term-missing"
-lint = "ruff check src/ tests/"
-lint-fix = "ruff check --fix src/ tests/"
-format = "ruff format src/ tests/"
+test = "pytest unittests/ -v"
+test-cov = "pytest unittests/ --cov=src/invokeai_py_client --cov-report=term-missing"
+lint = "ruff check src/ tests/ unittests/"
+lint-fix = "ruff check --fix src/ tests/ unittests/"
+format = "ruff format src/ tests/ unittests/"
 typecheck = "mypy src/"
 pre-commit-install = "pre-commit install"
 pre-commit-run = "pre-commit run --all-files"
+test-demos = "pytest tests/ -v"
 
 # Documentation tasks
 docs-serve = "mkdocs serve"
@@ -226,7 +227,7 @@ module = [
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["unittests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

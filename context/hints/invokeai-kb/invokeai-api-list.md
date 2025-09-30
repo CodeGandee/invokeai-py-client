@@ -2,7 +2,7 @@
 
 This document provides a list of all available API endpoints for InvokeAI, along with their summaries and descriptions.
 
-For detailed information about all endpoints (the openapi json), refer to `context\hints\invokeai-kb\invokeai-openapi-v6.3.json`.
+For detailed information about all endpoints (the openapi json), refer to `context\hints\invokeai-kb\invokeai-openapi-v6.8.json`.
 
 ## API Endpoints
 
@@ -114,6 +114,33 @@ For detailed information about all endpoints (the openapi json), refer to `conte
 *   **Endpoint:** `/api/v1/images/images_by_names`
     *   **Summary:** Get Images By Names
     *   **Description:** Gets image DTOs for the specified image names. Maintains order of input names.
+*   **Endpoint:** `/api/v1/videos/`
+    *   **Summary:** List Video Dtos
+    *   **Description:** Lists video DTOs
+*   **Endpoint:** `/api/v1/videos/ids`
+    *   **Summary:** Get Video Ids
+    *   **Description:** Gets ordered list of video ids with metadata for optimistic updates
+*   **Endpoint:** `/api/v1/videos/videos_by_ids`
+    *   **Summary:** Get Videos By Ids
+    *   **Description:** Gets video DTOs for the specified video ids. Maintains order of input ids.
+*   **Endpoint:** `/api/v1/videos/i/{video_id}`
+    *   **Summary:** Get Video Dto
+    *   **Description:** Gets a video's DTO
+*   **Endpoint:** `/api/v1/videos/i/{video_id}`
+    *   **Summary:** Update Video
+    *   **Description:** Updates a video
+*   **Endpoint:** `/api/v1/videos/delete`
+    *   **Summary:** Delete Videos From List
+    *   **Description:** 
+*   **Endpoint:** `/api/v1/videos/star`
+    *   **Summary:** Star Videos In List
+    *   **Description:** 
+*   **Endpoint:** `/api/v1/videos/unstar`
+    *   **Summary:** Unstar Videos In List
+    *   **Description:** 
+*   **Endpoint:** `/api/v1/videos/uncategorized`
+    *   **Summary:** Delete Uncategorized Videos
+    *   **Description:** Deletes all videos that are uncategorized
 *   **Endpoint:** `/api/v1/boards/`
     *   **Summary:** Create Board
     *   **Description:** Creates a board
@@ -132,6 +159,12 @@ For detailed information about all endpoints (the openapi json), refer to `conte
 *   **Endpoint:** `/api/v1/board_images/batch/delete`
     *   **Summary:** Remove Images From Board
     *   **Description:** Removes a list of images from their board, if they had one
+*   **Endpoint:** `/api/v1/board_videos/batch`
+    *   **Summary:** Add Videos To Board
+    *   **Description:** Adds a list of videos to a board
+*   **Endpoint:** `/api/v1/board_videos/batch/delete`
+    *   **Summary:** Remove Videos From Board
+    *   **Description:** Removes a list of videos from their board, if they had one
 *   **Endpoint:** `/api/v1/model_relationships/i/{model_key}`
     *   **Summary:** Get Related Models
     *   **Description:** Get a list of model keys related to a given model.
@@ -171,9 +204,12 @@ For detailed information about all endpoints (the openapi json), refer to `conte
 *   **Endpoint:** `/api/v1/queue/{queue_id}/enqueue_batch`
     *   **Summary:** Enqueue Batch
     *   **Description:** Processes a batch and enqueues the output graphs for execution.
-*   **Endpoint:** `/api/v1/queue/{queue_id}/list`
-    *   **Summary:** List Queue Items
-    *   **Description:** Gets cursor-paginated queue items
+*   **Endpoint:** `/api/v1/queue/{queue_id}/item_ids`
+    *   **Summary:** Get Queue Item Ids
+    *   **Description:** Gets all queue item ids that match the given parameters
+*   **Endpoint:** `/api/v1/queue/{queue_id}/items_by_ids`
+    *   **Summary:** Get Queue Items By Item Ids
+    *   **Description:** Gets queue items for the specified queue item ids. Maintains order of item ids.
 *   **Endpoint:** `/api/v1/queue/{queue_id}/list_all`
     *   **Summary:** List All Queue Items
     *   **Description:** Gets all queue items
@@ -222,7 +258,7 @@ For detailed information about all endpoints (the openapi json), refer to `conte
 *   **Endpoint:** `/api/v1/queue/{queue_id}/i/{item_id}/cancel`
     *   **Summary:** Cancel Queue Item
     *   **Description:** Deletes a queue item
-*   **Endpoint:** `/api/vv1/queue/{queue_id}/counts_by_destination`
+*   **Endpoint:** `/api/v1/queue/{queue_id}/counts_by_destination`
     *   **Summary:** Counts By Destination
     *   **Description:** Gets the counts of queue items by destination
 *   **Endpoint:** `/api/v1/queue/{queue_id}/d/{destination}`
