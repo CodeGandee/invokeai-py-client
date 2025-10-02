@@ -574,3 +574,41 @@ class InvokeAIClient:
         response.raise_for_status()
 
         return response
+
+    # -------------------- v2 helpers --------------------
+    def _make_request_v2(self, method: str, endpoint: str, **kwargs: Any) -> Any:
+        """
+        Make an HTTP request to the v2 API.
+
+        Parameters
+        ----------
+        method : str
+            HTTP method (GET, POST, etc.).
+        endpoint : str
+            API endpoint path relative to `/api/v2`, must start with '/'.
+        **kwargs : Any
+            Additional arguments to pass to requests.
+
+        Returns
+        -------
+        requests.Response
+            The response object.
+
+        Raises
+        ------
+        requests.RequestException
+            If the request fails.
+        """
+        if not endpoint.startswith("/"):
+            raise ValueError("v2 endpoint must start with '/' (e.g., '/models/install')")
+
+        scheme = "https" if self.use_https else "http"
+        base_url_v2 = f"{scheme}://{self.host}:{self.port}/api/v2"
+        url = f"{base_url_v2}{endpoint}"
+
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.timeout
+
+        response = self.session.request(method, url, **kwargs)
+        response.raise_for_status()
+        return response

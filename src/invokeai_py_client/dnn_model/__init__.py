@@ -19,6 +19,15 @@ from invokeai_py_client.dnn_model.dnn_model_types import (
     DnnModelType,
 )
 from invokeai_py_client.dnn_model.dnn_model_repo import DnnModelRepository
+from invokeai_py_client.dnn_model.dnn_model_models import (
+    InstallJobStatus,
+    ModelInstJobInfo,
+    ModelManagerStats,
+    HFLoginStatus,
+    FoundModel,
+    ModelInstallConfig,
+)
+from invokeai_py_client.dnn_model.model_inst_job_handle import ModelInstJobHandle
 
 __all__ = [
     "DnnModel",
@@ -26,4 +35,12 @@ __all__ = [
     "DnnModelType",
     "BaseDnnModelType",
     "DnnModelFormat",
+    # Model manager
+    "InstallJobStatus",
+    "ModelInstJobInfo",
+    "ModelManagerStats",
+    "HFLoginStatus",
+    "FoundModel",
+    "ModelInstallConfig",
+    "ModelInstJobHandle",
 ]

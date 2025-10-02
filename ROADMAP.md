@@ -47,9 +47,14 @@ Highlights of what is implemented and tested.
 
 - **`src/invokeai_py_client/workflow/field_plugins.py`**: Prioritized detection rules (explicit type, name patterns, node primitives, value-based, enum presence, numeric constraints) and builders (string, integer, float, boolean, model, board, image, enum). Public helpers `detect_field_type()` and `build_field()`
 
-### DNN Models (read-only discovery)
+### DNN Models (discovery + management)
 
-- **`src/invokeai_py_client/dnn_model/dnn_model_repo.py`**: Stateless repository for v2 model list/detail (no caching). Model entity + enums in `dnn_model_types.py`
+- **Discovery**: `src/invokeai_py_client/dnn_model/dnn_model_repo.py` provides v2 list/detail (no caching). Entity + enums in `dnn_model_types.py`.
+- **Management (v2 model_manager)**: Implemented in `DnnModelRepository` with typed models/handle:
+  - Models: `src/invokeai_py_client/dnn_model/dnn_model_models.py` (`InstallJobStatus`, `ModelInstJobInfo`, `ModelManagerStats`, `HFLoginStatus`, `FoundModel`, `ModelInstallConfig`)
+  - Job handle: `src/invokeai_py_client/dnn_model/model_inst_job_handle.py` (`ModelInstJobHandle` with refresh/status/cancel/wait)
+  - API surface: install/list/get/prune install jobs; convert/delete model; scan_folder; empty cache; stats; HF login/logout/status
+  - Client: v2 request helper `_make_request_v2()` added in `client.py`
 
 ### Queues and Jobs (Repository/Handle pattern)
 
@@ -68,87 +73,19 @@ Highlights of what is implemented and tested.
 
 - Image field operations: `IvkImageField.upload()` / `download()` are placeholders (uploads handled by `BoardHandle`)
 - Exceptions: `src/invokeai_py_client/exceptions.py` scaffolds not implemented yet
-- Model management (write operations): Install/convert/delete/prune/scan/cache/HF login not yet exposed; `DnnModelRepository` is intentionally read-only
+  
 
 ## Next Milestones
 
-### 1. Model Management API (v2 model_manager endpoints)
+### Test Model Management API
 
 Goals
-- Support install (add), delete (remove), convert, scan, prune/cancel install jobs, cache management, HF login where relevant
-- Preserve current read-only discovery in `DnnModelRepository`; introduce a write-capable manager to keep concerns clear
-
-Endpoints (OpenAPI v6.8 tag: model_manager)
-- List/detail: `GET /api/v2/models/`, `GET /api/v2/models/i/{key}`
-- Install: `POST /api/v2/models/install` (string source + optional config + access_token)
-- Install job: `GET /api/v2/models/install/{id}`, `DELETE /api/v2/models/install/{id}`, `DELETE /api/v2/models/install` (prune)
-- Convert: `PUT /api/v2/models/convert/{key}`
-- Delete model: `DELETE /api/v2/models/i/{key}`
-- Scan folder: `GET /api/v2/models/scan_folder` (trigger)
-- HF helpers: `GET/POST/DELETE /api/v2/models/hf_login`
-- Cache: `POST /api/v2/models/empty_model_cache`, `GET /api/v2/models/stats`
-
-Proposed Structure
-- New repository: `ModelManagerRepository` (write operations), complementing read-only `DnnModelRepository`
-- `ModelManagerRepository` API (initial):
-
-```python
-install_model(source: str, config: dict | None = None, access_token: str | None = None) -> dict
-get_install_job(id: str) -> dict | None
-cancel_install_job(id: str) -> bool
-prune_install_jobs() -> bool
-convert_model(key: str) -> dict
-delete_model(key: str) -> bool
-scan_folder() -> dict
-empty_model_cache() -> bool
-get_stats() -> dict | None
-hf_login(token: str) -> bool
-hf_logout() -> bool
-hf_status() -> dict
-```
+- Add unit and integration tests for the newly implemented model management operations in `DnnModelRepository`.
+- Provide examples and docs for typical flows (HF install → wait → convert → delete; cache/stats; HF login).
 
 Acceptance Criteria
-- Unit/integration tests covering happy-path flows against a running server
-- Example snippets for installing by HF repo id, monitoring an install job, and deleting a model
-
-### 2. Model Management API (v2 model_manager endpoints)
-#### Goals
-
-- Support install (add), delete (remove), convert, scan, prune/cancel install jobs, cache management, HF login where relevant
-- Preserve current read-only discovery in `DnnModelRepository`; introduce a write-capable manager to keep concerns clear
-#### Endpoints (OpenAPI v6.8 tag: model_manager)
-
-- **List/detail**: `GET /api/v2/models/`, `GET /api/v2/models/i/{key}`
-- **Install**: `POST /api/v2/models/install` (string source + optional config + access_token)
-- **Install job**: `GET /api/v2/models/install/{id}`, `DELETE /api/v2/models/install/{id}`, `DELETE /api/v2/models/install` (prune)
-- **Convert**: `PUT /api/v2/models/convert/{key}`
-- **Delete model**: `DELETE /api/v2/models/i/{key}`
-- **Scan folder**: `GET /api/v2/models/scan_folder` (trigger)
-- **HF helpers**: `GET/POST/DELETE /api/v2/models/hf_login`
-- **Cache**: `POST /api/v2/models/empty_model_cache`, `GET /api/v2/models/stats`
-#### Proposed Structure
-
-- **New repository**: `ModelManagerRepository` (write operations), complementing read-only `DnnModelRepository`
-- **`ModelManagerRepository` API (initial)**:
-
-```python
-install_model(source: str, config: dict | None = None, access_token: str | None = None) -> dict
-get_install_job(id: str) -> dict | None
-cancel_install_job(id: str) -> bool
-prune_install_jobs() -> bool
-convert_model(key: str) -> dict
-delete_model(key: str) -> bool
-scan_folder() -> dict
-empty_model_cache() -> bool
-get_stats() -> dict | None
-hf_login(token: str) -> bool
-hf_logout() -> bool
-hf_status() -> dict
-```
-#### Acceptance Criteria
-
-- Unit tests exercising happy-path responses; verify failures surface structured `APIError` once exceptions are implemented
-- Example notebook/snippet in `examples/` for installing a model by HF repo id, monitoring install job, and deleting a model
+- Unit/integration tests covering happy-path flows against a running server (guard with `INVOKE_AI_ENDPOINT`).
+- Example snippets/notebook in `examples/` for installing a model by HF repo id, monitoring an install job via `ModelInstJobHandle`, and deleting a model.
 
 ## Stretch / Later
 
