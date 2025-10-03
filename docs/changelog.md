@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-10-03
+
+### Added
+- DNN Model Repository (v2 model_manager) docs and API
+- Model install jobs with `ModelInstJobHandle.wait_until()` and native exceptions
+- `delete_all_models()` convenience method
+- Folder scanning via `scan_folder()` and cache helpers (`empty_model_cache()`, `get_stats()`)
+
+### Changed
+- `install_model()` now treats HTTP 409 (already installed) as a non-fatal skip and returns a synthetic COMPLETED handle with `info.extra['reason']=='already_installed'`
+- Converted DNN model repository docstrings to NumPy style for consistency
+- Refreshed API reference pages and user guide models section
+
 ### Added
 - Comprehensive MkDocs Material documentation
 - Support for Flux workflows
