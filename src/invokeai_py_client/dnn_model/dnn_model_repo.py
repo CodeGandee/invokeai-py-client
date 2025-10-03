@@ -23,6 +23,10 @@ from invokeai_py_client.dnn_model.dnn_model_models import (
     _V2Endpoint,
 )
 from invokeai_py_client.dnn_model.model_inst_job_handle import ModelInstJobHandle
+from invokeai_py_client.dnn_model.dnn_model_exceptions import (
+    APIRequestError,
+    ModelInstallStartError,
+)
 
 if TYPE_CHECKING:
     from invokeai_py_client.client import InvokeAIClient
@@ -99,8 +103,10 @@ class DnnModelRepository:
         >>> from invokeai_py_client.dnn_model import BaseDnnModelType
         >>> flux_models = [m for m in models if m.is_compatible_with_base(BaseDnnModelType.Flux)]
         """
-        # Always fetch fresh from InvokeAI API using v2 endpoint
-        response = self._client._make_request_v2("GET", "/models/")
+        try:
+            response = self._client._make_request_v2("GET", "/models/")
+        except requests.HTTPError as e:
+            raise self._to_api_error(e)
         data = response.json()
 
         # Extract models from response
@@ -149,7 +155,7 @@ class DnnModelRepository:
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code == 404:
                 return None
-            raise
+            raise self._to_api_error(e)
 
     # -------------------- Model install jobs --------------------
     def install_model(
@@ -175,7 +181,11 @@ class DnnModelRepository:
         else:
             body = dict(config)
 
-        resp = self._client._make_request_v2("POST", _V2Endpoint.INSTALL_BASE, params=params, json=body)
+        try:
+            resp = self._client._make_request_v2("POST", _V2Endpoint.INSTALL_BASE, params=params, json=body)
+        except requests.HTTPError as e:
+            # Wrap rejection as a start error
+            raise ModelInstallStartError(str(self._to_api_error(e)))
         data = resp.json()
         job_id = int(data.get("id", 0))
         handle = ModelInstJobHandle.from_client_and_id(self._client, job_id)
@@ -184,7 +194,10 @@ class DnnModelRepository:
 
     def list_install_jobs(self) -> list[ModelInstJobHandle]:
         """List all install jobs as handles (with preloaded info)."""
-        resp = self._client._make_request_v2("GET", _V2Endpoint.INSTALL_BASE)
+        try:
+            resp = self._client._make_request_v2("GET", _V2Endpoint.INSTALL_BASE)
+        except requests.HTTPError as e:
+            raise self._to_api_error(e)
         items = resp.json() or []
         handles: list[ModelInstJobHandle] = []
         for it in items:
@@ -209,7 +222,7 @@ class DnnModelRepository:
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code == 404:
                 return None
-            raise
+            raise self._to_api_error(e)
         data = resp.json()
         h = ModelInstJobHandle.from_client_and_id(self._client, jid)
         h._info = self._parse_job_info(data)  # type: ignore[attr-defined]
@@ -217,7 +230,10 @@ class DnnModelRepository:
 
     def prune_install_jobs(self) -> bool:
         """Prune completed and errored jobs from install list."""
-        resp = self._client._make_request_v2("DELETE", _V2Endpoint.INSTALL_BASE)
+        try:
+            resp = self._client._make_request_v2("DELETE", _V2Endpoint.INSTALL_BASE)
+        except requests.HTTPError as e:
+            raise self._to_api_error(e)
         return bool(resp.status_code in (200, 204))
 
     def install_huggingface(
@@ -233,22 +249,34 @@ class DnnModelRepository:
     # -------------------- Mutations --------------------
     def convert_model(self, key: str) -> DnnModel:
         """Convert a safetensors model to diffusers format."""
-        resp = self._client._make_request_v2("PUT", _V2Endpoint.CONVERT.format(key=key))
+        try:
+            resp = self._client._make_request_v2("PUT", _V2Endpoint.CONVERT.format(key=key))
+        except requests.HTTPError as e:
+            raise self._to_api_error(e)
         data = resp.json()
         return DnnModel.from_api_response(data)
 
     def delete_model(self, key: str) -> bool:
         """Delete a model by key."""
-        resp = self._client._make_request_v2("DELETE", _V2Endpoint.MODEL_BY_KEY.format(key=key))
+        try:
+            resp = self._client._make_request_v2("DELETE", _V2Endpoint.MODEL_BY_KEY.format(key=key))
+        except requests.HTTPError as e:
+            raise self._to_api_error(e)
         return bool(resp.status_code in (200, 204))
 
     # -------------------- Cache & Stats --------------------
     def empty_model_cache(self) -> bool:
-        resp = self._client._make_request_v2("POST", _V2Endpoint.EMPTY_CACHE)
+        try:
+            resp = self._client._make_request_v2("POST", _V2Endpoint.EMPTY_CACHE)
+        except requests.HTTPError as e:
+            raise self._to_api_error(e)
         return bool(resp.status_code in (200, 204))
 
     def get_stats(self) -> Optional[ModelManagerStats]:
-        resp = self._client._make_request_v2("GET", _V2Endpoint.STATS)
+        try:
+            resp = self._client._make_request_v2("GET", _V2Endpoint.STATS)
+        except requests.HTTPError as e:
+            raise self._to_api_error(e)
         if resp.status_code == 200 and resp.content:
             data = resp.json()
             if data is None:
@@ -261,7 +289,10 @@ class DnnModelRepository:
         params: dict[str, Any] = {}
         if scan_path is not None:
             params["scan_path"] = scan_path
-        resp = self._client._make_request_v2("GET", _V2Endpoint.SCAN_FOLDER, params=params)
+        try:
+            resp = self._client._make_request_v2("GET", _V2Endpoint.SCAN_FOLDER, params=params)
+        except requests.HTTPError as e:
+            raise self._to_api_error(e)
         data = resp.json()
         if isinstance(data, list):
             return [self._parse_found_model(it) for it in data]
@@ -269,7 +300,10 @@ class DnnModelRepository:
 
     # -------------------- Hugging Face helpers --------------------
     def hf_status(self) -> HFLoginStatus:
-        resp = self._client._make_request_v2("GET", _V2Endpoint.HF_LOGIN)
+        try:
+            resp = self._client._make_request_v2("GET", _V2Endpoint.HF_LOGIN)
+        except requests.HTTPError as e:
+            raise self._to_api_error(e)
         status_raw = str(resp.json())
         try:
             return HFLoginStatus(status_raw)
@@ -277,11 +311,17 @@ class DnnModelRepository:
             return HFLoginStatus.UNKNOWN
 
     def hf_login(self, token: str) -> bool:
-        resp = self._client._make_request_v2("POST", _V2Endpoint.HF_LOGIN, json={"token": token})
+        try:
+            resp = self._client._make_request_v2("POST", _V2Endpoint.HF_LOGIN, json={"token": token})
+        except requests.HTTPError as e:
+            raise self._to_api_error(e)
         return bool(resp.status_code == 200)
 
     def hf_logout(self) -> bool:
-        resp = self._client._make_request_v2("DELETE", _V2Endpoint.HF_LOGIN)
+        try:
+            resp = self._client._make_request_v2("DELETE", _V2Endpoint.HF_LOGIN)
+        except requests.HTTPError as e:
+            raise self._to_api_error(e)
         return bool(resp.status_code == 200)
 
     # -------------------- Parsing helpers --------------------
@@ -313,6 +353,17 @@ class DnnModelRepository:
         }
         extra = {k: v for k, v in data.items() if k not in {"path", "is_installed"}}
         return FoundModel(**known, extra=extra)
+
+    @staticmethod
+    def _to_api_error(e: requests.HTTPError) -> APIRequestError:
+        status = e.response.status_code if e.response is not None else None
+        payload: Any = None
+        try:
+            if e.response is not None:
+                payload = e.response.json()
+        except Exception:
+            payload = e.response.text if e.response is not None else None
+        return APIRequestError(str(e), status_code=status, payload=payload)
 
     def __repr__(self) -> str:
         """

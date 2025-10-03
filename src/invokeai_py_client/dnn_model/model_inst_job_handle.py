@@ -16,6 +16,11 @@ from invokeai_py_client.dnn_model.dnn_model_models import (
     ModelInstJobInfo,
     _V2Endpoint,
 )
+from invokeai_py_client.dnn_model.dnn_model_exceptions import (
+    APIRequestError,
+    ModelInstallJobFailed,
+    ModelInstallTimeout,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     from invokeai_py_client.client import InvokeAIClient
@@ -55,7 +60,10 @@ class ModelInstJobHandle:
     def refresh(self) -> ModelInstJobInfo:
         """Fetch latest job info and cache it."""
         url = _V2Endpoint.INSTALL_BY_ID.format(id=self.job_id)
-        resp = self._client_v2("GET", url)
+        try:
+            resp = self._client_v2("GET", url)
+        except requests.HTTPError as e:  # pragma: no cover
+            raise self._to_api_error(e)
         data = resp.json()
         self._info = self._parse_job_info(data)
         return self._info
@@ -90,19 +98,46 @@ class ModelInstJobHandle:
         except requests.HTTPError as e:  # pragma: no cover - depends on server behavior
             if e.response is not None and e.response.status_code in (404, 415):
                 return False
-            raise
+            raise self._to_api_error(e)
 
-    def wait(self, timeout: float = 600.0, poll_interval: float = 2.0) -> ModelInstJobInfo:
-        """Wait until the job reaches a terminal state or timeout elapses."""
-        deadline = datetime.now() + timedelta(seconds=timeout)
-        while datetime.now() < deadline:
+    def wait_until(self, timeout: Optional[float] = 600.0, poll_interval: float = 2.0) -> ModelInstJobInfo:
+        """Wait until the job reaches a terminal state or timeout elapses.
+
+        When `timeout` is None, wait indefinitely.
+        Raises ModelInstallJobFailed on failure/cancelled, ModelInstallTimeout on timeout.
+        """
+        start = datetime.now()
+        deadline = None if timeout is None else (start + timedelta(seconds=timeout))
+        last_info: Optional[ModelInstJobInfo] = None
+        while True:
             info = self.refresh()
+            last_info = info
             if info.status in {InstallJobStatus.COMPLETED, InstallJobStatus.ERROR, InstallJobStatus.CANCELLED}:
-                return info
+                if info.status == InstallJobStatus.COMPLETED:
+                    return info
+                raise ModelInstallJobFailed(
+                    f"install job {self.job_id} ended with status={info.status}", info=info
+                )
             import time
 
             time.sleep(poll_interval)
-        return self.refresh()
+            if deadline is not None and datetime.now() >= deadline:
+                raise ModelInstallTimeout(
+                    f"install job {self.job_id} timed out after {timeout}s", last_info=last_info, timeout=timeout
+                )
+
+    # Backward compatible alias
+    def wait(self, timeout: Optional[float] = 600.0, poll_interval: float = 2.0) -> ModelInstJobInfo:  # pragma: no cover
+        return self.wait_until(timeout=timeout, poll_interval=poll_interval)
+
+    def raise_if_failed(self) -> None:
+        """Raise ModelInstallJobFailed if the job is failed/cancelled."""
+        info = self.refresh() if self._info is None else self._info
+        assert info is not None
+        if info.status in {InstallJobStatus.ERROR, InstallJobStatus.CANCELLED}:
+            raise ModelInstallJobFailed(
+                f"install job {self.job_id} ended with status={info.status}", info=info
+            )
 
     # -------------------- Private helpers --------------------
     def _client_v2(self, method: str, endpoint: str, **kwargs):
@@ -143,3 +178,13 @@ class ModelInstJobHandle:
         }}
         return ModelInstJobInfo(**known, extra=extra)
 
+    @staticmethod
+    def _to_api_error(e: requests.HTTPError) -> APIRequestError:
+        status = e.response.status_code if e.response is not None else None
+        payload: Any = None
+        try:
+            if e.response is not None:
+                payload = e.response.json()
+        except Exception:
+            payload = e.response.text if e.response is not None else None
+        return APIRequestError(str(e), status_code=status, payload=payload)

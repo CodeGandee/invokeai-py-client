@@ -60,32 +60,33 @@ Model Management API (v2 model_manager endpoints) — Implemented in DnnModelRep
 **Public API (proposed)**
 - Repository: `DnnModelRepository`
   - Install / Jobs
-    - `install_model(source: str, config: ModelInstallConfig | dict | None = None, inplace: bool | None = None, access_token: str | None = None) -> ModelInstJobHandle` — Creates and returns a job handle for a new install job (local path, URL, or HF repo id).
+    - `install_model(source: str, config: ModelInstallConfig | dict | None = None, inplace: bool | None = None, access_token: str | None = None) -> ModelInstJobHandle` — Creates and returns a job handle for a new install job (local path, URL, or HF repo id). Raises a native exception if job creation fails (no `requests.HTTPError` leakage).
     - `list_install_jobs() -> list[ModelInstJobHandle]` — Lists all install jobs as handles.
-    - `get_install_job(id: str) -> ModelInstJobHandle | None` — Returns a handle to a single install job.
+    - `get_install_job(id: str) -> ModelInstJobHandle | None` — Returns a handle to a single install job (wraps not‑found as `None`, other errors as native exceptions).
     - `prune_install_jobs() -> bool` — Removes finished/errored install jobs from the server’s list.
     - (Optional) `install_huggingface(repo_id: str, config: ModelInstallConfig | dict | None = None, access_token: str | None = None) -> ModelInstJobHandle` — Convenience wrapper over `install_model` for HF repo ids.
   - Mutations
-    - `convert_model(key: str) -> DnnModel` — Converts a safetensors model to diffusers; returns the updated model record.
-    - `delete_model(key: str) -> bool` — Deletes a model by key.
+    - `convert_model(key: str) -> DnnModel` — Converts a safetensors model to diffusers; returns the updated model record. Raises native exceptions on API errors.
+    - `delete_model(key: str) -> bool` — Deletes a model by key. Raises native exceptions on API errors.
     - `scan_folder(scan_path: str | None = None) -> list[FoundModel] | dict` — Triggers a scan of the models directory for changes; return shape follows upstream.
   - Cache & Stats
-    - `empty_model_cache() -> bool` — Clears the RAM/VRAM model cache (locked/in-use models remain).
-    - `get_stats() -> ModelManagerStats | None` — Returns cache stats or `None` if no models were loaded.
+    - `empty_model_cache() -> bool` — Clears the RAM/VRAM model cache (locked/in-use models remain). Raises native exceptions on API errors.
+    - `get_stats() -> ModelManagerStats | None` — Returns cache stats or `None` if no models were loaded. Raises native exceptions on API errors.
   - HF Helpers
-    - `hf_login(token: str) -> bool` — Logs into Hugging Face with the provided token.
-    - `hf_logout() -> bool` — Logs out of Hugging Face and clears the token.
-    - `hf_status() -> HFLoginStatus` — Returns Hugging Face login status (logged in, username, scopes).
+    - `hf_login(token: str) -> bool` — Logs into Hugging Face with the provided token. Raises native exceptions on API errors.
+    - `hf_logout() -> bool` — Logs out of Hugging Face and clears the token. Raises native exceptions on API errors.
+    - `hf_status() -> HFLoginStatus` — Returns Hugging Face login status (logged in, username, scopes). Raises native exceptions on API errors.
 
 - Handle: `ModelInstJobHandle` (optional, sugar)
-  - `refresh() -> ModelInstJobInfo` — Fetch latest job info from the server and update cache.
+  - `refresh() -> ModelInstJobInfo` — Fetch latest job info and update cache. Wraps API errors as native exceptions.
   - `info: ModelInstJobInfo | None` — Cached job info, if previously refreshed.
   - `status() -> InstallJobStatus`
   - `progress() -> float | None`
   - `is_done() -> bool`
   - `is_failed() -> bool`
-  - `cancel() -> bool`
-  - `wait(timeout: float = 600.0, poll_interval: float = 2.0) -> ModelInstJobInfo` (returns final state)
+  - `raise_if_failed() -> None` — Raises native job failure exception if the job is in a failed state.
+  - `cancel() -> bool` — Cancels the job via the API (wraps API errors as native exceptions).
+  - `wait_until(timeout: float | None = 600.0, poll_interval: float = 2.0) -> ModelInstJobInfo` — Poll until terminal. When `timeout is None`, wait indefinitely. Raises a native exception if the job ends in failure or cancellation; returns final info on success.
 
 **Typed Models (Pydantic, v2)**
 - `InstallJobStatus` (Enum[str]): allow known values and store unknown in `extra`
@@ -173,6 +174,28 @@ Signature note
 - We accept either `ModelInstallConfig` or a raw `dict` for `config`.
 - `inplace: bool | None` forwards to the upstream query param for local installs.
 
+**Error Handling & Native Exceptions**
+- Rationale: Do not leak `requests.HTTPError` to users of this client. Map HTTP failures and job failures to native exceptions with useful context.
+- New exception hierarchy (in `src/invokeai_py_client/exceptions.py`):
+  - `InvokeAIClientError` (base)
+  - `APIRequestError(InvokeAIClientError)`: `.status_code`, `.message`, `.payload`
+    - Subclasses for common classes: `BadRequestError(400)`, `UnauthorizedError(401)`, `ForbiddenError(403)`, `NotFoundError(404)`, `ConflictError(409)`, `ValidationError(422)`, `RateLimitError(429)`, `ServerError(5xx)`
+  - `ModelManagerError(InvokeAIClientError)` (base for model ops)
+    - `ModelInstallStartError(ModelManagerError)`: job creation failed (install_model cannot start)
+    - `ModelInstallJobFailed(ModelManagerError)`: job reached a terminal failure/cancelled state; includes final `ModelInstJobInfo`
+    - `ModelInstallTimeout(ModelManagerError)`: `wait_until()` timed out; includes last observed `ModelInstJobInfo`
+- Repository behavior:
+  - All repository methods wrap HTTP failures into `APIRequestError` subclasses — users never see `requests.HTTPError`.
+  - `install_model()` raises `ModelInstallStartError` when the API rejects job creation.
+  - Mutations (`convert_model`, `delete_model`, `empty_model_cache`, `hf_login`, etc.) raise `APIRequestError` subclasses on failure.
+- Handle behavior:
+  - `refresh()` wraps HTTP errors into native `APIRequestError` subclasses.
+  - `wait_until()` polls until success/failure/timeout:
+    - On success: returns final `ModelInstJobInfo`.
+    - On failure/cancelled: raises `ModelInstallJobFailed` with attached final info.
+    - On timeout: raises `ModelInstallTimeout` with last observed info.
+  - `raise_if_failed()` allows explicit failure checks during manual polling.
+
 **Compatibility & URL Builder**
 - Client currently builds URLs against `/api/v1`. To call v2 endpoints reliably:
   - Add `_make_request_v2(method: str, endpoint: str, **kwargs)` that mirrors `_make_request` but prefixes `/api/v2`.
@@ -191,8 +214,12 @@ job = client.dnn_model_repo.install_model(
     inplace=None,  # or True for local path installs
 )
 
-# 2) Wait for install to complete (handle returns info)
-final = job.wait(timeout=1800, poll_interval=3)
+# 2) Wait for install to complete with native error handling
+try:
+    final = job.wait_until(timeout=1800, poll_interval=3)
+except ModelInstallJobFailed as e:
+    print("install failed:", e)
+    raise
 assert final.status in {"installed", "completed"}
 
 # 3) Convert a model

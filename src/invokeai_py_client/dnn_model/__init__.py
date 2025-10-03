@@ -28,6 +28,14 @@ from invokeai_py_client.dnn_model.dnn_model_models import (
     ModelInstallConfig,
 )
 from invokeai_py_client.dnn_model.model_inst_job_handle import ModelInstJobHandle
+from invokeai_py_client.dnn_model.dnn_model_exceptions import (
+    InvokeAIClientError,
+    APIRequestError,
+    ModelManagerError,
+    ModelInstallStartError,
+    ModelInstallJobFailed,
+    ModelInstallTimeout,
+)
 
 __all__ = [
     "DnnModel",
@@ -43,4 +51,11 @@ __all__ = [
     "FoundModel",
     "ModelInstallConfig",
     "ModelInstJobHandle",
+    # Exceptions
+    "InvokeAIClientError",
+    "APIRequestError",
+    "ModelManagerError",
+    "ModelInstallStartError",
+    "ModelInstallJobFailed",
+    "ModelInstallTimeout",
 ]
