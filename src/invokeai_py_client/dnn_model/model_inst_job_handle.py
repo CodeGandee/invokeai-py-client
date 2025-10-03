@@ -59,6 +59,14 @@ class ModelInstJobHandle:
     # -------------------- API helpers --------------------
     def refresh(self) -> ModelInstJobInfo:
         """Fetch latest job info and cache it."""
+        # If we have a synthetic terminal info (e.g., already installed), return it
+        if self._info is not None and self._info.status in {
+            InstallJobStatus.COMPLETED,
+            InstallJobStatus.ERROR,
+            InstallJobStatus.CANCELLED,
+        } and (self._job_id is None or self._job_id < 0):
+            return self._info
+
         url = _V2Endpoint.INSTALL_BY_ID.format(id=self.job_id)
         try:
             resp = self._client_v2("GET", url)
@@ -110,6 +118,18 @@ class ModelInstJobHandle:
         deadline = None if timeout is None else (start + timedelta(seconds=timeout))
         last_info: ModelInstJobInfo | None = None
         while True:
+            # If we already know the terminal state, short-circuit
+            if self._info is not None and self._info.status in {
+                InstallJobStatus.COMPLETED,
+                InstallJobStatus.ERROR,
+                InstallJobStatus.CANCELLED,
+            }:
+                info = self._info
+                if info.status == InstallJobStatus.COMPLETED:
+                    return info
+                raise ModelInstallJobFailed(
+                    f"install job {self.job_id} ended with status={info.status}", info=info
+                )
             info = self.refresh()
             last_info = info
             if info.status in {InstallJobStatus.COMPLETED, InstallJobStatus.ERROR, InstallJobStatus.CANCELLED}:
