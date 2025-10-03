@@ -55,6 +55,8 @@ Highlights of what is implemented and tested.
   - Job handle: `src/invokeai_py_client/dnn_model/model_inst_job_handle.py` (`ModelInstJobHandle` with refresh/status/cancel/wait)
   - API surface: install/list/get/prune install jobs; convert/delete model; scan_folder; empty cache; stats; HF login/logout/status
   - Client: v2 request helper `_make_request_v2()` added in `client.py`
+  - Native errors: `dnn_model_exceptions.py` with `APIRequestError`, `ModelInstallStartError`, `ModelInstallJobFailed`, `ModelInstallTimeout`
+  - Idempotency: install 409 (already installed) returns a synthetic COMPLETED handle with `info.extra['reason']=='already_installed'` (no exception)
 
 ### Queues and Jobs (Repository/Handle pattern)
 
@@ -77,15 +79,16 @@ Highlights of what is implemented and tested.
 
 ## Next Milestones
 
-### Test Model Management API
+### Test & Document Model Management API
 
 Goals
-- Add unit and integration tests for the newly implemented model management operations in `DnnModelRepository`.
+- Add unit and integration tests for model management operations in `DnnModelRepository`.
 - Provide examples and docs for typical flows (HF install → wait → convert → delete; cache/stats; HF login).
 
 Acceptance Criteria
 - Unit/integration tests covering happy-path flows against a running server (guard with `INVOKE_AI_ENDPOINT`).
-- Example snippets/notebook in `examples/` for installing a model by HF repo id, monitoring an install job via `ModelInstJobHandle`, and deleting a model.
+- API reference page for `DnnModelRepository` and updated user guide section for model management.
+- Example snippets/notebook in `examples/` for install/monitor/delete.
 
 ## Stretch / Later
 

@@ -133,19 +133,35 @@ workflow = client.workflow_repo.create_workflow(definition)
 def dnn_model_repo(self) -> DnnModelRepository:
 ```
 
-Get the DNN model repository instance for model operations.
+Get the DNN model repository instance for model discovery and management.
 
 **Returns:**
 - `DnnModelRepository`: Repository for listing and accessing models
 
 **Example:**
 ```python
-# List available models
+# Discovery: list/get
 models = client.dnn_model_repo.list_models()
-sdxl_models = [m for m in models if m.base == "sdxl"]
+sdxl_models = [m for m in models if str(getattr(m, "base", "")).lower() == "sdxl"]
 ```
 
-**Source:** [`InvokeAIClient.dnn_model_repo`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/client.py#L281){:target="_blank"}
+Model management (v2 model_manager):
+- Install from local path/URL/HF; idempotent (409 already-installed returns a synthetic COMPLETED handle)
+- Monitor install jobs with `ModelInstJobHandle.wait_until()`
+- Convert/delete models; `delete_all_models()` convenience
+- Scan folders for models; empty cache; get cache stats
+- HF login/logout/status
+
+```python
+from invokeai_py_client.dnn_model import ModelInstallJobFailed
+
+h = client.dnn_model_repo.install_model("/mnt/extra/sdxl/main/my_model.safetensors", inplace=True)
+try:
+    info = h.wait_until(timeout=None)
+    print("installed", getattr(info, "model_key", None))
+except ModelInstallJobFailed as e:
+    print("failed", getattr(e.info, "error", None))
+```
 
 ### Core Methods
 

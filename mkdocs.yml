@@ -149,6 +149,7 @@ nav:
     - Fields: api-reference/fields.md
     - Boards: api-reference/boards.md
     - Models: api-reference/models.md
+    - DNN Model Repository: api-reference/dnn_model_repo.md
     - Quick Client: api-reference/quick.md
     - Utilities: api-reference/utilities.md
   - Developer Guide:

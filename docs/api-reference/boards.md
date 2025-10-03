@@ -1,6 +1,6 @@
 # Boards API
 
-Complete reference for board and image management using the Repository pattern, covering board lifecycle operations, image upload/download, and organizational features. Key implementations include [`BoardRepository`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_repo.py#L21){:target="_blank"} for board management and [`BoardHandle`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_handle.py#L23){:target="_blank"} for per-board operations.
+Complete reference for board and image management using the Repository pattern, covering board lifecycle operations, image upload/download, and organizational features. Use `client.board_repo` for repository access and `BoardHandle` for per-board operations.
 
 ## BoardRepository
 
@@ -205,13 +205,6 @@ Update board name and/or privacy settings.
 **Returns:**
 - `Board | None`: Updated board object if successful, None otherwise
 
-Implementation details
-- `list_boards`: [`BoardRepository.list_boards()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_repo.py#L59){:target="_blank"}
-- `create_board`: [`BoardRepository.create_board()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_repo.py#L175){:target="_blank"}
-- `delete_board`: [`BoardRepository.delete_board()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_repo.py#L219){:target="_blank"}
-- `get_board_handle`: [`BoardRepository.get_board_handle()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_repo.py#L267){:target="_blank"}
-- `update_board`: [`BoardRepository.update_board()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_repo.py#L401){:target="_blank"}
-
 Usage
 ```python
 # List boards (optionally include uncategorized)
@@ -287,13 +280,6 @@ Important behaviors
 - remove_image() moves an image off the current board to uncategorized. move_image_to() allows moving across boards.
 - Returns: upload_image(_data) returns IvkImage; download_image returns bytes.
 
-Implementation details
-- `upload_image`: [`BoardHandle.upload_image()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_handle.py#L182){:target="_blank"}
-- `upload_image_data`: [`BoardHandle.upload_image_data()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_handle.py#L272){:target="_blank"}
-- `list_images`: [`BoardHandle.list_images()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_handle.py#L106){:target="_blank"}
-- `download_image`: [`BoardHandle.download_image()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_handle.py#L357){:target="_blank"}
-- Image operations: [`BoardHandle.move_image_to()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_handle.py#L404){:target="_blank"}, [`BoardHandle.remove_image()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_handle.py#L436){:target="_blank"}, [`BoardHandle.delete_image()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_handle.py#L460){:target="_blank"}, [`BoardHandle.star_image()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_handle.py#L490){:target="_blank"}, [`BoardHandle.unstar_image()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_handle.py#L510){:target="_blank"}
-
 Examples
 ```python
 # Upload from file (to a named board)
@@ -334,84 +320,12 @@ print("Deleted?", deleted)
 - Implementation: [`BoardHandle.delete_image()`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/board/board_handle.py#L460){:target="_blank"}
 - Behavior: issues `DELETE /api/v1/images/i/{image_name}` and parses the response JSON (`deleted_images` list). Returns `True` only if the specified `image_name` appears in `deleted_images`; otherwise `False`. A 404 results in `False`.
 
-Resolving exact image_name
+Deletion helpers
 ```python
-# If unsure about exact token (with/without extension), resolve robustly:
-def resolve_exact_image_name(client, rough):
-    # Try DTO as-is
-    try:
-        if client._make_request("GET", f"/images/i/{rough}").status_code == 200:
-            return rough
-    except Exception:
-        pass
-    # Try stem
-    stem = rough.rsplit(".", 1)[0] if "." in rough else rough
-    try:
-        if client._make_request("GET", f"/images/i/{stem}").status_code == 200:
-            return stem
-    except Exception:
-        pass
-    # Fallback to uncategorized list (board_id="none")
-    try:
-        names = client._make_request("GET", "/boards/none/image_names").json()
-        if isinstance(names, list):
-            if rough in names: return rough
-            if stem in names: return stem
-            for n in names:
-                if n.startswith(stem):  # prefix fallback
-                    return n
-    except Exception:
-        pass
-    return None
-```
-
-Bulk deletion (raw API)
-```python
-# Delete all uncategorized images:
-resp = client._make_request("DELETE", "/images/uncategorized")
-print(resp.json())  # -> {'deleted_images': [...], 'affected_boards': [...]}
-
-# Delete a list of images:
-payload = {"image_names": ["a.png", "b.png", "c.png"]}
-resp = client._make_request("POST", "/images/delete", json=payload)
-print(resp.json())  # -> {'deleted_images': [...], 'affected_boards': [...]}
-```
-Upstream endpoints (reference):
-- Single delete: `DELETE /api/v1/images/i/{image_name}` (see InvokeAI images router)
-- Bulk delete list: `POST /api/v1/images/delete` (see InvokeAI images router)
-- Delete all uncategorized: `DELETE /api/v1/images/uncategorized` (see InvokeAI images router)
-
-Error-handling pattern (optional)
-```python
-# Raise on not found; raise on unknown failure; True on success; False otherwise.
-def delete_image_strict(client, image_name: str) -> bool:
-    # Confirm existence
-    try:
-        exists = client._make_request("GET", f"/images/i/{image_name}").status_code == 200
-    except Exception as e:
-        raise RuntimeError(f"connection error verifying existence: {e}")
-    if not exists:
-        raise FileNotFoundError(f"image does not exist: {image_name}")
-
-    # Attempt deletion
-    try:
-        deleted = client.board_repo.get_uncategorized_handle().delete_image(image_name)
-    except Exception as e:
-        raise RuntimeError(f"delete failed: {e}")
-
-    if deleted:
-        return True
-
-    # Unknown failure if server didn’t report deletion and image still exists
-    try:
-        still_exists = client._make_request("GET", f"/images/i/{image_name}").status_code == 200
-    except Exception as e:
-        raise RuntimeError(f"connection error verifying deletion: {e}")
-
-    if still_exists:
-        raise RuntimeError("unknown error")
-
-    return False
+# Delete by name within a board
+uncat = client.board_repo.get_uncategorized_handle()
+deleted = uncat.delete_image("image_name.png")
+print("Deleted?", deleted)
 ```
 
 Model
@@ -432,5 +346,3 @@ class Board(BaseModel):
 
 Cross-references
 - User guide: [docs/user-guide/boards.md](../user-guide/boards.md)
-- Examples: [`flux-image-to-image.py`](https://github.com/CodeGandee/invokeai-py-client/blob/main/examples/pipelines/flux-image-to-image.py){:target="_blank"}
-- Raw API demos: [`api-demo-boards.py`](https://github.com/CodeGandee/invokeai-py-client/blob/main/examples/raw-apis/api-demo-boards.py){:target="_blank"}, [`api-demo-upload-image.py`](https://github.com/CodeGandee/invokeai-py-client/blob/main/examples/raw-apis/api-demo-upload-image.py){:target="_blank"}

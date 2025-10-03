@@ -43,6 +43,14 @@ High-level convenience helpers built on top of the core APIs
 - Type-safe API response handling and serialization
 - Workflow execution state tracking
 
+### [🧩 DNN Model Repository](dnn_model_repo.md)
+**Model management** - v2 model_manager API operations
+- Discovery: list/get models (no cache)
+- Install jobs: create/list/get/prune; `ModelInstJobHandle.wait_until()`
+- Mutations: convert/delete; `delete_all_models()` convenience
+- Scan: `scan_folder()` to find models on disk; `empty_model_cache()`/`get_stats()`
+- HF helpers: `hf_status()`/`hf_login()`/`hf_logout()`
+
 ### [🛠️ Utilities](utilities.md)
 **Helper patterns** - Practical utilities for common operations
 - Input discovery: `preview()`, index map management

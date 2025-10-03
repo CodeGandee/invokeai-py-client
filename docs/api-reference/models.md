@@ -45,7 +45,7 @@ while job.status == JobStatus.PENDING:
     job = client.get_job(job.id)
 ```
 
-**Source:** [`JobStatus`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/models.py#L17){:target="_blank"}
+See: `src/invokeai_py_client/models.py` (JobStatus)
 
 ### `ImageCategory` - Image Classification System
 
@@ -82,42 +82,20 @@ depth_img = board_handle.upload_image(
 )
 ```
 
-**Source:** [`ImageCategory`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/models.py#L32){:target="_blank"}
+See: `src/invokeai_py_client/models.py` (ImageCategory)
 
-### `BaseModelEnum` - AI Model Architectures
+### BaseDnnModelType & DnnModelType — DNN Model Taxonomy
 
 ```python
-class BaseModelEnum(str, Enum):
-    SD1 = "sd-1"                    # Stable Diffusion v1.x
-    SD2 = "sd-2"                    # Stable Diffusion v2.x  
-    SDXL = "sdxl"                   # Stable Diffusion XL
-    SDXL_REFINER = "sdxl-refiner"   # SDXL Refiner model
-    FLUX = "flux"                   # FLUX standard model
-    FLUX_SCHNELL = "flux-schnell"   # FLUX fast variant
+from invokeai_py_client.dnn_model import BaseDnnModelType, DnnModelType
 ```
 
-Categorizes AI model architectures for compatibility and selection purposes.
-
-**Architecture Characteristics:**
-- **SD1/SD2**: Legacy Stable Diffusion models (512x512, 768x768)
-- **SDXL**: High-resolution Stable Diffusion XL (1024x1024+)
-- **SDXL_REFINER**: Specialized refiner for SDXL outputs
-- **FLUX**: New architecture with improved quality and speed
-- **FLUX_SCHNELL**: Optimized FLUX variant for faster generation
+Use BaseDnnModelType (e.g., StableDiffusionXL, Flux) with DnnModelType (e.g., Main, VAE, ControlNet).
 
 **Model Selection Example:**
 ```python
-# Filter models by architecture
-sdxl_models = [
-    model for model in client.dnn_model_repo.list_models() 
-    if model.base == BaseModelEnum.SDXL
-]
-
-# Architecture-specific workflow selection
-if model.base in [BaseModelEnum.FLUX, BaseModelEnum.FLUX_SCHNELL]:
-    workflow = "flux-text-to-image.json"
-elif model.base == BaseModelEnum.SDXL:
-    workflow = "sdxl-text-to-image.json"
+models = client.dnn_model_repo.list_models()
+sdxl_models = [m for m in models if m.base == BaseDnnModelType.StableDiffusionXL]
 ```
 
 **Source:** [`BaseModelEnum`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/models.py#L77){:target="_blank"}
@@ -232,12 +210,12 @@ class IvkJob(BaseModel):
     metadata: dict[str, Any] = {}
 
     @classmethod
-    def from_api_response(cls, data: dict[str, Any]) -> "IvkJob": ...
+    def from_api_response(cls, data: dict[str, Any]) -> IvkJob: ...
     def is_complete(self) -> bool: ...
     def is_successful(self) -> bool: ...
     def to_dict(self) -> dict[str, Any]: ...
 ```
-- Helpers:
+Helpers:
   - is_complete() checks for COMPLETED/FAILED/CANCELLED
   - is_successful() checks for COMPLETED
 - Source: [`IvkJob`](https://github.com/CodeGandee/invokeai-py-client/blob/main/src/invokeai_py_client/models.py#L196){:target="_blank"} class
@@ -275,3 +253,25 @@ class IvkDnnModel(BaseModel):
 - Workflows: [docs/api-reference/workflow.md](workflow.md)
 - Fields and enums for inputs: [docs/api-reference/fields.md](fields.md)
 - Boards and images: [docs/api-reference/boards.md](boards.md)
+### DnnModel — DNN Model Metadata
+
+```python
+from invokeai_py_client.dnn_model import DnnModel
+
+class DnnModel(BaseModel):
+    key: str
+    name: str
+    type: DnnModelType
+    base: BaseDnnModelType
+    hash: str
+    description: str = ""
+    format: DnnModelFormat
+    path: str
+    source: str = ""
+    file_size: int | None = None
+    variant: str | None = None
+    prediction_type: str | None = None
+```
+
+Use `client.dnn_model_repo.list_models()` to fetch DnnModel instances and
+`get_model_by_key()` to retrieve a specific model.

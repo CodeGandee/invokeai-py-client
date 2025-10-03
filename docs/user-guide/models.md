@@ -99,41 +99,83 @@ def smart_sync(wf, preferred_models=None):
     return changes
 ```
 
-## Model Discovery
+## Model Discovery & Management
 
 ### List Available Models
 
 ```python
-def list_available_models(client, base_model=None):
-    """List models available on server."""
-    # This would use the REST API
-    params = {}
-    if base_model:
-        params['base_models'] = base_model
-    
-    response = client._make_request("GET", "/models/", params=params)
-    return response.json()
-
-# Get all SDXL models
-sdxl_models = list_available_models(client, base_model="sdxl")
-for model in sdxl_models:
-    print(f"- {model['model_name']}: {model['description']}")
+models = client.dnn_model_repo.list_models()
+sdxl = [m for m in models if str(getattr(m, "base", "")).lower() == "sdxl"]
+for m in sdxl:
+    print(f"- {m.name} ({m.type})")
 ```
 
 ### Get Model Details
 
 ```python
-def get_model_info(client, model_key):
-    """Get detailed model information."""
-    response = client._make_request("GET", f"/models/i/{model_key}")
-    return response.json()
+info = client.dnn_model_repo.get_model_by_key("stable-diffusion-xl-base")
+if info:
+    print(f"Name: {info.name}")
+    print(f"Base: {info.base}")
+    print(f"Type: {info.type}")
+    print(f"Path: {info.path}")
 
-# Get model details
-info = get_model_info(client, "stable-diffusion-xl-base")
-print(f"Name: {info['model_name']}")
-print(f"Base: {info['base_model']}")
-print(f"Type: {info['model_type']}")
-print(f"Path: {info['path']}")
+## Installing Models
+
+Use the DNN model repository to install models from local files, URLs, or HF repos.
+
+```python
+from invokeai_py_client.dnn_model import ModelInstallJobFailed
+
+# Local file
+h = client.dnn_model_repo.install_model("/mnt/extra/sdxl/main/my_model.safetensors", inplace=True)
+try:
+    info = h.wait_until(timeout=None)  # Wait until terminal
+    print("installed", getattr(info, "model_key", None))
+except ModelInstallJobFailed as e:
+    print("install failed:", getattr(e.info, "error", None))
+
+# Hugging Face repo id
+h2 = client.dnn_model_repo.install_huggingface("org/name")
+info2 = h2.wait_until(timeout=None)
+```
+
+Already-installed models are returned as a synthetic COMPLETED handle with
+`info.extra['reason']=='already_installed'` (no exception).
+
+## Scanning & Cleanup
+
+Scan a folder for models on disk and optionally install them.
+
+```python
+entries = client.dnn_model_repo.scan_folder(os.environ.get("CONTAINER_EXTERNAL_MODEL_DIR", "/mnt/extra"))
+for e in entries:
+    path = getattr(e, "path", None) or e.get("path")
+    if not path:
+        continue
+    try:
+        h = client.dnn_model_repo.install_model(path, inplace=True)
+        info = h.wait_until(timeout=None)
+        print("installed", getattr(info, "model_key", None))
+    except ModelInstallJobFailed as err:
+        print("failed", getattr(err.info, "error", None))
+```
+
+Delete a model or clear all models:
+
+```python
+client.dnn_model_repo.delete_model("abc-123")
+summary = client.dnn_model_repo.delete_all_models()
+print(summary)
+```
+
+Empty cache and get stats:
+
+```python
+client.dnn_model_repo.empty_model_cache()
+stats = client.dnn_model_repo.get_stats()
+print(stats)
+```
 ```
 
 ## Working with Model Fields
