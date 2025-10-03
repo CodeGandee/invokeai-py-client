@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -41,19 +41,19 @@ class ModelInstJobInfo(BaseModel):
     status: InstallJobStatus
 
     # Error and progress info
-    error: Optional[str] = None
-    error_reason: Optional[str] = None
-    error_traceback: Optional[str] = None
-    bytes: Optional[int] = None
-    total_bytes: Optional[int] = None
+    error: str | None = None
+    error_reason: str | None = None
+    error_traceback: str | None = None
+    bytes: int | None = None
+    total_bytes: int | None = None
 
     # Resulting model key (if available)
-    model_key: Optional[str] = None
+    model_key: str | None = None
 
     # Timestamps (best-effort, upstream may not include)
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    completed_at: datetime | None = None
 
     extra: dict[str, Any] = Field(default_factory=dict)
 
@@ -63,12 +63,12 @@ class ModelManagerStats(BaseModel):
     Model manager RAM cache performance statistics. Upstream may return null.
     """
 
-    hit_rate: Optional[float] = None
-    miss_rate: Optional[float] = None
-    ram_used_mb: Optional[float] = None
-    ram_capacity_mb: Optional[float] = None
-    loads: Optional[int] = None
-    evictions: Optional[int] = None
+    hit_rate: float | None = None
+    miss_rate: float | None = None
+    ram_used_mb: float | None = None
+    ram_capacity_mb: float | None = None
+    loads: int | None = None
+    evictions: int | None = None
     extra: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -96,18 +96,18 @@ class ModelInstallConfig(BaseModel):
     All fields are optional; passing an empty dict accepts server defaults.
     """
 
-    name: Optional[str] = None
-    description: Optional[str] = None
-    base: Optional[BaseDnnModelType] = None
-    type: Optional[DnnModelType] = None
-    path: Optional[str] = None
-    format: Optional[str] = None
-    prediction_type: Optional[str] = None
-    upcast_attention: Optional[bool] = None
-    trigger_phrases: Optional[list[str]] = None
-    default_settings: Optional[dict[str, Any]] = None
-    variant: Optional[str] = None
-    config_path: Optional[str] = None
+    name: str | None = None
+    description: str | None = None
+    base: BaseDnnModelType | None = None
+    type: DnnModelType | None = None
+    path: str | None = None
+    format: str | None = None
+    prediction_type: str | None = None
+    upcast_attention: bool | None = None
+    trigger_phrases: list[str] | None = None
+    default_settings: dict[str, Any] | None = None
+    variant: str | None = None
+    config_path: str | None = None
     extra: dict[str, Any] = Field(default_factory=dict)
 
     def to_record_changes(self) -> dict[str, Any]:
@@ -130,4 +130,3 @@ class _V2Endpoint:
     EMPTY_CACHE: str = "/models/empty_model_cache"
     HF_LOGIN: str = "/models/hf_login"
     SCAN_FOLDER: str = "/models/scan_folder"
-

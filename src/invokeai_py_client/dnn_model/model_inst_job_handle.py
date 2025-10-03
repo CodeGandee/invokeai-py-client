@@ -7,7 +7,7 @@ Provides refresh, status helpers, cancel, and wait-for-completion.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Optional, TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import requests
 
@@ -34,12 +34,12 @@ class ModelInstJobHandle:
     """
 
     def __init__(self) -> None:
-        self._client: Optional["InvokeAIClient"] = None
-        self._job_id: Optional[int] = None
-        self._info: Optional[ModelInstJobInfo] = None
+        self._client: InvokeAIClient | None = None
+        self._job_id: int | None = None
+        self._info: ModelInstJobInfo | None = None
 
     @classmethod
-    def from_client_and_id(cls, client: "InvokeAIClient", job_id: int) -> "ModelInstJobHandle":
+    def from_client_and_id(cls, client: InvokeAIClient, job_id: int) -> ModelInstJobHandle:
         inst = cls()
         inst._client = client
         inst._job_id = job_id
@@ -53,7 +53,7 @@ class ModelInstJobHandle:
         return self._job_id
 
     @property
-    def info(self) -> Optional[ModelInstJobInfo]:
+    def info(self) -> ModelInstJobInfo | None:
         return self._info
 
     # -------------------- API helpers --------------------
@@ -63,7 +63,7 @@ class ModelInstJobHandle:
         try:
             resp = self._client_v2("GET", url)
         except requests.HTTPError as e:  # pragma: no cover
-            raise self._to_api_error(e)
+            raise self._to_api_error(e) from e
         data = resp.json()
         self._info = self._parse_job_info(data)
         return self._info
@@ -81,7 +81,7 @@ class ModelInstJobHandle:
     def is_failed(self) -> bool:
         return self.status() == InstallJobStatus.ERROR
 
-    def progress(self) -> Optional[float]:
+    def progress(self) -> float | None:
         if self._info is None:
             self.refresh()
         assert self._info is not None
@@ -98,9 +98,9 @@ class ModelInstJobHandle:
         except requests.HTTPError as e:  # pragma: no cover - depends on server behavior
             if e.response is not None and e.response.status_code in (404, 415):
                 return False
-            raise self._to_api_error(e)
+            raise self._to_api_error(e) from e
 
-    def wait_until(self, timeout: Optional[float] = 600.0, poll_interval: float = 2.0) -> ModelInstJobInfo:
+    def wait_until(self, timeout: float | None = 600.0, poll_interval: float = 2.0) -> ModelInstJobInfo:
         """Wait until the job reaches a terminal state or timeout elapses.
 
         When `timeout` is None, wait indefinitely.
@@ -108,7 +108,7 @@ class ModelInstJobHandle:
         """
         start = datetime.now()
         deadline = None if timeout is None else (start + timedelta(seconds=timeout))
-        last_info: Optional[ModelInstJobInfo] = None
+        last_info: ModelInstJobInfo | None = None
         while True:
             info = self.refresh()
             last_info = info
@@ -127,7 +127,7 @@ class ModelInstJobHandle:
                 )
 
     # Backward compatible alias
-    def wait(self, timeout: Optional[float] = 600.0, poll_interval: float = 2.0) -> ModelInstJobInfo:  # pragma: no cover
+    def wait(self, timeout: float | None = 600.0, poll_interval: float = 2.0) -> ModelInstJobInfo:  # pragma: no cover
         return self.wait_until(timeout=timeout, poll_interval=poll_interval)
 
     def raise_if_failed(self) -> None:
@@ -155,7 +155,7 @@ class ModelInstJobHandle:
             # Unknown value, map to ERROR-like terminal state to avoid infinite waits
             status = InstallJobStatus.ERROR
 
-        model_key: Optional[str] = None
+        model_key: str | None = None
         cfg_out = data.get("config_out") or {}
         if isinstance(cfg_out, dict):
             mk = cfg_out.get("key")

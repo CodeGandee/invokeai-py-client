@@ -9,7 +9,7 @@ the v2 model_manager endpoints.
 
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING, Optional
+from typing import Any, TYPE_CHECKING
 
 import requests
 
@@ -106,7 +106,7 @@ class DnnModelRepository:
         try:
             response = self._client._make_request_v2("GET", "/models/")
         except requests.HTTPError as e:
-            raise self._to_api_error(e)
+            raise self._to_api_error(e) from e
         data = response.json()
 
         # Extract models from response
@@ -115,7 +115,7 @@ class DnnModelRepository:
         # Convert to DnnModel objects
         return [DnnModel.from_api_response(model_data) for model_data in models_data]
 
-    def get_model_by_key(self, model_key: str) -> Optional[DnnModel]:
+    def get_model_by_key(self, model_key: str) -> DnnModel | None:
         """
         Get a specific dnn-model by its unique key from the InvokeAI system.
 
@@ -155,7 +155,7 @@ class DnnModelRepository:
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code == 404:
                 return None
-            raise self._to_api_error(e)
+            raise self._to_api_error(e) from e
 
     # -------------------- Model install jobs --------------------
     def install_model(
@@ -185,7 +185,7 @@ class DnnModelRepository:
             resp = self._client._make_request_v2("POST", _V2Endpoint.INSTALL_BASE, params=params, json=body)
         except requests.HTTPError as e:
             # Wrap rejection as a start error
-            raise ModelInstallStartError(str(self._to_api_error(e)))
+            raise ModelInstallStartError(str(self._to_api_error(e))) from e
         data = resp.json()
         job_id = int(data.get("id", 0))
         handle = ModelInstJobHandle.from_client_and_id(self._client, job_id)
@@ -197,7 +197,7 @@ class DnnModelRepository:
         try:
             resp = self._client._make_request_v2("GET", _V2Endpoint.INSTALL_BASE)
         except requests.HTTPError as e:
-            raise self._to_api_error(e)
+            raise self._to_api_error(e) from e
         items = resp.json() or []
         handles: list[ModelInstJobHandle] = []
         for it in items:
@@ -210,7 +210,7 @@ class DnnModelRepository:
             handles.append(h)
         return handles
 
-    def get_install_job(self, id: int | str) -> Optional[ModelInstJobHandle]:
+    def get_install_job(self, id: int | str) -> ModelInstJobHandle | None:
         """Get a handle for a single install job. Returns None if not found."""
         try:
             jid = int(id)
@@ -222,7 +222,7 @@ class DnnModelRepository:
         except requests.HTTPError as e:
             if e.response is not None and e.response.status_code == 404:
                 return None
-            raise self._to_api_error(e)
+            raise self._to_api_error(e) from e
         data = resp.json()
         h = ModelInstJobHandle.from_client_and_id(self._client, jid)
         h._info = self._parse_job_info(data)  # type: ignore[attr-defined]
@@ -233,7 +233,7 @@ class DnnModelRepository:
         try:
             resp = self._client._make_request_v2("DELETE", _V2Endpoint.INSTALL_BASE)
         except requests.HTTPError as e:
-            raise self._to_api_error(e)
+            raise self._to_api_error(e) from e
         return bool(resp.status_code in (200, 204))
 
     def install_huggingface(
@@ -252,7 +252,7 @@ class DnnModelRepository:
         try:
             resp = self._client._make_request_v2("PUT", _V2Endpoint.CONVERT.format(key=key))
         except requests.HTTPError as e:
-            raise self._to_api_error(e)
+            raise self._to_api_error(e) from e
         data = resp.json()
         return DnnModel.from_api_response(data)
 
@@ -261,7 +261,7 @@ class DnnModelRepository:
         try:
             resp = self._client._make_request_v2("DELETE", _V2Endpoint.MODEL_BY_KEY.format(key=key))
         except requests.HTTPError as e:
-            raise self._to_api_error(e)
+            raise self._to_api_error(e) from e
         return bool(resp.status_code in (200, 204))
 
     # -------------------- Cache & Stats --------------------
@@ -269,14 +269,14 @@ class DnnModelRepository:
         try:
             resp = self._client._make_request_v2("POST", _V2Endpoint.EMPTY_CACHE)
         except requests.HTTPError as e:
-            raise self._to_api_error(e)
+            raise self._to_api_error(e) from e
         return bool(resp.status_code in (200, 204))
 
-    def get_stats(self) -> Optional[ModelManagerStats]:
+    def get_stats(self) -> ModelManagerStats | None:
         try:
             resp = self._client._make_request_v2("GET", _V2Endpoint.STATS)
         except requests.HTTPError as e:
-            raise self._to_api_error(e)
+            raise self._to_api_error(e) from e
         if resp.status_code == 200 and resp.content:
             data = resp.json()
             if data is None:
@@ -292,7 +292,7 @@ class DnnModelRepository:
         try:
             resp = self._client._make_request_v2("GET", _V2Endpoint.SCAN_FOLDER, params=params)
         except requests.HTTPError as e:
-            raise self._to_api_error(e)
+            raise self._to_api_error(e) from e
         data = resp.json()
         if isinstance(data, list):
             return [self._parse_found_model(it) for it in data]
@@ -303,7 +303,7 @@ class DnnModelRepository:
         try:
             resp = self._client._make_request_v2("GET", _V2Endpoint.HF_LOGIN)
         except requests.HTTPError as e:
-            raise self._to_api_error(e)
+            raise self._to_api_error(e) from e
         status_raw = str(resp.json())
         try:
             return HFLoginStatus(status_raw)
@@ -314,14 +314,14 @@ class DnnModelRepository:
         try:
             resp = self._client._make_request_v2("POST", _V2Endpoint.HF_LOGIN, json={"token": token})
         except requests.HTTPError as e:
-            raise self._to_api_error(e)
+            raise self._to_api_error(e) from e
         return bool(resp.status_code == 200)
 
     def hf_logout(self) -> bool:
         try:
             resp = self._client._make_request_v2("DELETE", _V2Endpoint.HF_LOGIN)
         except requests.HTTPError as e:
-            raise self._to_api_error(e)
+            raise self._to_api_error(e) from e
         return bool(resp.status_code == 200)
 
     # -------------------- Parsing helpers --------------------

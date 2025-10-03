@@ -7,13 +7,13 @@ client. They provide structured information where relevant.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 
 class InvokeAIClientError(Exception):
     """Base exception for InvokeAI client failures."""
 
-    def __init__(self, message: str, *, details: Optional[dict[str, Any]] = None) -> None:  # noqa: D401
+    def __init__(self, message: str, *, details: dict[str, Any] | None = None) -> None:  # noqa: D401
         super().__init__(message)
         self.message = message
         self.details = details or {}
@@ -26,9 +26,9 @@ class APIRequestError(InvokeAIClientError):
         self,
         message: str,
         *,
-        status_code: Optional[int] = None,
-        payload: Optional[Any] = None,
-        details: Optional[dict[str, Any]] = None,
+        status_code: int | None = None,
+        payload: Any | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message, details=details)
         self.status_code = status_code
@@ -58,4 +58,3 @@ class ModelInstallTimeout(ModelManagerError):
         super().__init__(message)
         self.last_info = last_info
         self.timeout = timeout
-
