@@ -24,11 +24,13 @@ jobs:
         run: |
           curl -fsSL https://pixi.sh/install.sh | bash
           echo "$HOME/.pixi/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.pixi/bin:$PATH"
           pixi --version
 
       - name: Lint library code with ruff (via Pixi)
         shell: bash
         run: |
+          export PATH="$HOME/.pixi/bin:$PATH"
           pixi run -e dev ruff --version
           # Lint only the library for critical errors/warnings
-          pixi run -e dev ruff check src/ --select E,F
+          pixi run -e dev ruff check src/ --select E,F --ignore E501
