@@ -4,8 +4,8 @@ Manual test: attempt to install a non-existent local model and handle the error.
 Default path: /tmp/fakemodel.safetensors (override with MODEL_PATH).
 
 Behavior
-- If server rejects the request (HTTP error), catch and report.
-- If server accepts and creates a job, poll until terminal and expect status=error.
+- If server rejects the request, catch native ModelInstallStartError (no HTTP leakage).
+- If server accepts and creates a job, wait_until() should raise ModelInstallJobFailed.
 
 Run
 - export INVOKE_AI_ENDPOINT="http://localhost:19090/api/v1"
@@ -16,12 +16,15 @@ from __future__ import annotations
 import os
 import sys
 import time
-from typing import Optional
-
-import requests
 
 from invokeai_py_client import InvokeAIClient
-from invokeai_py_client.dnn_model import InstallJobStatus
+from invokeai_py_client.dnn_model import (
+    InstallJobStatus,
+    ModelInstallStartError,
+    ModelInstallJobFailed,
+    ModelInstallTimeout,
+    APIRequestError,
+)
 
 
 DEFAULT_MODEL_PATH = "/tmp/fakemodel.safetensors"
@@ -43,40 +46,41 @@ def main() -> int:
     try:
         job = repo.install_model(source=model_path, inplace=True)
         print(f"[INFO] Started job id: {job.job_id}")
-    except requests.HTTPError as e:
-        print(f"[OK] Caught HTTP error on install: {e}")
+    except ModelInstallStartError as e:
+        print(f"[OK] Caught ModelInstallStartError on install: {e}")
+        return 0
+    except APIRequestError as e:
+        print(f"[OK] Caught APIRequestError on install: {e}")
         return 0
     except Exception as e:
         print(f"[OK] Caught exception on install: {e}")
         return 0
 
-    # If we get here, the server accepted the install; poll until error/completed.
-    start = time.time()
-    timeout = int(os.environ.get("MODEL_INSTALL_TIMEOUT", "120"))
-    last_status: Optional[str] = None
-    while time.time() - start < timeout:
-        info = job.refresh()
-        status = info.status.value if isinstance(info.status, InstallJobStatus) else str(info.status)
-        if status != last_status:
-            print(f"[POLL {int(time.time()-start):3d}s] status={status}")
-            last_status = status
-        if status in {"completed", "error", "cancelled"}:
-            break
-        time.sleep(2)
-
-    final = job.refresh()
-    if final.status == InstallJobStatus.ERROR:
-        print("[OK] Job reached error state as expected.")
-        if final.error:
-            print(f"      error={final.error}")
-        if final.error_reason:
-            print(f"      error_reason={final.error_reason}")
+    # If we get here, the server accepted the install; wait_until should lead to a failure.
+    timeout = float(os.environ.get("MODEL_INSTALL_TIMEOUT", "120"))
+    try:
+        final = job.wait_until(timeout=timeout, poll_interval=2.0)
+        # If we reached here without exception, it's unexpected success
+        print(f"[WARN] Unexpected success: status={final.status}")
         return 0
-    else:
-        print(f"[WARN] Unexpected terminal state: {final.status}")
+    except ModelInstallJobFailed as e:
+        print("[OK] wait_until raised ModelInstallJobFailed as expected.")
+        if e.info is not None:
+            print(f"      final_status={e.info.status}")
+            if e.info.error:
+                print(f"      error={e.info.error}")
+            if e.info.error_reason:
+                print(f"      error_reason={e.info.error_reason}")
+        return 0
+    except ModelInstallTimeout as e:
+        print("[WARN] wait_until timed out.")
+        if e.last_info is not None:
+            print(f"      last_status={e.last_info.status}")
+        return 0
+    except APIRequestError as e:
+        print(f"[OK] Caught APIRequestError during wait: {e}")
         return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
-
