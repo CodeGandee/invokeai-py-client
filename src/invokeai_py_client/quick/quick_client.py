@@ -18,9 +18,7 @@ from invokeai_py_client.ivk_fields import (
     IvkBoardField,
     IvkStringField,
     IvkIntegerField,
-    IvkFloatField,
     IvkSchedulerField,
-    SchedulerName,
 )
 from invokeai_py_client.ivk_fields.models import IvkModelIdentifierField
 

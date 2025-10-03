@@ -25,6 +25,7 @@ from invokeai_py_client.queue.queue_models import (
 
 if TYPE_CHECKING:  # pragma: no cover
     from invokeai_py_client.client import InvokeAIClient
+    from invokeai_py_client.queue.job_handle import JobHandle
 
 
 class QueueHandle:
@@ -227,9 +228,20 @@ class QueueHandle:
 
     @staticmethod
     def _parse_queue_status(data: dict[str, Any]) -> QueueStatus:
-        extra = {k: v for k in data.keys() if k not in {
-            "queue_id", "item_id", "batch_id", "session_id", "pending", "in_progress", "completed", "failed", "canceled", "total"
-        }}
+        extra_keys = {
+            k for k in data.keys() if k not in {
+                "queue_id",
+                "item_id",
+                "batch_id",
+                "session_id",
+                "pending",
+                "in_progress",
+                "completed",
+                "failed",
+                "canceled",
+                "total",
+            }
+        }
         return QueueStatus(
             queue_id=data.get("queue_id", "default"),
             item_id=data.get("item_id"),
@@ -241,16 +253,16 @@ class QueueHandle:
             failed=int(data.get("failed", 0)),
             canceled=int(data.get("canceled", 0)),
             total=int(data.get("total", 0)),
-            extra={k: data[k] for k in extra},
+            extra={k: data[k] for k in extra_keys},
         )
 
     @staticmethod
     def _parse_processor_status(data: dict[str, Any]) -> ProcessorStatus:
-        extra = {k: v for k in data.keys() if k not in {"is_started", "is_processing"}}
+        extra_keys = {k for k in data.keys() if k not in {"is_started", "is_processing"}}
         return ProcessorStatus(
             is_started=bool(data.get("is_started", False)),
             is_processing=bool(data.get("is_processing", False)),
-            extra={k: data[k] for k in extra},
+            extra={k: data[k] for k in extra_keys},
         )
 
     @staticmethod
