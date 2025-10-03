@@ -1,6 +1,6 @@
 [project]
 name = "invokeai-py-client"
-version = "1.1.0"
+version = "1.1.1"
 description = "A Python client library for interacting with InvokeAI APIs"
 authors = [
     {name = "CodeGandee", email = "igamenovoer@xx.com"}
@@ -96,7 +96,7 @@ name = "invokeai-py-client"
 authors = ["CodeGandee <igamenovoer@xx.com>"]
 channels = ["conda-forge"]
 platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
-version = "1.1.0"
+version = "1.1.1"
 
 [tool.pixi.dependencies]
 python = ">=3.11"

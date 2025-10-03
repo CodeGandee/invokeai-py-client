@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2025-10-03
+
+### Changed
+- CI: run lint-only on library code via Pixi + Ruff (no tests in CI)
+- Remove duplicate PyPI publish workflow; keep single publish pipeline
+- Minor lint fixes in queue and quick modules to satisfy CI gate
+
 ## [1.1.0] - 2025-10-03
 
 ### Added
