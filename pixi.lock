@@ -5608,8 +5608,8 @@ packages:
   timestamp: 1733223232820
 - pypi: ./
   name: invokeai-py-client
-  version: 1.1.0
-  sha256: 2f06030501d3162cf69602fbb389f0d87832cab253c6c669bd7977dd0b972fe3
+  version: 1.1.1
+  sha256: 30904847cb51a1b25a9277071b940effac7f3eaf5da6942814b8fba0a00bf7b3
   requires_dist:
   - scipy>=1.16.1
   - opencv-python>=4.5.0
